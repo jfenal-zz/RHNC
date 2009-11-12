@@ -1,0 +1,16 @@
+Build.PL
+Changes
+MANIFEST
+README
+lib/RHN/Channel.pm
+lib/RHN/Client.pm
+lib/RHN/Kickstart.pm
+lib/RHN/Package.pm
+lib/RHN/Session.pm
+lib/RHN/System.pm
+lib/RHN/SystemGroup.pm
+t/00-load.t
+t/pod-coverage.t
+t/pod.t
+Makefile.PL
+META.yml

@@ -1,0 +1,37 @@
+---
+name: RHN-Session
+version: 0.01
+author:
+  - 'Jérôme Fenal <jfenal@redhat.com>'
+abstract: The great new RHN::Session!
+license: perl
+resources:
+  license: ~
+build_requires:
+  Test::More: 0
+provides:
+  RHN::Channel:
+    file: lib/RHN/Channel.pm
+    version: 0.01
+  RHN::Client:
+    file: lib/RHN/Client.pm
+    version: 0.01
+  RHN::Kickstart:
+    file: lib/RHN/Kickstart.pm
+    version: 0.01
+  RHN::Package:
+    file: lib/RHN/Package.pm
+    version: 0.01
+  RHN::Session:
+    file: lib/RHN/Session.pm
+    version: 0.01
+  RHN::System:
+    file: lib/RHN/System.pm
+    version: 0.01
+  RHN::SystemGroup:
+    file: lib/RHN/SystemGroup.pm
+    version: 0.01
+generated_by: Module::Build version 0.32
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.2.html
+  version: 1.2
