@@ -37,35 +37,59 @@ Perhaps a little code snippet.
 
 =head1 FUNCTIONS
 
+=head2 _readconfig
+
+Just read a config file
+
+=cut
+
+sub _readconfig {
+    my ( $self, $file ) = @_;
+
+    my $config = Config::Tiny->new();
+
+    if ( defined($file) ) {
+        print STDERR "Reading config file" . $file . "\n";
+        $config = Config::Tiny->read( $file );
+#        use Data::Dumper; print Dumper $config; print "error ? " . Config::Tiny->errstr() . "\n";
+    }
+
+    $self->{host} = $config->{rhnclient}->{server}
+      if defined( $config->{rhnclient}->{server} );
+    $self->{user} = $config->{rhnclient}->{user}
+      if defined( $config->{rhnclient}->{user} );
+    $self->{password} = $config->{rhnclient}->{password}
+      if defined( $config->{rhnclient}->{password} );
+    $self->{version} = $VERSION;
+
+    $self;
+}
+
 =head2 new
 
 =cut
 
 sub new {
     my ( $class, @args ) = @_;
-    my %p =
-      validate( @args, { config => { default => "/etc/satellite_api.conf" } } );
-    my $fconfig;
+    my @files = [ "/etc/satellite_api.conf", "$ENV{HOME}/.rhnrc" ];
+    my %p = validate( @args, { config => 0 } );
     my $self = {};
     bless $self, $class;
 
-    open( $fconfig, '<', $p{config} )
-      or die "Couldn't open file for reading: $!";
+    $self->{host} = 'localhost';
+    $self->{user} = 'rhn-admin';
+    $self->{password} = 'none';
 
-# /etc/satellite_api.conf should contain only a single line # seperated by spaces
-    $_ = <$fconfig>;
-    my ( $HOST, $USER, $PASS ) = (split);
-    close($fconfig)
-      or die "Can't close config file $p{config} ($!)";
+    foreach my $f (@files, $p{config} ) {
+        $self->_readconfig($f) if (-f $f);
+    }
 
-    $self->{client}   = Frontier::Client->new( url => "http://$HOST/rpc/api" );
-    $self->{host}     = $HOST;
-    $self->{user}     = $USER;
-    $self->{password} = $PASS;
-    $self->{version}  = $VERSION;
+    $self->{client} =
+      Frontier::Client->new( url => "http://" . $self->{host} . "/rpc/api" );
+    my $session =
+      $self->{client}->call( 'auth.login', $self->{user}, $self->{password} );
 
-    my $session = $self->{client}->call( 'auth.login', $USER, $PASS );
-
+    delete $self->{password};
     return $self;
 }
 
@@ -94,7 +118,6 @@ sub version {
 
     return $self->{version};
 }
-
 
 =head1 AUTHOR
 

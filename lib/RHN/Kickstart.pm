@@ -34,11 +34,18 @@ if you don't export anything, such as for a purely object-oriented module.
 
 =head1 FUNCTIONS
 
-=head2 function1
+=head2 createProfile
+
+* string sessionKey
+* string profileLabel - Label for the new kickstart profile.
+* string virtualizationType - none, para_host, qemu, xenfv or xenpv.
+* string kickstartableTreeLabel - Label of a kickstartable tree to associate the new profile with.
+* string kickstartHost - Kickstart hostname (of a satellite or proxy) used to construct the default download URL for the new kickstart profile.
+* string rootPassword - Root password.
 
 =cut
 
-sub function1 {
+sub createProfile {
 }
 
 =head2 function2
