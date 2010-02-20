@@ -2,19 +2,20 @@
 
 use Test::More;
 
-use lib qw( . lib lib/RHN );
-use RHN::Session;
+use lib qw( . lib lib/RHNC );
+use RHNC;
+use RHNC::Session;
 
 
-#BEGIN { use_ok( 'RHN::Session' ); } 
+#BEGIN { use_ok( 'RHNC::Session' ); } 
 
-diag( "Testing RHN::Session $RHN::Session::VERSION, Perl $], $^X" );
+diag( "Testing RHNC::Session $RHNC::Session::VERSION, Perl $], $^X" );
 
 my $tests;
 
 plan tests => $tests;
 
-my $rhnc = RHN::Session->new( config => "$ENV{HOME}/.rhnrc" );
+my $rhnc = RHNC::Session->new( config => "$ENV{HOME}/.rhnrc" );
 
 
 BEGIN { $tests++ }

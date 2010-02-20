@@ -1,4 +1,4 @@
-# This Makefile is for the RHN::Session extension to perl.
+# This Makefile is for the RHNC extension to perl.
 #
 # It was generated automatically by MakeMaker version
 # 6.42 (Revision: 41145) from the contents of
@@ -12,9 +12,9 @@
 
 #     EXE_FILES => []
 #     INSTALLDIRS => q[site]
-#     NAME => q[RHN::Session]
+#     NAME => q[RHNC]
 #     PREREQ_PM => { Test::More=>q[0], Params::Validate=>q[0], Frontier::Client=>q[0] }
-#     VERSION_FROM => q[lib/RHN/Session.pm]
+#     VERSION_FROM => q[lib/RHNC/Session.pm]
 
 # --- MakeMaker post_initialize section:
 
@@ -39,7 +39,7 @@ LIBC =
 LIB_EXT = .a
 OBJ_EXT = .o
 OSNAME = linux
-OSVERS = 2.6.18-164.el5
+OSVERS = 2.6.18-164.2.1.el5
 RANLIB = :
 SITELIBEXP = /usr/local/lib/perl5/site_perl/5.10.0
 SITEARCHEXP = /usr/local/lib64/perl5/site_perl/5.10.0/x86_64-linux-thread-multi
@@ -52,8 +52,8 @@ VENDORLIBEXP = /usr/lib/perl5/vendor_perl/5.10.0
 AR_STATIC_ARGS = cr
 DIRFILESEP = /
 DFSEP = $(DIRFILESEP)
-NAME = RHN::Session
-NAME_SYM = RHN_Session
+NAME = RHNC
+NAME_SYM = RHNC
 VERSION = 0.01
 VERSION_MACRO = VERSION
 VERSION_SYM = 0_01
@@ -141,11 +141,11 @@ MM_REVISION = 41145
 # PARENT_NAME = NAME without BASEEXT and no trailing :: (eg Foo::Bar)
 # DLBASE  = Basename part of dynamic library. May be just equal BASEEXT.
 MAKE = make
-FULLEXT = RHN/Session
-BASEEXT = Session
-PARENT_NAME = RHN
+FULLEXT = RHNC
+BASEEXT = RHNC
+PARENT_NAME = 
 DLBASE = $(BASEEXT)
-VERSION_FROM = lib/RHN/Session.pm
+VERSION_FROM = lib/RHNC/Session.pm
 OBJECT = 
 LDFROM = $(OBJECT)
 LINKTYPE = dynamic
@@ -157,20 +157,23 @@ C_FILES  =
 O_FILES  = 
 H_FILES  = 
 MAN1PODS = 
-MAN3PODS = lib/RHN/Channel.pm \
-	lib/RHN/Client.pm \
-	lib/RHN/Kickstart.pm \
-	lib/RHN/Package.pm \
-	lib/RHN/Session.pm \
-	lib/RHN/System.pm \
-	lib/RHN/SystemGroup.pm
+MAN3PODS = lib/RHNC.pm \
+	lib/RHNC/ActivationKey.pm \
+	lib/RHNC/Channel.pm \
+	lib/RHNC/Client.pm \
+	lib/RHNC/Kickstart.pm \
+	lib/RHNC/Package.pm \
+	lib/RHNC/Session.pm \
+	lib/RHNC/System.pm \
+	lib/RHNC/SystemGroup.pm \
+	lib/RHNC/template.pm
 
 # Where is the Config information that we are using/depend on
 CONFIGDEP = $(PERL_ARCHLIB)$(DFSEP)Config.pm $(PERL_INC)$(DFSEP)config.h
 
 # Where to build things
-INST_LIBDIR      = $(INST_LIB)/RHN
-INST_ARCHLIBDIR  = $(INST_ARCHLIB)/RHN
+INST_LIBDIR      = $(INST_LIB)
+INST_ARCHLIBDIR  = $(INST_ARCHLIB)
 
 INST_AUTODIR     = $(INST_LIB)/auto/$(FULLEXT)
 INST_ARCHAUTODIR = $(INST_ARCHLIB)/auto/$(FULLEXT)
@@ -185,31 +188,40 @@ PERL_ARCHIVE       =
 PERL_ARCHIVE_AFTER = 
 
 
-TO_INST_PM = lib/RHN/.Session.pm.swp \
-	lib/RHN/Channel.pm \
-	lib/RHN/Client.pm \
-	lib/RHN/Kickstart.pm \
-	lib/RHN/Package.pm \
-	lib/RHN/Session.pm \
-	lib/RHN/System.pm \
-	lib/RHN/SystemGroup.pm
+TO_INST_PM = README.pl \
+	lib/RHNC.pm \
+	lib/RHNC/ActivationKey.pm \
+	lib/RHNC/Channel.pm \
+	lib/RHNC/Client.pm \
+	lib/RHNC/Kickstart.pm \
+	lib/RHNC/Package.pm \
+	lib/RHNC/Session.pm \
+	lib/RHNC/System.pm \
+	lib/RHNC/SystemGroup.pm \
+	lib/RHNC/template.pm
 
-PM_TO_BLIB = lib/RHN/Channel.pm \
-	blib/lib/RHN/Channel.pm \
-	lib/RHN/Client.pm \
-	blib/lib/RHN/Client.pm \
-	lib/RHN/System.pm \
-	blib/lib/RHN/System.pm \
-	lib/RHN/Package.pm \
-	blib/lib/RHN/Package.pm \
-	lib/RHN/.Session.pm.swp \
-	blib/lib/RHN/.Session.pm.swp \
-	lib/RHN/SystemGroup.pm \
-	blib/lib/RHN/SystemGroup.pm \
-	lib/RHN/Kickstart.pm \
-	blib/lib/RHN/Kickstart.pm \
-	lib/RHN/Session.pm \
-	blib/lib/RHN/Session.pm
+PM_TO_BLIB = lib/RHNC/Session.pm \
+	blib/lib/RHNC/Session.pm \
+	lib/RHNC.pm \
+	blib/lib/RHNC.pm \
+	lib/RHNC/SystemGroup.pm \
+	blib/lib/RHNC/SystemGroup.pm \
+	lib/RHNC/template.pm \
+	blib/lib/RHNC/template.pm \
+	lib/RHNC/Package.pm \
+	blib/lib/RHNC/Package.pm \
+	lib/RHNC/ActivationKey.pm \
+	blib/lib/RHNC/ActivationKey.pm \
+	lib/RHNC/Client.pm \
+	blib/lib/RHNC/Client.pm \
+	lib/RHNC/Channel.pm \
+	blib/lib/RHNC/Channel.pm \
+	README.pl \
+	$(INST_LIB)/README.pl \
+	lib/RHNC/System.pm \
+	blib/lib/RHNC/System.pm \
+	lib/RHNC/Kickstart.pm \
+	blib/lib/RHNC/Kickstart.pm
 
 
 # --- MakeMaker platform_constants section:
@@ -275,8 +287,8 @@ CI = ci -u
 RCS_LABEL = rcs -Nv$(VERSION_SYM): -q
 DIST_CP = best
 DIST_DEFAULT = tardist
-DISTNAME = RHN-Session
-DISTVNAME = RHN-Session-0.01
+DISTNAME = RHNC
+DISTVNAME = RHNC-0.01
 
 
 # --- MakeMaker macro section:
@@ -429,21 +441,27 @@ POD2MAN = $(POD2MAN_EXE)
 
 
 manifypods : pure_all  \
-	lib/RHN/Channel.pm \
-	lib/RHN/Client.pm \
-	lib/RHN/System.pm \
-	lib/RHN/Package.pm \
-	lib/RHN/SystemGroup.pm \
-	lib/RHN/Kickstart.pm \
-	lib/RHN/Session.pm
+	lib/RHNC/Session.pm \
+	lib/RHNC.pm \
+	lib/RHNC/SystemGroup.pm \
+	lib/RHNC/template.pm \
+	lib/RHNC/Package.pm \
+	lib/RHNC/ActivationKey.pm \
+	lib/RHNC/Client.pm \
+	lib/RHNC/Channel.pm \
+	lib/RHNC/System.pm \
+	lib/RHNC/Kickstart.pm
 	$(NOECHO) $(POD2MAN) --section=3 --perm_rw=$(PERM_RW) \
-	  lib/RHN/Channel.pm $(INST_MAN3DIR)/RHN::Channel.$(MAN3EXT) \
-	  lib/RHN/Client.pm $(INST_MAN3DIR)/RHN::Client.$(MAN3EXT) \
-	  lib/RHN/System.pm $(INST_MAN3DIR)/RHN::System.$(MAN3EXT) \
-	  lib/RHN/Package.pm $(INST_MAN3DIR)/RHN::Package.$(MAN3EXT) \
-	  lib/RHN/SystemGroup.pm $(INST_MAN3DIR)/RHN::SystemGroup.$(MAN3EXT) \
-	  lib/RHN/Kickstart.pm $(INST_MAN3DIR)/RHN::Kickstart.$(MAN3EXT) \
-	  lib/RHN/Session.pm $(INST_MAN3DIR)/RHN::Session.$(MAN3EXT) 
+	  lib/RHNC/Session.pm $(INST_MAN3DIR)/RHNC::Session.$(MAN3EXT) \
+	  lib/RHNC.pm $(INST_MAN3DIR)/RHNC.$(MAN3EXT) \
+	  lib/RHNC/SystemGroup.pm $(INST_MAN3DIR)/RHNC::SystemGroup.$(MAN3EXT) \
+	  lib/RHNC/template.pm $(INST_MAN3DIR)/RHNC::template.$(MAN3EXT) \
+	  lib/RHNC/Package.pm $(INST_MAN3DIR)/RHNC::Package.$(MAN3EXT) \
+	  lib/RHNC/ActivationKey.pm $(INST_MAN3DIR)/RHNC::ActivationKey.$(MAN3EXT) \
+	  lib/RHNC/Client.pm $(INST_MAN3DIR)/RHNC::Client.$(MAN3EXT) \
+	  lib/RHNC/Channel.pm $(INST_MAN3DIR)/RHNC::Channel.$(MAN3EXT) \
+	  lib/RHNC/System.pm $(INST_MAN3DIR)/RHNC::System.$(MAN3EXT) \
+	  lib/RHNC/Kickstart.pm $(INST_MAN3DIR)/RHNC::Kickstart.$(MAN3EXT) 
 
 
 
@@ -508,7 +526,7 @@ realclean purge ::  clean realclean_subdirs
 metafile : create_distdir
 	$(NOECHO) $(ECHO) Generating META.yml
 	$(NOECHO) $(ECHO) '--- #YAML:1.0' > META_new.yml
-	$(NOECHO) $(ECHO) 'name:                RHN-Session' >> META_new.yml
+	$(NOECHO) $(ECHO) 'name:                RHNC' >> META_new.yml
 	$(NOECHO) $(ECHO) 'version:             0.01' >> META_new.yml
 	$(NOECHO) $(ECHO) 'abstract:            ~' >> META_new.yml
 	$(NOECHO) $(ECHO) 'license:             ~' >> META_new.yml
@@ -831,14 +849,17 @@ ppd :
 
 pm_to_blib : $(TO_INST_PM)
 	$(NOECHO) $(ABSPERLRUN) -MExtUtils::Install -e 'pm_to_blib({@ARGV}, '\''$(INST_LIB)/auto'\'', '\''$(PM_FILTER)'\'')' -- \
-	  lib/RHN/Channel.pm blib/lib/RHN/Channel.pm \
-	  lib/RHN/Client.pm blib/lib/RHN/Client.pm \
-	  lib/RHN/System.pm blib/lib/RHN/System.pm \
-	  lib/RHN/Package.pm blib/lib/RHN/Package.pm \
-	  lib/RHN/.Session.pm.swp blib/lib/RHN/.Session.pm.swp \
-	  lib/RHN/SystemGroup.pm blib/lib/RHN/SystemGroup.pm \
-	  lib/RHN/Kickstart.pm blib/lib/RHN/Kickstart.pm \
-	  lib/RHN/Session.pm blib/lib/RHN/Session.pm 
+	  lib/RHNC/Session.pm blib/lib/RHNC/Session.pm \
+	  lib/RHNC.pm blib/lib/RHNC.pm \
+	  lib/RHNC/SystemGroup.pm blib/lib/RHNC/SystemGroup.pm \
+	  lib/RHNC/template.pm blib/lib/RHNC/template.pm \
+	  lib/RHNC/Package.pm blib/lib/RHNC/Package.pm \
+	  lib/RHNC/ActivationKey.pm blib/lib/RHNC/ActivationKey.pm \
+	  lib/RHNC/Client.pm blib/lib/RHNC/Client.pm \
+	  lib/RHNC/Channel.pm blib/lib/RHNC/Channel.pm \
+	  README.pl $(INST_LIB)/README.pl \
+	  lib/RHNC/System.pm blib/lib/RHNC/System.pm \
+	  lib/RHNC/Kickstart.pm blib/lib/RHNC/Kickstart.pm 
 	$(NOECHO) $(TOUCH) pm_to_blib
 
 

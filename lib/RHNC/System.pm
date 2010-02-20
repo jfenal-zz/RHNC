@@ -1,11 +1,11 @@
-package RHN::Package;
+package RHNC::System;
 
 use warnings;
 use strict;
 
 =head1 NAME
 
-RHN::Package - The great new RHN::Package!
+RHNC::System - The great new RHNC::System!
 
 =head1 VERSION
 
@@ -22,9 +22,9 @@ Quick summary of what the module does.
 
 Perhaps a little code snippet.
 
-    use RHN::Package;
+    use RHNC::System;
 
-    my $foo = RHN::Package->new();
+    my $foo = RHNC::System->new();
     ...
 
 =head1 EXPORT
@@ -34,19 +34,31 @@ if you don't export anything, such as for a purely object-oriented module.
 
 =head1 FUNCTIONS
 
-=head2 function1
+=head2 new
 
 =cut
 
-sub function1 {
+sub new {
+    my ( $class, @args ) = @_;
+    $class = ref($class) || $class;
+
+    my $self = {};
+
+    bless $self, $class;
+
+    return $self;
 }
 
-=head2 function2
+
+=head2 search
 
 =cut
 
-sub function2 {
+sub search {
+
 }
+
+
 
 =head1 AUTHOR
 
@@ -55,7 +67,7 @@ Jérôme Fenal, C<< <jfenal at redhat.com> >>
 =head1 BUGS
 
 Please report any bugs or feature requests to C<bug-rhn-session at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHN-Session>.  I will be notified, and then you'll
+the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
 
 
@@ -65,7 +77,7 @@ automatically be notified of progress on your bug as I make changes.
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc RHN::Package
+    perldoc RHNC::System
 
 
 You can also look for information at:
@@ -74,19 +86,19 @@ You can also look for information at:
 
 =item * RT: CPAN's request tracker
 
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=RHN-Session>
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=RHNC-Session>
 
 =item * AnnoCPAN: Annotated CPAN documentation
 
-L<http://annocpan.org/dist/RHN-Session>
+L<http://annocpan.org/dist/RHNC-Session>
 
 =item * CPAN Ratings
 
-L<http://cpanratings.perl.org/d/RHN-Session>
+L<http://cpanratings.perl.org/d/RHNC-Session>
 
 =item * Search CPAN
 
-L<http://search.cpan.org/dist/RHN-Session/>
+L<http://search.cpan.org/dist/RHNC-Session/>
 
 =back
 
@@ -104,4 +116,4 @@ under the same terms as Perl itself.
 
 =cut
 
-1; # End of RHN::Package
+1; # End of RHNC::System

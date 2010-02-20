@@ -48,13 +48,13 @@ TODO: {
     "placeholder date/time"       => qr(Date/time)
   );
 
-  module_boilerplate_ok('lib/RHN/Session.pm');
-  module_boilerplate_ok('lib/RHN/Client.pm');
-  module_boilerplate_ok('lib/RHN/Package.pm');
-  module_boilerplate_ok('lib/RHN/Channel.pm');
-  module_boilerplate_ok('lib/RHN/Kickstart.pm');
-  module_boilerplate_ok('lib/RHN/System.pm');
-  module_boilerplate_ok('lib/RHN/SystemGroup.pm');
+  module_boilerplate_ok('lib/RHNC/Session.pm');
+  module_boilerplate_ok('lib/RHNC/Client.pm');
+  module_boilerplate_ok('lib/RHNC/Package.pm');
+  module_boilerplate_ok('lib/RHNC/Channel.pm');
+  module_boilerplate_ok('lib/RHNC/Kickstart.pm');
+  module_boilerplate_ok('lib/RHNC/System.pm');
+  module_boilerplate_ok('lib/RHNC/SystemGroup.pm');
 
 
 }

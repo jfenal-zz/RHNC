@@ -3,9 +3,9 @@ use ExtUtils::MakeMaker;
 WriteMakefile
 (
           'INSTALLDIRS' => 'site',
-          'NAME' => 'RHN::Session',
+          'NAME' => 'RHNC',
           'EXE_FILES' => [],
-          'VERSION_FROM' => 'lib/RHN/Session.pm',
+          'VERSION_FROM' => 'lib/RHNC/Session.pm',
           'PREREQ_PM' => {
                            'Test::More' => 0,
                            'Params::Validate' => 0,
