@@ -1,10 +1,11 @@
 #!perl -T
 
-use Test::More tests => 7;
+use Test::More tests => 8;
 
 BEGIN {
+	use_ok( 'RHNC' );
 	use_ok( 'RHNC::Session' );
-	use_ok( 'RHNC::Client' );
+	use_ok( 'RHNC::Org' );
 	use_ok( 'RHNC::Package' );
 	use_ok( 'RHNC::Channel' );
 	use_ok( 'RHNC::Kickstart' );

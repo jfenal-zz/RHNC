@@ -5,7 +5,7 @@ use strict;
 
 =head1 NAME
 
-RHNC::System - The great new RHNC::System!
+RHNC::System - Red Hat Network Client - Systems handling
 
 =head1 VERSION
 
@@ -17,10 +17,6 @@ our $VERSION = '0.01';
 
 
 =head1 SYNOPSIS
-
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
 
     use RHNC::System;
 

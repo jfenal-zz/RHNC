@@ -5,7 +5,7 @@ use strict;
 
 =head1 NAME
 
-RHNC::Channel - The great new RHNC::Channel!
+RHNC::Channel - Red Hat Network Client - Software Channel handling
 
 =head1 VERSION
 
@@ -18,14 +18,12 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
     use RHNC::Channel;
 
     my $foo = RHNC::Channel->new();
     ...
+
+    my $foo = RHNC::Channel->get();
 
 =head1 EXPORT
 
@@ -40,6 +38,7 @@ if you don't export anything, such as for a purely object-oriented module.
 
 sub new {
     my ( $class, @args ) = @_;
+
     $class = ref($class) || $class;
 
     
@@ -59,12 +58,6 @@ sub get {
     
 }
 
-=head2 function2
-
-=cut
-
-sub function2 {
-}
 
 =head1 AUTHOR
 

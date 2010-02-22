@@ -4,8 +4,8 @@ MANIFEST
 README
 lib/RHNC.pm
 lib/RHNC/Channel.pm
-lib/RHNC/Client.pm
 lib/RHNC/Kickstart.pm
+lib/RHNC/Org.pm
 lib/RHNC/Package.pm
 lib/RHNC/Session.pm
 lib/RHNC/System.pm

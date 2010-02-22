@@ -6,13 +6,13 @@ use Params::Validate;
 use Carp;
 use RHNC;
 
-our @ISA = qw( RHNC );
+use base 'RHNC';
 
-use vars qw( $AUTOLOAD %_properties );
+use vars qw( $AUTOLOAD %properties %valid_prefix );
 
 =head1 NAME
 
-RHNC::Org - The great new RHNC::Org!
+RHNC::Org - Red Hat Network Client - Organisation handling
 
 =head1 VERSION
 
@@ -24,14 +24,32 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
     use RHNC::Org;
 
-    my $foo = RHNC::Org->new();
-    ...
+    # Create object, not yet on Satellite
+    my $foo = RHNC::Org->new(
+        name      => $orgName,
+        login     => $adminLogin,
+        password  => $adminPassword,
+        prefix    => $prefix,
+        firstname => $firstName,
+        lastname  => $lastName,
+        email     => $email
+    );
+    my $foo = RHNC::Org->new($org);  # From an already existing object
+
+    # Create object + create it directly on Satellite.
+    my $foo = RHNC::Org->create(
+        rhnc      => $rhnc,          # RHNC object, referring to a RHNC::Session
+        name      => $orgName,
+        login     => $adminLogin,
+        password  => $adminPassword,
+        prefix    => $prefix,
+        firstname => $firstName,
+        lastname  => $lastName,
+        email => $email usepam => $usePamAuth
+    );
+    my $foo = RHNC::Org->create($org);
 
 =head1 EXPORT
 
@@ -43,14 +61,14 @@ if you don't export anything, such as for a purely object-oriented module.
 =head2 new
 
   my $org => RHNC::Org->new(
-      orgName       => $orgName,
-      adminLogin    => $adminLogin,
-      adminPassword => $adminPassword,
-      prefix        => prefix,
-      firstName     => $firstName,
-      lastName      => $lastName,
-      email         => $email
-      usePamAuth    => $usePamAuth
+      name       => $orgName,
+      login      => $adminLogin,
+      password   => $adminPassword,
+      prefix     => prefix,
+      firstname  => $firstName,
+      lastname   => $lastName,
+      email      => $email
+      usepam     => $usePamAuth
   );
 
     - string orgName - Organization name. Must meet same criteria as in the web UI.
@@ -65,20 +83,52 @@ if you don't export anything, such as for a purely object-oriented module.
 
 =cut
 
-my @priv = qw( rhnc orgName adminLogin adminPassword prefix firstName lastName
-  email usePamAuth );
+#
+# Accessors
+#
+use constant {
+    MANDATORY => 0,
+    DEFAULT   => 1,
+    VALIDATE  => 2,
+    TRANSFORM => 3,
+};
+
+my %valid_prefix = map { $_ => 1 } qw( Dr. Hr. Miss Mr. Mrs. Sr. );
+my %properties = (
+    rhnc     => [ 0, undef, undef, undef ],
+    name     => [ 1, undef, undef, undef ],
+    login    => [ 0, undef, undef, undef ],
+    password => [ 0, undef, undef, undef ],
+    prefix =>
+      [ 0, 'Mr.', sub { return defined $valid_prefix{ $_[0] } }, undef ],
+    firstname              => [ 0, 'John',                 undef, undef ],
+    lastname               => [ 0, 'Doe',                  undef, undef ],
+    email                  => [ 0, 'john.doe@example.com', undef, undef ],
+    usepam                 => [ 0, 0,                      undef, undef ],
+    id                     => [ 0, 0,                      undef, undef ],
+    active_users           => [ 0, 0,                      undef, undef ],
+    systems                => [ 0, 0,                      undef, undef ],
+    trusts                 => [ 0, 0,                      undef, undef ],
+    system_groups          => [ 0, 0,                      undef, undef ],
+    activation_keys        => [ 0, 0,                      undef, undef ],
+    kickstart_profiles     => [ 0, 0,                      undef, undef ],
+    configuration_channels => [ 0, 0,                      undef, undef ],
+);
+
+#FIXME
 
 sub new {
     my ( $class, @args ) = @_;
     $class = ref($class) || $class;
 
     my $self = {};
-    my %v = map { $_ => 1 } @priv;
+
+    my %v = map { $_ => 0 } ( 'id', keys(%properties) );
 
     my %p = validate( @args, \%v );
 
-    for my $i (@priv) {
-        $self->{"_$i"} = $p{$i};
+    for my $i ( keys %properties ) {
+        $self->{$i} = $p{$i};
     }
 
     bless $self, $class;
@@ -91,6 +141,13 @@ sub new {
 
 =cut
 
+sub _missing_parameter {
+    my $parm = shift;
+
+    croak "Missing parameter $parm";
+
+}
+
 sub create {
     my ( $self, @args ) = @_;
 
@@ -99,19 +156,27 @@ sub create {
     if ( !ref $self ) {
         $self = RHN::Org->new(@args);
     }
-    my $res = $self->{_rhnc}->call(
+
+    foreach
+      my $p (qw( name login password prefix firstname lastname email usepam))
+    {
+        if ( !defined $self->{$p} ) {
+            _missing_parameter($p);
+        }
+    }
+    my $res = $self->{rhnc}->call(
         'org.create',
-        $self->{_orgName},
-        $self->{_adminLogin},
-        $self->{_adminPassword},
-        $self->{_prefix},
-        $self->{_firstName},
-        $self->{_lastName},
-        $self->{_email},
-        $self->{_usePamAuth} ? $RHNC::_xmltrue : $RHNC::_xmlfalse,
+        $self->{name},
+        $self->{login},
+        $self->{password},
+        $self->{prefix},
+        $self->{firstname},
+        $self->{lastname},
+        $self->{email},
+        $self->{usepam} ? $RHNC::_xmltrue : $RHNC::_xmlfalse,
     );
 
-    $self->{_id} = $res->{id};
+    $self->{id} = $res->{id};
 
     return $self;
 }
@@ -127,75 +192,54 @@ sub trust {
     my ( $self, @args ) = @_;
     my $trustme = shift @args;
 
-    if ( !defined $self->{_rhnc} ) {
+    if ( !defined $self->{rhnc} ) {
         croak "No client in this object " . ref($self) . ". Exiting";
     }
-    $self->{_rhnc}->call( 'org.trusts.addTrust', $self->{_id}, $trustme );
+    $self->{rhnc}->call( 'org.trusts.addTrust', $self->{id}, $trustme );
 
     $self->{trusts}{$trustme}++;
 
-    $self->{_modified}++;
+    $self->{modified}++;
 
     return $self;
 }
 
-=head2 delete
+=head2 destroy
 
-  $org->delete();
+  $org->destroy();
 
 =cut
 
-sub delete {
+sub destroy {
     my ( $self, @args ) = @_;
 
-    if ( !defined $self->{_rhnc} ) {
+    if ( !defined $self->{rhnc} ) {
         croak "No client in this object " . ref($self) . ". Exiting";
     }
-    $self->{_rhnc}->call( 'org.delete', $self->{_id} );
+    $self->{rhnc}->call( 'org.delete', $self->{id} );
 
-    $self = undef;
+    $self = ();
+    undef $self;
     return 1;
 }
-
-#
-# Accessors
-#
-use constant {
-    DEFAULT   => 0,
-    VALIDATE  => 1,
-    TRANSFORM => 2,
-};
-
-my %_valid_prefix = map { $_ => 1 } qw( Dr. Hr. Miss Mr. Mrs. Sr. );
-my %_properties = (
-    _rhnc          => [ undef, undef, undef ],
-    _orgName       => [ undef, undef, undef ],
-    _adminLogin    => [ undef, undef, undef ],
-    _adminPassword => [ undef, undef, undef ],
-    _prefix => [ 'Mr.', sub { return defined $_valid_prefix{ $_[0] } }, undef ],
-    _firstName  => [ 'John', undef, undef ],
-    _lastName   => [ 'Doe', undef, undef ],
-    _email      => [ 'john.doe@example.com', undef, undef ],
-    _usePamAuth => [ 0, undef, undef ],
-);
 
 sub AUTOLOAD {
     my ( $self, $value ) = @_;
     my $attr = $AUTOLOAD;
     $attr =~ s{ \A .*:: }{}imxs;
-    $attr = "_$attr";
 
-    if ( !defined $_properties{$attr} ) {
-        return undef;
+    if ( !defined $properties{$attr} ) {
+        return 0;
     }
+    if ( $attr eq 'name' ) { return 0; }
 
     if ( defined $value ) {
-        if ( defined $_properties{$attr}[TRANSFORM] ) {
-            $value = $_properties{$attr}[TRANSFORM]($value);
+        if ( defined $properties{$attr}[TRANSFORM] ) {
+            $value = $properties{$attr}[TRANSFORM]($value);
         }
 
-        if ( defined $_properties{$attr}[VALIDATE] ) {
-            if ( $_properties{$attr}[VALIDATE]($value) ) {
+        if ( defined $properties{$attr}[VALIDATE] ) {
+            if ( $properties{$attr}[VALIDATE]($value) ) {
                 $self->{$attr} = $value;
             }
             else {
@@ -207,11 +251,129 @@ sub AUTOLOAD {
         }
     }
 
-    if ( !defined $self->{$attr} && defined $_properties{$attr}[DEFAULT] ) {
-        $self->{$attr} = $_properties{$attr}[DEFAULT];
+    if ( !defined $self->{$attr} && defined $properties{$attr}[DEFAULT] ) {
+        $self->{$attr} = $properties{$attr}[DEFAULT];
     }
 
     return $self->{$attr};
+}
+
+=head2 name 
+
+Return name of organisation
+
+=cut
+
+sub name {
+    my ( $self, $name ) = @_;
+    if ( defined $name ) {
+
+        if ( defined $self->{id} ) {
+            $self->{name} = $name;
+            my $res =
+              $self->{rhnc}
+              ->call( 'org.updateName', $self->{id}, $self->{name} );
+
+            if ( !defined($name) || $res->{name} ne $name ) {
+                croak
+                  "Could not change Org name to '$name' for OrgId $self->{id}";
+            }
+        }
+        else {
+            croak "Cannot change Org Name to '$name' for unknown OrgId";
+        }
+    }
+
+    return $self->{name};
+}
+
+=head2 id 
+
+Return id of organisation
+
+=cut
+
+sub id {
+    my $self = shift;
+
+    return $self->{id} if defined $self->{id};
+    return '';
+}
+
+=head2 list
+
+Return list of Organisations
+
+Can work in OO context if you have already an organisation at hand.
+
+    @orgs = $org->list();
+
+More likely in package context :
+
+    @orgs = RHNC::Org->list( $RHNC );  # Need to specify a RHN client
+
+=cut
+
+sub list {
+    my ( $self, $parm ) = @_;
+
+    my $rhnc;
+    if ( ref $self ) {    # OO context
+        $rhnc = $self->{rhnc};
+    }
+    else {                # package context
+        $rhnc = $parm;
+    }
+
+    my $res = $rhnc->call('org.listOrgs');
+
+    my @orgs;
+    foreach my $h ( @{$res} ) {
+
+        my $o = __PACKAGE__->new(
+            name => $h->{name},
+            id   => $h->{id}
+        );
+        $rhnc->manage($o);
+
+        push @orgs, $o;
+    }
+
+    return \@orgs;
+}
+
+=head2 info
+
+Return information about organisation.
+
+Can work in OO context if you have already an organisation at hand.
+
+    @orgs = $org->info();
+
+More likely in package context :
+
+    $org = RHNC::Org->info( $RHNC, $name); # Need to specify a RHN client
+    $org = RHNC::Org->info( $RHNC, $id);   # Need to specify a RHN client
+
+=cut
+
+sub info {
+    my ( $self, $parm ) = @_;
+
+    my $rhnc;
+    if ( ref $self ) {    # OO context
+        $rhnc = $self->{rhnc};
+    }
+    else {                # package context
+        $rhnc = $parm;
+    }
+
+    my $res = $rhnc->call('org.getDetails');
+    my $o   = __PACKAGE__->new( %{$res} );
+
+    $rhnc->manage($o);
+
+    return $o;
 }
 
 =head1 AUTHOR
@@ -220,7 +382,7 @@ Jérôme Fenal, C<< <jfenal at redhat.com> >>
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-rhn-session at rt.cpan.org>, or through
+Please report any bugs or feature requests to C<bug-rhn at rt.cpan.org>, or through
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
 

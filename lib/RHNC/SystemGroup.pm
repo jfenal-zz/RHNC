@@ -5,7 +5,7 @@ use strict;
 
 =head1 NAME
 
-RHNC::SystemGroup - The great new RHNC::SystemGroup!
+RHNC::SystemGroup - Red Hat Network Client - SystemGroup handling
 
 =head1 VERSION
 
@@ -17,10 +17,6 @@ our $VERSION = '0.01';
 
 
 =head1 SYNOPSIS
-
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
 
     use RHNC::SystemGroup;
 
@@ -34,18 +30,11 @@ if you don't export anything, such as for a purely object-oriented module.
 
 =head1 FUNCTIONS
 
-=head2 function1
+=head2 list
 
 =cut
 
-sub function1 {
-}
-
-=head2 function2
-
-=cut
-
-sub function2 {
+sub list {
 }
 
 =head1 AUTHOR

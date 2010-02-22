@@ -157,16 +157,18 @@ C_FILES  =
 O_FILES  = 
 H_FILES  = 
 MAN1PODS = 
-MAN3PODS = lib/RHNC.pm \
+MAN3PODS = README.pl \
+	lib/RHNC.pm \
 	lib/RHNC/ActivationKey.pm \
 	lib/RHNC/Channel.pm \
-	lib/RHNC/Client.pm \
 	lib/RHNC/Kickstart.pm \
+	lib/RHNC/Org.pm \
 	lib/RHNC/Package.pm \
 	lib/RHNC/Session.pm \
 	lib/RHNC/System.pm \
 	lib/RHNC/SystemGroup.pm \
-	lib/RHNC/template.pm
+	lib/RHNC/template.pm \
+	lib/template.pm
 
 # Where is the Config information that we are using/depend on
 CONFIGDEP = $(PERL_ARCHLIB)$(DFSEP)Config.pm $(PERL_INC)$(DFSEP)config.h
@@ -192,13 +194,14 @@ TO_INST_PM = README.pl \
 	lib/RHNC.pm \
 	lib/RHNC/ActivationKey.pm \
 	lib/RHNC/Channel.pm \
-	lib/RHNC/Client.pm \
 	lib/RHNC/Kickstart.pm \
+	lib/RHNC/Org.pm \
 	lib/RHNC/Package.pm \
 	lib/RHNC/Session.pm \
 	lib/RHNC/System.pm \
 	lib/RHNC/SystemGroup.pm \
-	lib/RHNC/template.pm
+	lib/RHNC/template.pm \
+	lib/template.pm
 
 PM_TO_BLIB = lib/RHNC/Session.pm \
 	blib/lib/RHNC/Session.pm \
@@ -212,8 +215,10 @@ PM_TO_BLIB = lib/RHNC/Session.pm \
 	blib/lib/RHNC/Package.pm \
 	lib/RHNC/ActivationKey.pm \
 	blib/lib/RHNC/ActivationKey.pm \
-	lib/RHNC/Client.pm \
-	blib/lib/RHNC/Client.pm \
+	lib/RHNC/Org.pm \
+	blib/lib/RHNC/Org.pm \
+	lib/template.pm \
+	blib/lib/template.pm \
 	lib/RHNC/Channel.pm \
 	blib/lib/RHNC/Channel.pm \
 	README.pl \
@@ -447,8 +452,10 @@ manifypods : pure_all  \
 	lib/RHNC/template.pm \
 	lib/RHNC/Package.pm \
 	lib/RHNC/ActivationKey.pm \
-	lib/RHNC/Client.pm \
+	lib/template.pm \
 	lib/RHNC/Channel.pm \
+	lib/RHNC/Org.pm \
+	README.pl \
 	lib/RHNC/System.pm \
 	lib/RHNC/Kickstart.pm
 	$(NOECHO) $(POD2MAN) --section=3 --perm_rw=$(PERM_RW) \
@@ -458,8 +465,10 @@ manifypods : pure_all  \
 	  lib/RHNC/template.pm $(INST_MAN3DIR)/RHNC::template.$(MAN3EXT) \
 	  lib/RHNC/Package.pm $(INST_MAN3DIR)/RHNC::Package.$(MAN3EXT) \
 	  lib/RHNC/ActivationKey.pm $(INST_MAN3DIR)/RHNC::ActivationKey.$(MAN3EXT) \
-	  lib/RHNC/Client.pm $(INST_MAN3DIR)/RHNC::Client.$(MAN3EXT) \
+	  lib/template.pm $(INST_MAN3DIR)/template.$(MAN3EXT) \
 	  lib/RHNC/Channel.pm $(INST_MAN3DIR)/RHNC::Channel.$(MAN3EXT) \
+	  lib/RHNC/Org.pm $(INST_MAN3DIR)/RHNC::Org.$(MAN3EXT) \
+	  README.pl $(INST_MAN3DIR)/README.$(MAN3EXT) \
 	  lib/RHNC/System.pm $(INST_MAN3DIR)/RHNC::System.$(MAN3EXT) \
 	  lib/RHNC/Kickstart.pm $(INST_MAN3DIR)/RHNC::Kickstart.$(MAN3EXT) 
 
@@ -855,7 +864,8 @@ pm_to_blib : $(TO_INST_PM)
 	  lib/RHNC/template.pm blib/lib/RHNC/template.pm \
 	  lib/RHNC/Package.pm blib/lib/RHNC/Package.pm \
 	  lib/RHNC/ActivationKey.pm blib/lib/RHNC/ActivationKey.pm \
-	  lib/RHNC/Client.pm blib/lib/RHNC/Client.pm \
+	  lib/RHNC/Org.pm blib/lib/RHNC/Org.pm \
+	  lib/template.pm blib/lib/template.pm \
 	  lib/RHNC/Channel.pm blib/lib/RHNC/Channel.pm \
 	  README.pl $(INST_LIB)/README.pl \
 	  lib/RHNC/System.pm blib/lib/RHNC/System.pm \

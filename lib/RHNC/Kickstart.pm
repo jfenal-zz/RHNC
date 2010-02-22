@@ -5,7 +5,7 @@ use strict;
 
 =head1 NAME
 
-RHNC::Kickstart - The great new RHNC::Kickstart!
+RHNC::Kickstart - Red Hat Network Client - Kickstart handling
 
 =head1 VERSION
 
@@ -17,10 +17,6 @@ our $VERSION = '0.01';
 
 
 =head1 SYNOPSIS
-
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
 
     use RHNC::Kickstart;
 
@@ -48,12 +44,6 @@ if you don't export anything, such as for a purely object-oriented module.
 sub createProfile {
 }
 
-=head2 function2
-
-=cut
-
-sub function2 {
-}
 
 =head1 AUTHOR
 

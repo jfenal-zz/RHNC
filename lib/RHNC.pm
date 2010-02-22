@@ -31,10 +31,6 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
     use RHNC;
 
     my $foo = RHNC->new();
@@ -75,7 +71,7 @@ sub manage {
         return undef;
     }
 
-    $object->{_rhnc} = $self;
+    $object->{rhnc} = $self;
 
     $self->{_managed}{ $object->name() } = \$object;
 
@@ -96,7 +92,7 @@ sub unmanage {
     }
 
     delete $self->{_managed}{ $object->name() };
-    $object->{_rhnc} = undef;
+    $object->{rhnc} = undef;
 
     return $self;
 }
@@ -122,7 +118,7 @@ use constant {
     VALIDATE  => 1,
     TRANSFORM => 2,
 };
-my %_properties = ( _rhnc => [ undef, undef, undef ], );
+my %_properties = ( rhnc => [ undef, undef, undef ], );
 
 sub AUTOLOAD {
     my ( $self, $value ) = @_;
