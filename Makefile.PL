@@ -5,7 +5,7 @@ WriteMakefile
           'INSTALLDIRS' => 'site',
           'NAME' => 'RHNC',
           'EXE_FILES' => [],
-          'VERSION_FROM' => 'lib/RHNC/Session.pm',
+          'VERSION_FROM' => 'lib/RHNC.pm',
           'PREREQ_PM' => {
                            'Test::More' => 0,
                            'Params::Validate' => 0,
