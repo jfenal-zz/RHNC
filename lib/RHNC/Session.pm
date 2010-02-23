@@ -116,8 +116,8 @@ sub new {
       $self->{client}->call( 'auth.login', $self->{user}, $self->{password} );
     $self->{session} = $session;
 
-#    $self->{apiversion}    = $self->call('api.getVersion');
-#    $self->{systemversion} = $self->call('api.systemVersion');
+    $self->{apiversion}    = $self->{client}->call('api.getVersion');
+    $self->{systemversion} = $self->{client}->call('api.systemVersion');
     my $r = $self->call( 'user.getDetails', $self->{user} );
     $self->{org_id} = $r->{org_id};
 
