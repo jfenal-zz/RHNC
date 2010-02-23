@@ -1,0 +1,72 @@
+
+=head1 Developement Ideas
+
+ With this package, we want to achieve :
+ - a command line interface to RHN Satellite
+ - automation for export/import task
+ 
+ For systems, we need to :
+ - get a list from Satellite, possibly using groups
+ - display the list (choose columns ?)
+ - FIXME : dumpxml a system to allow for re-registration of the same
+   system with same uuid on anonther satellite ?
+ - define (and not register, foolproof if uuid not already there)
+ 
+ For system groups, we need to 
+ - list
+ - define
+ - assign systems to a group
+ - dumpxml (definition, except membership)
+ - loadxml
+ 
+ For activations keys:
+ - list
+ - display
+ - dumpxml (1 or selection)
+ - define from dumpxml
+ - Prerequisites :
+   - Channels & sub-channels (verify at import ??)
+   - package list (not to verify, too huge, could be done)
+   - Configuration channels (rhncfg-manager)
+   - system groups
+ 
+ For kickstarts
+ - Kickstart profiles
+ - Kickstart snippets (could be done from outside satellite, by
+   dumping files into Cobbler directories?)
+
+ For kickstart snippets
+ - list
+ - dumpxml (one, many)
+ - loadxml
+ 
+ Keys : GPG & SSL keys
+ Namespace : kickstart.keys
+     * listAllKeys
+     * create
+     * delete
+     * getDetails
+
+ System Profiles :
+ - list
+ - dumpxml
+ - loadxml
+
+ Conservation lists:
+ - list
+ - dumpxml
+ - loadxml
+ 
+ Custom System information
+ - list all keys (and dump the list)
+ - recreate one or all keys from XML
+ 
+ Organisations :
+ - search1
+ - list
+ - create
+ - create from XML
+ - dumpxml
+ - trust(other)
+ 
+=cut
