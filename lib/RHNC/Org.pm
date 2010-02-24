@@ -231,7 +231,6 @@ sub AUTOLOAD {
     if ( !defined $properties{$attr} ) {
         return 0;
     }
-    if ( $attr eq 'name' ) { return 0; }
 
     if ( defined $value ) {
         if ( defined $properties{$attr}[TRANSFORM] ) {

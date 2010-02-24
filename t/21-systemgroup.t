@@ -18,12 +18,16 @@ my $sg = RHNC::SystemGroup->new(
 );
 
 BEGIN { $tests++ }
-is( $sg->{name}, "xxxRHEL5");
+is( $sg->{name}, "xxxRHEL5", "name ok after new");
 
 BEGIN { $tests++ }
-is( $sg->{description}, "System group for xxxRHEL5 servers");
+is( $sg->{description}, "System group for xxxRHEL5 servers", "description ok after new");
 
 BEGIN { $tests++ }
 ok( $sg->create(), 'systemgroup created' );
+
+
+BEGIN { $tests++ }
+ok( $sg->destroy(), 'systemgroup destroyed' );
 
 

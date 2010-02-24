@@ -4,6 +4,8 @@ use warnings;
 use strict;
 use Data::Dumper;
 use Params::Validate;
+use Carp;
+
 use RHNC;
 
 use base qw( RHNC );
@@ -52,11 +54,11 @@ my %valid_prefix = map { $_ => 1 } qw( Dr. Hr. Miss
   Mr. Mrs. Sr. );
 my %properties = (
     id           => [ 0, undef, undef, undef ],
-    rhnc         => [ 0, undef, undef, undef ],
     name         => [ 1, undef, undef, undef ],
     description  => [ 1, undef, undef, undef ],
     org_id       => [ 0, undef, undef, undef ],
     system_count => [ 0, undef, undef, undef ],
+    rhnc         => [ 0, undef, undef, undef ],
 );
 
 sub new {
@@ -79,27 +81,82 @@ sub new {
 
 }
 
-
 =head2 create
 
 Persist system group
 
 =cut
+
 sub create {
     my ( $self, @args ) = @_;
 
-#   $self = ref($self) || $self;
-                if ( !ref $self ) {
-                $self = RHN::SystemGroup->new(@args);
-                    }
+    #   $self = ref($self) || $self;
+    if ( !ref $self ) {
+        $self = RHN::SystemGroup->new(@args);
+    }
 
-    my $res = $self->{rhnc}->call(
-    'systemgroup.create',
-    $self->{name},
-    $self->{description},
-);
+    my $res =
+      $self->{rhnc}
+      ->call( 'systemgroup.create', $self->{name}, $self->{description}, );
 
+}
 
+=head2 destroy
+
+=cut
+sub destroy {
+    my ( $self, @args ) = @_;
+
+    #   $self = ref($self) || $self;
+    if ( !ref $self ) {
+        $self = RHN::SystemGroup->new(@args);
+    }
+
+    my $res = $self->{rhnc} ->call( 'systemgroup.delete', $self->{name} );
+
+    return 1;
+}
+
+#
+# AUTOLOAD
+#
+# TODO : Maybe add some code to fetch information from Satellite if
+# not yet available (id, org_id, system_count)
+# And maybe get rid of AUTOLOAD...
+#
+
+sub AUTOLOAD {
+    my ( $self, $value ) = @_;
+    my $attr = $AUTOLOAD;
+    $attr =~ s{ \A .*:: }{}imxs;
+
+    if ( !defined $properties{$attr} ) {
+        return 0;
+    }
+
+    if ( defined $value ) {
+        if ( defined $properties{$attr}[TRANSFORM] ) {
+            $value = $properties{$attr}[TRANSFORM]($value);
+        }
+
+        if ( defined $properties{$attr}[VALIDATE] ) {
+            if ( $properties{$attr}[VALIDATE]($value) ) {
+                $self->{$attr} = $value;
+            }
+            else {
+                croak "'$value' cannot be validated for attribute '$attr'";
+            }
+        }
+        else {
+            $self->{$attr} = $value;
+        }
+    }
+
+    if ( !defined $self->{$attr} && defined $properties{$attr}[DEFAULT] ) {
+        $self->{$attr} = $properties{$attr}[DEFAULT];
+    }
+
+    return $self->{$attr};
 }
 
 =head2 list
@@ -107,11 +164,11 @@ sub create {
 
 Can work in OO context if you have already a SystemGroup at hand.
 
-  @orgs = $org->list();
+  @systemgroups = $systemgroup->list();
 
-More likely in package context :
+More likely in package context:
 
-  @orgs = RHNC::SystemGroup->list( $RHNC );  # Need to specify a RHN client
+  @systemgroups = RHNC::SystemGroup->list( $RHNC );  # Need to specify a RHN client
 
 =cut
 
@@ -119,7 +176,7 @@ sub list {
     my ( $self, $parm ) = @_;
 
     my $rhnc;
-    if ( ref $self ) {    # OO context
+    if ( ref $self && defined $self->{rhnc} ) {    # OO context
         $rhnc = $self->{rhnc};
     }
     else {                # package context
@@ -139,8 +196,11 @@ sub list {
             org_id       => $g->{org_id},
             system_count => $g->{system_count},
         );
+        $rhnc->manage($sg);
+        push @list, $sg;
     }
 
+    return @list;
 }
 
 =head1 AUTHOR
