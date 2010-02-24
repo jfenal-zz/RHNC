@@ -2,11 +2,12 @@ package RHNC::Session;
 
 use warnings;
 use strict;
+use English;
 use Frontier::Client;
 use Params::Validate;
 use Config::IniFiles;
 
-our @ISA = qw( RHNC );
+use base qw( RHNC );
 
 # $Id$
 
@@ -117,7 +118,9 @@ sub new {
     $self->{session} = $session;
 
     $self->{apiversion}    = $self->{client}->call('api.getVersion');
+#    $self->{apiversion} += 0;
     $self->{systemversion} = $self->{client}->call('api.systemVersion');
+#    $self->{systemversion} += 0;
     my $r = $self->call( 'user.getDetails', $self->{user} );
     $self->{org_id} = $r->{org_id};
 
@@ -144,7 +147,7 @@ sub call {
 
     # test eval (according PBP, testing $@ is not reliable)
     if ( !defined $rc ) {
-        print STDERR "Error encountered calling $call : $@\n";
+        print STDERR "Error encountered calling $call : $EVAL_ERROR\n";
         $result = undef;
     }
 
@@ -173,6 +176,18 @@ sub apiversion {
     my ( $self, @args ) = @_;
 
     return $self->{apiversion};
+}
+
+=head2 systemversion
+
+Returns Satellite version number
+
+=cut
+
+sub systemversion {
+    my ( $self, @args ) = @_;
+
+    return $self->{systemversion};
 }
 
 =head2 version

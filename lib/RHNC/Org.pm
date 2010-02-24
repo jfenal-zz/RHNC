@@ -95,24 +95,24 @@ use constant {
 
 my %valid_prefix = map { $_ => 1 } qw( Dr. Hr. Miss Mr. Mrs. Sr. );
 my %properties = (
-    rhnc     => [ 0, undef, undef, undef ],
-    name     => [ 1, undef, undef, undef ],
-    login    => [ 0, undef, undef, undef ],
-    password => [ 0, undef, undef, undef ],
+    id                     => [ 0, 0,                  undef, undef ],
+    rhnc                   => [ 0, undef,              undef, undef ],
+    name                   => [ 1, undef,              undef, undef ],
+    login                  => [ 0, undef,              undef, undef ],
+    password               => [ 0, undef,              undef, undef ],
+    firstname              => [ 0, 'John',             undef, undef ],
+    lastname               => [ 0, 'Doe',              undef, undef ],
+    usepam                 => [ 0, 0,                  undef, undef ],
+    active_users           => [ 0, 0,                  undef, undef ],
+    systems                => [ 0, 0,                  undef, undef ],
+    trusts                 => [ 0, 0,                  undef, undef ],
+    system_groups          => [ 0, 0,                  undef, undef ],
+    activation_keys        => [ 0, 0,                  undef, undef ],
+    kickstart_profiles     => [ 0, 0,                  undef, undef ],
+    configuration_channels => [ 0, 0,                  undef, undef ],
+    email                  => [ 0, 'jdoe@example.com', undef, undef ],
     prefix =>
       [ 0, 'Mr.', sub { return defined $valid_prefix{ $_[0] } }, undef ],
-    firstname              => [ 0, 'John',                 undef, undef ],
-    lastname               => [ 0, 'Doe',                  undef, undef ],
-    email                  => [ 0, 'john.doe@example.com', undef, undef ],
-    usepam                 => [ 0, 0,                      undef, undef ],
-    id                     => [ 0, 0,                      undef, undef ],
-    active_users           => [ 0, 0,                      undef, undef ],
-    systems                => [ 0, 0,                      undef, undef ],
-    trusts                 => [ 0, 0,                      undef, undef ],
-    system_groups          => [ 0, 0,                      undef, undef ],
-    activation_keys        => [ 0, 0,                      undef, undef ],
-    kickstart_profiles     => [ 0, 0,                      undef, undef ],
-    configuration_channels => [ 0, 0,                      undef, undef ],
 );
 
 #FIXME

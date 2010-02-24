@@ -10,6 +10,7 @@ use Carp;
 use Frontier::Client;
 use RHNC::Session;
 use RHNC::Org;
+use RHNC::SystemGroup;
 
 our $_xmlfalse = Frontier::RPC2::Boolean->new(0);
 our $_xmltrue = Frontier::RPC2::Boolean->new(1);
