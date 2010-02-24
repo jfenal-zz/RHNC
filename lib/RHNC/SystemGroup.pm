@@ -66,6 +66,7 @@ sub new {
     $class = ref($class) || $class;
 
     my $self = {};
+    bless $self, $class;
 
     my %v = map { $_ => 0 } ( keys %properties );
 
@@ -75,7 +76,9 @@ sub new {
         $self->{$i} = $p{$i};
     }
 
-    bless $self, $class;
+    if (defined $self->{rhnc}) {
+        $self->{rhnc}->manage($self);
+    }
 
     return $self;
 
