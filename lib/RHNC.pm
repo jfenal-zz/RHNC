@@ -1,8 +1,11 @@
 package RHNC;
 
+# $Id$
+# $Revision$
+
 use warnings;
 use strict;
-use vars qw( $AUTOLOAD %_properties );
+use vars qw(  %_properties );
 
 use Params::Validate;
 use Carp;
@@ -13,10 +16,9 @@ use RHNC::Org;
 use RHNC::SystemGroup;
 
 our $_xmlfalse = Frontier::RPC2::Boolean->new(0);
-our $_xmltrue = Frontier::RPC2::Boolean->new(1);
-our @EXPORTS  = qw( $VERSION );
+our $_xmltrue  = Frontier::RPC2::Boolean->new(1);
 
-#our $AUTOLOAD;
+our @EXPORTS = qw( $VERSION $_xmlfalse $_xmltrue);
 
 =head1 NAME
 
@@ -37,7 +39,10 @@ our $VERSION = '0.01';
     my $foo = RHNC->new();
     ...
 
-=head1 FUNCTIONS
+=head1 DESCRIPTION
+
+
+=head1 SUBROUTINES/METHODS
 
 =cut
 
@@ -69,7 +74,7 @@ sub manage {
     my ( $self, $object ) = @_;
 
     if ( ref $object !~ m{ \A RHN:: }imxs ) {
-        return undef;
+        return;
     }
 
     $object->{rhnc} = $self;
@@ -85,15 +90,16 @@ Remove a specified object from list of managed object. Remove cross
 references.
 
 =cut
+
 sub unmanage {
     my ( $self, $object ) = @_;
 
     if ( ref $object !~ m{ \A RHN:: }imxs ) {
-        return undef;
+        return;
     }
 
     delete $self->{_managed}{ $object->name() };
-    $object->{rhnc} = undef;
+    delete $object->{rhnc};
 
     return $self;
 }
@@ -114,58 +120,28 @@ sub save {
     return $self;
 }
 
-use constant {
-    DEFAULT   => 0,
-    VALIDATE  => 1,
-    TRANSFORM => 2,
-};
-my %_properties = ( rhnc => [ undef, undef, undef ], );
+=head2 rhnc()
 
-sub AUTOLOAD {
-    my ( $self, $value ) = @_;
-    my $attr = $AUTOLOAD;
-    $attr =~ s{ \A .*:: }{}imxs;
+Return corresponding RHN Client, if available.
 
-    return undef
-      if $attr =~ m{ \A [A-Z]+ }imxs;    # skip DESTROY and all-cap methods
+=cut
 
-    if ( ! defined $_properties{$attr} ) {
-        croak "invalid accessor $attr()";
+sub rhnc {
+    my ( $self, $rhnc ) = @_;
+
+    if ( defined $rhnc ) {
+        $self->{rhnc} = $rhnc;
     }
+    return $self->{rhnc} if exists $self->{rhnc};
 
-    if ( defined $value ) {
-        if ( defined $_properties{$attr}[TRANSFORM] ) {
-            $value = $_properties{$attr}[TRANSFORM]($value);
-        }
-
-        if ( defined $_properties{$attr}[VALIDATE] ) {
-            if ( $_properties{$attr}[VALIDATE]($value) ) {
-                $self->{$attr} = $value;
-            }
-            else {
-                croak "'$value' cannot be validated for attribute '$attr'";
-            }
-        }
-        else {
-            $self->{$attr} = $value;
-        }
-    }
-
-    if ( !defined $self->{$attr} && defined $_properties{$attr}[DEFAULT] ) {
-        $self->{$attr} = $_properties{$attr}[DEFAULT];
-    }
-
-    $self->{$attr};
-
+    return;
 }
 
-=head1 BUGS AND LIMITATIONS
+=head1 DIAGNOSTICS
 
-Please report any bugs or feature requests to C<bug-rhn-session at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
 
-=head1 CONFIGURATION
+
+=head1 CONFIGURATION AND ENVIRONMENT
 
 This program relies on the existance of a configuration file, either
 F</etc/satellite_api.conf> or F<$HOME/.rhnrc>.
@@ -180,6 +156,17 @@ C<[rhn]> section:
 
 Both files can exist, information in  F<$HOME/.rhnrc> will take
 precedence.
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+Please report any bugs or feature requests to C<bug-rhn-session at rt.cpan.org>, or through
+the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.  I will be notified, and then you'll
+automatically be notified of progress on your bug as I make changes.
+
 
 =head1 AUTHOR
 
@@ -218,7 +205,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 =head1 ACKNOWLEDGEMENTS
 
 
-=head1 COPYRIGHT & LICENSE
+=head1 LICENSE AND COPYRIGHT
 
 Copyright 2009 Jérôme Fenal, all rights reserved.
 
