@@ -159,24 +159,37 @@ sub AUTOLOAD {
 
 }
 
-=head1 AUTHOR
-
-Jérôme Fenal, C<< <jfenal at redhat.com> >>
-
-=head1 BUGS
+=head1 BUGS AND LIMITATIONS
 
 Please report any bugs or feature requests to C<bug-rhn-session at rt.cpan.org>, or through
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
 
+=head1 CONFIGURATION
 
+This program relies on the existance of a configuration file, either
+F</etc/satellite_api.conf> or F<$HOME/.rhnrc>.
 
+This file (in INI format) should contain three directives in the
+C<[rhn]> section:
+
+  [rhn]
+  host=satellite.example.com
+  user=rhn-admin
+  password=s3cr3t
+
+Both files can exist, information in  F<$HOME/.rhnrc> will take
+precedence.
+
+=head1 AUTHOR
+
+Jérôme Fenal, C<< <jfenal at redhat.com> >>
 
 =head1 SUPPORT
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc RHNC::System
+    perldoc RHNC
 
 
 You can also look for information at:
@@ -215,4 +228,4 @@ under the same terms as Perl itself.
 
 =cut
 
-1;    # End of RHNC::System
+1;    # End of RHNC
