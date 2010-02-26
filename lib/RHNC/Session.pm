@@ -112,7 +112,7 @@ sub new {
     }
 
     $self->{client} =
-      Frontier::Client->new( url => 'http://' . $self->{server} . '/rpc/api' );
+      Frontier::Client->new( url => 'https://' . $self->{server} . '/rpc/api' );
     my $session =
       $self->{client}->call( 'auth.login', $self->{user}, $self->{password} );
     $self->{session} = $session;
