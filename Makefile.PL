@@ -9,7 +9,7 @@ WriteMakefile
           'PREREQ_PM' => {
                            'Test::More' => 0,
                            'Params::Validate' => 0,
-                           'Frontier::Client' => 0,
+                           'Frontier::Client' => 0
                          }
         )
 ;

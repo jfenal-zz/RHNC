@@ -3,6 +3,8 @@ package RHNC::Template;
 use warnings;
 use strict;
 
+# $Id$
+
 =head1 NAME
 
 RHNC::Template - The great new RHNC::Template!
@@ -10,6 +12,8 @@ RHNC::Template - The great new RHNC::Template!
 =head1 VERSION
 
 Version 0.01
+
+Revision $Revision$
 
 =cut
 
@@ -27,12 +31,12 @@ Perhaps a little code snippet.
     my $foo = RHNC::Template->new();
     ...
 
-=head1 EXPORT
+=head1 DESCRIPTION
+
+=head1 SUBROUTINES/METHODS
 
 A list of functions that can be exported.  You can delete this section
 if you don't export anything, such as for a purely object-oriented module.
-
-=head1 FUNCTIONS
 
 =head2 new
 
@@ -60,20 +64,24 @@ sub search {
 
 }
 
+=head1 DIAGNOSTICS
 
+=head1 CONFIGURATION AND ENVIRONMENT
 
-=head1 AUTHOR
+=head1 DEPENDENCIES
 
-Jérôme Fenal, C<< <jfenal at redhat.com> >>
+=head1 INCOMPATIBILITIES
 
-=head1 BUGS
+=head1 BUGS AND LIMITATIONS
 
 Please report any bugs or feature requests to C<bug-rhn-session at rt.cpan.org>, or through
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
 
 
+=head1 AUTHOR
 
+Jérôme Fenal, C<< <jfenal at redhat.com> >>
 
 =head1 SUPPORT
 
@@ -108,7 +116,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 =head1 ACKNOWLEDGEMENTS
 
 
-=head1 COPYRIGHT & LICENSE
+=head1 LICENSE AND COPYRIGHT
 
 Copyright 2009 Jérôme Fenal, all rights reserved.
 

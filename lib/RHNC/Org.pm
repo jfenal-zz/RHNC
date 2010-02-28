@@ -71,7 +71,8 @@ if you don't export anything, such as for a purely object-oriented module.
       usepam     => $usePamAuth
   );
 
-    - string orgName - Organization name. Must meet same criteria as in the web UI.
+    - string orgName - Organization name. Must meet same criteria as
+      in the web UI.
     - string adminLogin - New administrator login name.
     - string adminPassword - New administrator password.
     - string prefix - New administrator's prefix. Must match one of the
@@ -79,7 +80,8 @@ if you don't export anything, such as for a purely object-oriented module.
     - string firstName - New administrator's first name.
     - string lastName - New administrator's first name.
     - string email - New administrator's e-mail.
-    - boolean usePamAuth - true if PAM authentication should be used for the new administrator account.
+    - boolean usePamAuth - true if PAM authentication should be used
+      for the new administrator account.
 
 =cut
 
@@ -158,7 +160,7 @@ sub create {
     #    $self = ref($self) || $self;
 
     if ( !ref $self ) {
-        $self = RHN::Org->new(@args);
+        $self = __PACKAGE__->new(@args);
     }
 
     foreach
@@ -204,6 +206,23 @@ sub trust {
     $self->{trusts}{$trustme}++;
 
     $self->{modified}++;
+
+    return $self;
+}
+
+=head2 save
+
+  $org-save();
+
+Save modifications to the object. Name only. See also C<name()>.
+
+=cut
+
+sub save {
+    my ( $self ) = @_;
+
+    # We can only save name for an organisation...
+    $self->name( $self->{name} );
 
     return $self;
 }
@@ -361,17 +380,18 @@ More likely in package context :
 =cut
 
 sub info {
-    my ( $self, $parm ) = @_;
+    my ( $self, @p ) = @_;
 
     my $rhnc;
     if ( ref $self ) {    # OO context
         $rhnc = $self->{rhnc};
     }
     else {                # package context
-        $rhnc = $parm;
+        $rhnc = shift @p;
     }
+    my $k = shift @p;
 
-    my $res = $rhnc->call('org.getDetails');
+    my $res = $rhnc->call('org.getDetails', $k);
     my $o   = __PACKAGE__->new( %{$res} );
 
     $rhnc->manage($o);

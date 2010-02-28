@@ -1,35 +1,43 @@
 ---
-name: RHN-Session
+name: RHNC
 version: 0.01
 author:
   - 'Jérôme Fenal <jfenal@redhat.com>'
-abstract: The great new RHN::Session!
+abstract: An OO Red Hat Network Satellite Client.
 license: perl
 resources:
   license: ~
 build_requires:
+  Frontier::Client: 0
+  Params::Validate: 0
   Test::More: 0
 provides:
-  RHN::Channel:
-    file: lib/RHN/Channel.pm
+  RHNC:
+    file: lib/RHNC.pm
     version: 0.01
-  RHN::Client:
-    file: lib/RHN/Client.pm
+  RHNC::ActivationKey:
+    file: lib/RHNC/ActivationKey.pm
     version: 0.01
-  RHN::Kickstart:
-    file: lib/RHN/Kickstart.pm
+  RHNC::Channel:
+    file: lib/RHNC/Channel.pm
     version: 0.01
-  RHN::Package:
-    file: lib/RHN/Package.pm
+  RHNC::Kickstart:
+    file: lib/RHNC/Kickstart.pm
     version: 0.01
-  RHN::Session:
-    file: lib/RHN/Session.pm
+  RHNC::Org:
+    file: lib/RHNC/Org.pm
     version: 0.01
-  RHN::System:
-    file: lib/RHN/System.pm
+  RHNC::Package:
+    file: lib/RHNC/Package.pm
     version: 0.01
-  RHN::SystemGroup:
-    file: lib/RHN/SystemGroup.pm
+  RHNC::Session:
+    file: lib/RHNC/Session.pm
+    version: 0.01
+  RHNC::System:
+    file: lib/RHNC/System.pm
+    version: 0.01
+  RHNC::SystemGroup:
+    file: lib/RHNC/SystemGroup.pm
     version: 0.01
 generated_by: Module::Build version 0.32
 meta-spec:

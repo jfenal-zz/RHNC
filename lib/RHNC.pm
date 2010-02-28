@@ -14,6 +14,8 @@ use Frontier::Client;
 use RHNC::Session;
 use RHNC::Org;
 use RHNC::SystemGroup;
+use RHNC::ActivationKey;
+use Data::Dumper;
 
 our $_xmlfalse = Frontier::RPC2::Boolean->new(0);
 our $_xmltrue  = Frontier::RPC2::Boolean->new(1);
@@ -73,11 +75,20 @@ $object must be blessed in 'RHNC::*' namespace.
 sub manage {
     my ( $self, $object ) = @_;
 
-    if ( ref $object !~ m{ \A RHN:: }imxs ) {
+    if ( !defined $object ) {
+        croak 'Can\'t manage undefined object';
+    }
+    if ( ref $object !~ m{ \A RHNC:: }imxs ) {
+        carp 'Can\'t manage this class of objects : ' . ref $object;
         return;
     }
 
     $object->{rhnc} = $self;
+
+    if ( !defined $object->name() || $object->name() eq q{} ) {
+        my @c = caller;
+        croak 'Object name not defined, call at ' . Dumper( \@c );
+    }
 
     $self->{_managed}{ $object->name() } = \$object;
 

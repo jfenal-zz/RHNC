@@ -1,5 +1,6 @@
 Build.PL
 Changes
+lib/RHNC/ActivationKey.pm
 lib/RHNC/Channel.pm
 lib/RHNC/Kickstart.pm
 lib/RHNC/Org.pm
