@@ -1,0 +1,66 @@
+#!/usr/bin/perl
+use lib qw( . .. lib ../lib );
+use RHNC;
+use RHNC::Session;
+use Carp;
+use Getopt::Long qw(GetOptionsFromArray);
+use Data::Dumper;
+
+use vars qw($rhnc);
+
+#
+# Subs
+#
+sub create {
+    my @args = @_;
+
+    # FIXME : this cannot work as it is. Add argument parsing here
+    # using Getopt::Long
+    RHNC::ActivationKey->create( rhnc => $rhnc, @args );
+}
+
+sub destroy {
+    my @args = @_;
+    
+    foreach my $kname (@args) {
+        my $ak = RHNC::ActivationKey->get( $rhnc, $kname );
+        if ( defined $ak ) {
+            $ak->delete( $rhnc, $kname );
+        }
+    }
+}
+
+sub list {
+    my @args = @_;
+    my $verbose;
+    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
+
+    my @akl = RHNC::ActivationKey->list($rhnc);
+
+    foreach my $ak (@akl) {
+        printf("%-36s : %s\n", $ak->name(), $ak->description());
+        print Dumper $ak if $verbose;
+    }
+    print "\n" . scalar(@akl) . " activation or reactivation keys\n";
+}
+
+#
+# Main
+#
+
+$rhnc = RHNC::Session->new();
+print "API version : ", $rhnc->apiversion(), " | " ;
+print "Org ID : ",      $rhnc->org_id(),     "\n";
+
+my @args = @ARGV;
+my $cmd  = shift @args;
+
+SWITCH: for ($cmd) {
+#    /create/  && create(@args) && last SWITCH;
+    /list/    && list(@args) && last SWITCH;
+#    /destroy/ && destroy(@args) && last SWITCH;
+
+    croak "no valid command given";
+}
+
+
