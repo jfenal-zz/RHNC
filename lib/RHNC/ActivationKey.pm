@@ -132,6 +132,8 @@ sub new {
         $self->{universal_default} = $RHNC::_xmlfalse;
     }
 
+    # FIXME : pas la bonne façon de savoir si on veut les créer...
+    # peut-être pas la chose à faire par défaut, même...
     if ( defined $self->{rhnc} ) {
         $self->create();
         $self->{rhnc}->manage($self);
@@ -152,6 +154,20 @@ sub name {
     }
 
     return $self->{key};
+}
+
+=head2 description
+
+=cut
+
+sub description {
+    my ( $self, @p ) = @_;
+
+    if ( !defined $self->{description} ) {
+        croak 'description not defined';
+    }
+
+    return $self->{description};
 }
 
 =head2 create
@@ -211,8 +227,32 @@ sub destroy {
 
 sub list {
     my ( $self, @p ) = @_;
+    my $rhnc;
 
-    return;
+    if ( ref $self eq 'RHNC::ActivationKey' && defined $self->{rhnc} ) {
+        # OO context, eg $ak-list
+        $rhnc = $self->{rhnc};
+    }
+    elsif ( ref $self eq 'RHNC::Session' ) {
+        # Called as RHNC::ActivationKey::List($rhnc)
+        $rhnc = $self;
+    }
+    elsif ( $self eq __PACKAGE__ && ref($p[0]) eq 'RHNC::Session' ) {
+        # Called as RHNC::ActivationKey->List($rhnc)
+        $rhnc = shift @p;
+    }
+    else {
+        croak "No RHNC client given here";
+    }
+
+    my $res = $rhnc->call( 'activationkey.listActivationKeys' );
+    
+    my @l;
+    foreach my $o (@$res) {
+        push @l, RHNC::ActivationKey->new($o);
+    }
+
+    return @l;
 }
 
 =head2 get
@@ -223,19 +263,27 @@ sub get {
     my ( $self, @p ) = @_;
     my $rhnc;
 
-    #    print STDERR Dumper($self);
-    if ( ref $self && defined $self->{rhnc} ) {
+    if ( ref $self eq 'RHNC::ActivationKey' && defined $self->{rhnc} ) {
+        # OO context, eg $ak-list
         $rhnc = $self->{rhnc};
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
+        # Called as RHNC::ActivationKey::List($rhnc)
         $rhnc = $self;
     }
+    elsif ( $self eq __PACKAGE__ ) {
+        # Called as RHNC::ActivationKey->List($rhnc)
+        $rhnc = shift @p;
+    }
+    else {
+        croak "No RHNC client given";
+    }
 
-    my $k = shift @p;
+    my $k = shift @p
+      or croak "No activation key specified in get";
 
     my $res = $rhnc->call( 'activationkey.getDetails', $k );
 
-    #    print STDERR Dumper($res);
     my $ak = __PACKAGE__->new( %{$res} );
 
     $rhnc->manage($ak);
