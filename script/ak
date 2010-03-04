@@ -32,12 +32,23 @@ sub destroy {
 
 sub list {
     my @args = @_;
-    my $verbose;
-    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
+    my ( $verbose, $reactivationkey);
+
+    my $result = GetOptionsFromArray( \@args,
+    'verbose|v' => \$verbose,
+    'reactivationkeys|r' => \$reactivationkey,
+    );
 
     my @akl = RHNC::ActivationKey->list($rhnc);
 
+    my $nr=0;
+    AK:
     foreach my $ak (@akl) {
+        my $desc = $ak->description();
+        my $isre = 0;
+
+        $isre = 1 if ($desc =~ /Kickstart re-activation|-activation du kickstart/);
+        next AK if $isre && ! $reactivationkey;
         printf("%-36s : %s\n", $ak->name(), $ak->description());
         print Dumper $ak if $verbose;
     }
