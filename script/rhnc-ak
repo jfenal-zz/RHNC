@@ -21,7 +21,7 @@ sub create {
 
 sub destroy {
     my @args = @_;
-    
+
     foreach my $kname (@args) {
         my $ak = RHNC::ActivationKey->get( $rhnc, $kname );
         if ( defined $ak ) {
@@ -32,24 +32,26 @@ sub destroy {
 
 sub list {
     my @args = @_;
-    my ( $verbose, $reactivationkey);
+    my ( $verbose, $reactivationkey );
 
-    my $result = GetOptionsFromArray( \@args,
-    'verbose|v' => \$verbose,
-    'reactivationkeys|r' => \$reactivationkey,
+    my $result = GetOptionsFromArray(
+        \@args,
+        'verbose|v'          => \$verbose,
+        'reactivationkeys|r' => \$reactivationkey,
     );
 
     my @akl = RHNC::ActivationKey->list($rhnc);
 
-    my $nr=0;
-    AK:
+    my $nr = 0;
+  AK:
     foreach my $ak (@akl) {
         my $desc = $ak->description();
         my $isre = 0;
 
-        $isre = 1 if ($desc =~ /Kickstart re-activation|-activation du kickstart/);
-        next AK if $isre && ! $reactivationkey;
-        printf("%-36s : %s\n", $ak->name(), $ak->description());
+        $isre = 1
+          if ( $desc =~ /Kickstart re-activation|-activation du kickstart/ );
+        next AK if $isre && !$reactivationkey;
+        printf( "%-36s : %s\n", $ak->name(), $ak->description() );
         print Dumper $ak if $verbose;
     }
     print "\n" . scalar(@akl) . " activation or reactivation keys\n";
@@ -60,18 +62,19 @@ sub list {
 #
 
 $rhnc = RHNC::Session->new();
-print "API version : ", $rhnc->apiversion(), " | " ;
+print "API version : ", $rhnc->apiversion(), " | ";
 print "Org ID : ",      $rhnc->org_id(),     "\n";
 
 my @args = @ARGV;
 my $cmd  = shift @args;
 
 SWITCH: for ($cmd) {
-#    /create/  && create(@args) && last SWITCH;
-    /list/    && list(@args) && last SWITCH;
-#    /destroy/ && destroy(@args) && last SWITCH;
+
+    #    /create/  && create(@args) && last SWITCH;
+    /^(?:l|li|lis|list)$/ && list(@args) && last SWITCH;
+
+    #    /destroy/ && destroy(@args) && last SWITCH;
 
     croak "no valid command given";
 }
-
 

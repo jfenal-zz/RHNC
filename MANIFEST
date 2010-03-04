@@ -15,6 +15,7 @@ META.yml
 README
 script/rhn-channel-sync.pl
 script/rhn-org
+script/rhnc-ak
 t/00-load.t
 TODO.pod
 t/pod-coverage.t
