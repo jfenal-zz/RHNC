@@ -337,14 +337,25 @@ More likely in package context :
 =cut
 
 sub list {
-    my ( $self, $parm ) = @_;
-
+    my ( $self, @p ) = @_;
     my $rhnc;
-    if ( ref $self ) {    # OO context
+
+    if ( ref $self eq 'RHNC::Kickstart' && defined $self->{rhnc} ) {
+        # OO context, eg $ak-list
         $rhnc = $self->{rhnc};
     }
-    else {                # package context
-        $rhnc = $parm;
+    elsif ( ref $self eq 'RHNC::Session' ) {
+
+        # Called as RHNC::Kickstart::List($rhnc)
+        $rhnc = $self;
+    }
+    elsif ( $self eq __PACKAGE__ ) {
+
+        # Called as RHNC::Kickstart->List($rhnc)
+        $rhnc = shift @p;
+    }
+    else {
+        croak "No RHNC client given";
     }
 
     my $res = $rhnc->call('org.listOrgs');
