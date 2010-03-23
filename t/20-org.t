@@ -26,10 +26,9 @@ my $org = RHNC::Org->new(
 BEGIN { $tests++ }
 ok( $org->create(), 'org created' );
 
-BEGIN { $tests += 8; }
+BEGIN { $tests += 7; }
 is( $org->name(),     'Test Org',   'name accessor' );
 is( $org->login(),    'test-admin', 'login accessor' );
-is( $org->password(), 'redhat',     'password accessor' );
 
 #is($org->adminPassword(), '', 'adminPassword accessor (empty string)');
 #ok( ! defined $org->adminPassword(), 'adminPassword accesssor (undef)');
