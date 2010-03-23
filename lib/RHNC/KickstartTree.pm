@@ -1,4 +1,4 @@
-package RHNC::Kickstart;
+package RHNC::KickstartTree;
 
 # $Id$
 
@@ -15,7 +15,7 @@ use vars qw( %properties %virt_type );
 
 =head1 NAME
 
-RHNC::Kickstart - The great new RHNC::Kickstart!
+RHNC::KickstartTree - Manage RHN Satellite Kickstart trees
 
 =head1 VERSION
 
@@ -31,9 +31,9 @@ Quick summary of what the module does.
 
 Perhaps a little code snippet.
 
-    use RHNC::Kickstart;
+    use RHNC::KickstartTree;
 
-    my $foo = RHNC::Kickstart->new();
+    my $foo = RHNC::KickstartTree->new();
     ...
 
 =head1 DESCRIPTION
@@ -76,19 +76,14 @@ use constant {
 my %properties = (
     rhnc       => [ 0, undef, undef, undef ],
     label      => [ 1, undef, undef, undef ],
-    name       => [ 0, undef, undef, undef ],
     server     => [ 1, undef, undef, undef ],
     tree_label => [ 1, undef, undef, undef ],
     password   => [ 1, undef, undef, undef ],
-    org_default   => [ 0, undef, undef, undef ],
-    advanced_mode => [ 0, undef, undef, undef ],
-    active        => [ 0, undef, undef, undef ],
     virt_type  => [
         1, 'none',
         sub {
             my $v = shift;
             return 1 if defined $virt_type{$_};
-            return 0;
         },
         undef
     ],
@@ -124,8 +119,7 @@ sub new {
         }
     }
 
-    if ( !defined $self->{server} && defined( $self->{rhnc} ) &&
-    defined $self->{rhnc}->name() ) {
+    if (! defined $self->{server}) {
         $self->{server} = $self->{rhnc}->name();
     }
 
@@ -146,25 +140,11 @@ sub new {
 sub name {
     my ( $self, @p ) = @_;
 
-    if ( !defined $self->{name} ) {
-        croak 'name not defined';
+    if ( !defined $self->{tree_label} ) {
+        croak 'tree_label not defined';
     }
 
-    return $self->{name};
-}
-
-=head2 label
-
-=cut
-
-sub label {
-    my ( $self, @p ) = @_;
-
-    if ( !defined $self->{label} ) {
-        croak 'label not defined';
-    }
-
-    return $self->{label};
+    return $self->{tree_label};
 }
 
 =head2 tree_label
@@ -179,35 +159,6 @@ sub tree_label {
     }
 
     return $self->{tree_label};
-}
-
-
-=head2 org_default
-
-=cut
-
-sub org_default {
-    my ( $self, @p ) = @_;
-
-    if ( !defined $self->{org_default} ) {
-        croak 'org_default not defined';
-    }
-
-    return $self->{org_default}->value;
-}
-
-=head2 advanced_mode
-
-=cut
-
-sub advanced_mode {
-    my ( $self, @p ) = @_;
-
-    if ( !defined $self->{advanced_mode} ) {
-        croak 'advanced_mode not defined';
-    }
-
-    return $self->{advanced_mode}->value;
 }
 
 =head2 create
@@ -238,46 +189,25 @@ sub create {
 
     my $res =
       $self->{rhnc}
-      ->call( 'kickstart.createProfile', $self->{label}, $self->{virt_type},
-        $self->{tree_label}, $self->{server}, $self->{password}, );
+      ->call( 'kickstart.tree.create', $self->{tree_label}, $self->{base_path},
+      $self->{channel_label}, $self->{install_type}, );
     croak 'Create did not work' if !defined $res;
-    $self->{key} = $res;
+
+    $self->{tree_label} = $res;
 
     return $self;
 }
 
 =head2 destroy 
 
-OO context: 
-
-  $ks->destroy();
-
-Function context:
-
-  RHNC::Kickstart::destroy( $rhnc, $ksname );
-
 =cut
 
 sub destroy {
     my ( $self, @args ) = @_;
 
-    my $rhnc;
-    my $ksname;
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {    # OO context
-        $rhnc   = $self->{rhnc};
-        $ksname = $self->{label};
-        undef $self;
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {    # package context
-        $rhnc   = $self;
-        $ksname = shift @args;
-    }
-    else {
-        croak "No RHNC client given here";
-    }
+    my $res = $self->{rhnc}->call( 'kickstart.tree.delete', $self->{key} );
 
-    my $res = $rhnc->call( 'kickstart.deleteProfile', $ksname );
-
+    undef $self;
 
     return 1;
 }
@@ -290,31 +220,31 @@ sub list {
     my ( $self, @p ) = @_;
     my $rhnc;
 
-    if ( ref $self eq 'RHNC::Kickstart' && defined $self->{rhnc} ) {
+    if ( ref $self eq 'RHNC::KickstartTree' && defined $self->{rhnc} ) {
 
         # OO context, eg $ak-list
         $rhnc = $self->{rhnc};
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
 
-        # Called as RHNC::Kickstart::List($rhnc)
+        # Called as RHNC::KickstartTree::List($rhnc)
         $rhnc = $self;
     }
     elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
 
-        # Called as RHNC::Kickstart->List($rhnc)
+        # Called as RHNC::KickstartTree->List($rhnc)
         $rhnc = shift @p;
     }
     else {
         croak "No RHNC client given here";
     }
 
-    my $res = $rhnc->call('kickstart.listKickstarts');
+    my $res = $rhnc->call('kickstart.tree.list');
 
     #    print STDERR Dumper($res);
     my @l;
     foreach my $o (@$res) {
-        push @l, RHNC::Kickstart->new($o);
+        push @l, RHNC::KickstartTree->new($o);
     }
 
     return @l;
@@ -328,43 +258,67 @@ sub get {
     my ( $self, @p ) = @_;
     my $rhnc;
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+    if ( ref $self eq 'RHNC::KickstartTree' && defined $self->{rhnc} ) {
 
         # OO context, eg $ak-list
         $rhnc = $self->{rhnc};
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
 
-        # Called as RHNC::Kickstart::List($rhnc)
+        # Called as RHNC::KickstartTree::List($rhnc)
         $rhnc = $self;
     }
     elsif ( $self eq __PACKAGE__ ) {
 
-        # Called as RHNC::Kickstart->List($rhnc)
+        # Called as RHNC::KickstartTree->List($rhnc)
         $rhnc = shift @p;
     }
     else {
         croak "No RHNC client given";
     }
 
-    my $name = shift @p
-      or croak "No kickstart name specified in get";
+    my $k = shift @p
+      or croak "No kickstart tree label specified in get";
 
-    my $res = $rhnc->call('kickstart.listKickstarts');
+    my $res = $rhnc->call( 'kickstart.tree.getDetails', $k );
 
-    foreach my $k ( @{$res} ) {
-#        print Dumper $k;
-#        print "label: $k->{label}\n";
-        if ( $k->{label} eq $name ) {
-            my $ak = __PACKAGE__->new( %{$k} );
+    my $ak = __PACKAGE__->new( %{$res} );
 
-            $rhnc->manage($ak);
+    $rhnc->manage($ak);
 
-            return $ak;
-        }
+    return $ak;
+}
+
+=head2 list_install_types
+
+=cut
+
+sub list_install_types {
+    my ( $self, @p ) = @_;
+    my $rhnc;
+
+    if ( ref $self eq 'RHNC::KickstartTree' && defined $self->{rhnc} ) {
+
+        # OO context, eg $ak-list
+        $rhnc = $self->{rhnc};
+    }
+    elsif ( ref $self eq 'RHNC::Session' ) {
+
+        # Called as RHNC::KickstartTree::List($rhnc)
+        $rhnc = $self;
+    }
+    elsif ( $self eq __PACKAGE__ ) {
+
+        # Called as RHNC::KickstartTree->List($rhnc)
+        $rhnc = shift @p;
+    }
+    else {
+        croak "No RHNC client given";
     }
 
-    return;
+    my $res = $rhnc->call( 'kickstart.tree.listInstallTypes' );
+
+    return $res;
 }
 
 =head1 DIAGNOSTICS
@@ -390,7 +344,7 @@ Jérôme Fenal, C<< <jfenal at redhat.com> >>
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc RHNC::Kickstart
+    perldoc RHNC::KickstartTree
 
 
 You can also look for information at:
@@ -429,4 +383,4 @@ under the same terms as Perl itself.
 
 =cut
 
-1;    # End of RHNC::Kickstart
+1;    # End of RHNC::KickstartTree
