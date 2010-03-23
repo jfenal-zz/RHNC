@@ -166,6 +166,18 @@ sub org_id {
     return $self->{org_id};
 }
 
+=head2 server
+
+Returns current org_id
+
+=cut
+
+sub server {
+    my ( $self, @args ) = @_;
+
+    return $self->{server};
+}
+
 =head2 apiversion
 
 Returns API version number
