@@ -13,18 +13,27 @@ my $rhnc = RHNC::Session->new();
 
 my $sg = RHNC::SystemGroup->new(
     rhnc      => $rhnc,
-    name      => "xxxRHEL5",
-    description     => "System group for xxxRHEL5 servers",
+    name      => 'xxxRHEL5',
+    description     => 'System group for xxxRHEL5 servers',
 );
 
 BEGIN { $tests++ }
-is( $sg->{name}, "xxxRHEL5", "name ok after new");
+is( $sg->{name}, 'xxxRHEL5', 'name ok after new');
 
 BEGIN { $tests++ }
-is( $sg->{description}, "System group for xxxRHEL5 servers", "description ok after new");
+is( $sg->{description}, 'System group for xxxRHEL5 servers', 'description ok after new');
 
 BEGIN { $tests++ }
 ok( $sg->create(), 'systemgroup created' );
+
+
+my $ssg = RHNC::SystemGroup->get( $rhnc, 'xxxRHEL5');
+
+BEGIN { $tests++ }
+is( $ssg->{name}, 'xxxRHEL5', 'name ok after new');
+
+BEGIN { $tests++ }
+is( $ssg->{description}, 'System group for xxxRHEL5 servers', 'description ok after new');
 
 
 BEGIN { $tests++ }
