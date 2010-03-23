@@ -246,6 +246,8 @@ sub destroy {
     return 1;
 }
 
+=pod
+
 sub AUTOLOAD {
     my ( $self, $value ) = @_;
     my $attr = $AUTOLOAD;
@@ -279,6 +281,9 @@ sub AUTOLOAD {
 
     return $self->{$attr};
 }
+=cut
+
+
 
 =head2 name 
 
@@ -307,6 +312,87 @@ sub name {
     }
 
     return $self->{name};
+}
+
+=head2 prefix 
+
+Return prefix for org user
+
+=cut
+
+sub prefix {
+    my $self = shift;
+
+    return $self->{prefix} if defined $self->{prefix};
+    return;
+}
+
+=head2 firstname 
+
+Return firstname for org user
+
+=cut
+
+sub firstname {
+    my $self = shift;
+
+    return $self->{firstname} if defined $self->{firstname};
+    return;
+}
+
+
+=head2 lastname 
+
+Return lastname for org user
+
+=cut
+
+sub lastname {
+    my $self = shift;
+
+    return $self->{lastname} if defined $self->{lastname};
+    return;
+}
+
+
+=head2 email 
+
+Return email for org user
+
+=cut
+
+sub email {
+    my $self = shift;
+
+    return $self->{email} if defined $self->{email};
+    return;
+}
+
+
+=head2 usepam 
+
+Return usepam for org user
+
+=cut
+
+sub usepam {
+    my $self = shift;
+
+    return $self->{usepam} if defined $self->{usepam};
+    return;
+}
+
+=head2 login 
+
+Return login for organisation
+
+=cut
+
+sub login {
+    my $self = shift;
+
+    return $self->{login} if defined $self->{login};
+    return;
 }
 
 =head2 id 
