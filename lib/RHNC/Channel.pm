@@ -149,30 +149,86 @@ sub new {
 
 =head2 name
 
+  $name = $ch->name;
+
 =cut
 
 sub name {
     my ( $self, @p ) = @_;
 
-    if ( !defined $self->{key} ) {
-        croak 'key not defined';
+    if ( !defined $self->{name} ) {
+        croak 'name not defined';
     }
 
-    return $self->{key};
+    return $self->{name};
 }
 
-=head2 description
+=head2 label
+
+  $label = $ch->label;
 
 =cut
 
-sub description {
+sub label {
     my ( $self, @p ) = @_;
 
-    if ( !defined $self->{description} ) {
-        croak 'description not defined';
+    if ( !defined $self->{label} ) {
+        croak 'label not defined';
     }
 
-    return $self->{description};
+    return $self->{label};
+}
+
+=head2 provider_name
+
+  $provider_name = $ch->provider_name;
+
+=cut
+
+sub provider_name {
+    my ( $self, @p ) = @_;
+
+    if (defined $self->{provider_name} ) {
+        return $self->{provider_name};
+    }
+
+    return;
+}
+
+
+
+=head2 packages
+
+  $packages = $ch->packages;
+
+=cut
+
+sub packages {
+    my ( $self, @p ) = @_;
+
+    if (defined $self->{packages} ) {
+        return $self->{packages};
+    }
+
+    return;
+}
+
+
+
+=head2 systems
+
+  $systems = $ch->systems;
+
+=cut
+
+sub systems {
+    my ( $self, @p ) = @_;
+
+    if (defined $self->{systems} ) {
+        return $self->{systems};
+    }
+
+    return;
 }
 
 =head2 create

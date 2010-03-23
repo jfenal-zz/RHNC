@@ -1,0 +1,76 @@
+#!/usr/bin/perl
+use lib qw( . .. lib ../lib );
+use RHNC;
+use RHNC::Session;
+use Carp;
+use Getopt::Long qw(GetOptionsFromArray);
+use Data::Dumper;
+
+use vars qw($rhnc);
+
+#
+# Subs
+#
+sub create {
+    my @args = @_;
+
+    # FIXME : this cannot work as it is. Add argument parsing here
+    # using Getopt::Long
+    RHNC::Channel->create( rhnc => $rhnc, @args );
+}
+
+sub destroy {
+    my @args = @_;
+
+    foreach my $kname (@args) {
+        my $chan = RHNC::Channel->get( $rhnc, $kname );
+        if ( defined $chan ) {
+            $chan->delete( $rhnc, $kname );
+        }
+    }
+}
+
+sub list {
+    my @args = @_;
+    my ( $verbose, $reactivationkey );
+
+    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
+
+    my @channel = RHNC::Channel->list($rhnc);
+
+    my $nr = 0;
+    foreach my $chan (@channel) {
+        printf(
+            "%-44s: %5d pkg, %5d systems, %s, %-40s\n",
+            $chan->label(),
+            $chan->packages,
+            $chan->systems(),
+            $chan->provider_name(),
+            $chan->name(),
+        );
+        print Dumper $chan if $verbose;
+    }
+    print "\n" . scalar(@channel) . " Channels\n";
+}
+
+#
+# Main
+#
+
+$rhnc = RHNC::Session->new();
+print "API version : ", $rhnc->apiversion(), " | ";
+print "Org ID : ",      $rhnc->org_id(),     "\n";
+
+my @args = @ARGV;
+my $cmd  = shift @args;
+
+SWITCH: for ($cmd) {
+
+    #    /create/  && create(@args) && last SWITCH;
+    /^(?:l|li|lis|list)$/ && list(@args) && last SWITCH;
+
+    #    /destroy/ && destroy(@args) && last SWITCH;
+
+    croak "no valid command given";
+}
+
