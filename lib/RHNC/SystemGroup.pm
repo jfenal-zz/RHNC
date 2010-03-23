@@ -37,10 +37,6 @@ if you don't export anything, such as for a purely object-oriented module.
 
 =head1 FUNCTIONS
 
-=head2 new
-
-Constructor
-
 =cut
 
 use constant {
@@ -60,6 +56,18 @@ my %properties = (
     system_count => [ 0, undef, undef, undef ],
     rhnc         => [ 0, undef, undef, undef ],
 );
+
+=head2 new
+
+Create a new system group.
+
+  $sg = RHNC::SystemGroup->new(
+    rhnc        => $rhnc,
+    name        => 'name',
+    description => 'new group',
+  );
+
+=cut
 
 sub new {
     my ( $class, @args ) = @_;
@@ -86,7 +94,13 @@ sub new {
 
 =head2 create
 
-Persist system group
+Persist system group, create it if needed.
+
+  $sg = RHNC::SystemGroup->create((
+    rhnc        => $rhnc,
+    name        => 'name',
+    description => 'new group',
+  );
 
 =cut
 
@@ -95,71 +109,158 @@ sub create {
 
     #   $self = ref($self) || $self;
     if ( !ref $self ) {
-        $self = RHN::SystemGroup->new(@args);
+        $self = RHNC::SystemGroup->new(@args);
     }
 
     my $res =
       $self->{rhnc}
       ->call( 'systemgroup.create', $self->{name}, $self->{description}, );
 
+    return $self;
 }
 
 =head2 destroy
+
+    $sg->destroy();
 
 =cut
 sub destroy {
     my ( $self, @args ) = @_;
 
     #   $self = ref($self) || $self;
-    if ( !ref $self ) {
-        $self = RHN::SystemGroup->new(@args);
+    if ( ref $self eq 'RHNC::SystemGroup' ) {
+        my $res = $self->{rhnc} ->call( 'systemgroup.delete', $self->{name} );
+        return 1;
     }
 
-    my $res = $self->{rhnc} ->call( 'systemgroup.delete', $self->{name} );
-
-    return 1;
+    return;
 }
 
-#
-# AUTOLOAD
-#
-# TODO : Maybe add some code to fetch information from Satellite if
-# not yet available (id, org_id, system_count)
-# And maybe get rid of AUTOLOAD...
-#
 
-sub AUTOLOAD {
-    my ( $self, $value ) = @_;
-    my $attr = $AUTOLOAD;
-    $attr =~ s{ \A .*:: }{}imxs;
+=head2 name
 
-    if ( !defined $properties{$attr} ) {
-        return 0;
+   my $name = $sg->name();
+
+=cut
+
+sub name {
+    my ( $self, @args ) = @_;
+
+    if ( ref $self eq 'RHNC::SystemGroup' && defined $self->{name} ) {
+        return $self->{name};
     }
 
-    if ( defined $value ) {
-        if ( defined $properties{$attr}[TRANSFORM] ) {
-            $value = $properties{$attr}[TRANSFORM]($value);
-        }
+    return;
+}
 
-        if ( defined $properties{$attr}[VALIDATE] ) {
-            if ( $properties{$attr}[VALIDATE]($value) ) {
-                $self->{$attr} = $value;
-            }
-            else {
-                croak "'$value' cannot be validated for attribute '$attr'";
-            }
-        }
-        else {
-            $self->{$attr} = $value;
-        }
+
+=head2 id
+
+   my $id = $sg->id();
+
+=cut
+
+sub id {
+    my ( $self, @args ) = @_;
+
+    if ( ref $self eq 'RHNC::SystemGroup' && defined $self->{id} ) {
+        return $self->{id};
     }
 
-    if ( !defined $self->{$attr} && defined $properties{$attr}[DEFAULT] ) {
-        $self->{$attr} = $properties{$attr}[DEFAULT];
+    return;
+}
+
+
+
+=head2 description
+
+   my $description = $sg->description();
+
+=cut
+
+sub description {
+    my ( $self, @args ) = @_;
+
+    if ( ref $self eq 'RHNC::SystemGroup' && defined
+    $self->{description} ) {
+        return $self->{description};
     }
 
-    return $self->{$attr};
+    return;
+}
+
+=head2 org_id
+
+   my $org_id = $sg->org_id();
+
+=cut
+
+sub org_id {
+    my ( $self, @args ) = @_;
+
+    if ( ref $self eq 'RHNC::SystemGroup' && defined $self->{org_id} ) {
+        return $self->{org_id};
+    }
+
+    return;
+}
+
+
+=head2 system_count
+
+   my $system_count = $sg->system_count();
+
+=cut
+
+sub system_count {
+    my ( $self, @args ) = @_;
+
+    if ( ref $self eq 'RHNC::SystemGroup' && defined $self->{system_count} ) {
+        return $self->{system_count};
+    }
+
+    return;
+}
+
+=head2 get
+
+Get from Satellite a specific system group. Returns a RHNC::SystemGroup object.
+
+By id: 
+
+  $sg = RHNC::SystemGroup->get( $RHNC, $id );
+
+By name:
+
+  $sg = RHNC::SystemGroup->get( $RHNC, $id );
+
+=cut
+
+sub get {
+    my ( $self, $parm, $sg_id_or_name) = @_;
+
+    my $rhnc;
+    if ( ref $self && defined $self->{rhnc} ) {    # OO context
+        $rhnc = $self->{rhnc};
+    }
+    else {                # package context
+        $rhnc = $parm;
+    }
+
+    my $res = $rhnc->call('systemgroup.getDetails', $sg_id_or_name );
+    my @list;
+
+        my $sg = RHNC::SystemGroup->new(
+            id           => $res->{id},
+            name         => $res->{name},
+            description  => $res->{description},
+            org_id       => $res->{org_id},
+            system_count => $res->{system_count},
+        );
+        $rhnc->manage($sg);
+
+    return $sg;
+
 }
 
 =head2 list
@@ -188,8 +289,6 @@ sub list {
 
     my $res = $rhnc->call('systemgroup.listAllGroups');
     my @list;
-
-    print STDERR Dumper( \@list );
 
     foreach my $g (@list) {
         my $sg = RHNC::SystemGroup->new(
