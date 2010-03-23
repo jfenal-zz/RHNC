@@ -28,7 +28,10 @@ undef $ak;
 
 $ak = RHNC::ActivationKey::get( $rhnc, $key );
 BEGIN { $tests++ }
-like( $ak->{key}, qr{ [0-9a-f-]+ }imxs, "key name defined : $ak->{key}" );
+like( $ak->name, qr{ [0-9a-f-]+ }imxs, "key name defined : $ak->{key}" );
+
+BEGIN { $tests++ }
+ok( $ak->universal_default == 0 || $ak->universal_default == 1, 'universal_default... or not');
 
 BEGIN { $tests++ }
 ok( $ak->destroy(), 'activation key destroyed' );

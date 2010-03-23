@@ -125,11 +125,13 @@ sub new {
         }
     }
 
-    if ( $self->{universal_default} ) {
-        $self->{universal_default} = $RHNC::_xmltrue;
-    }
-    else {
-        $self->{universal_default} = $RHNC::_xmlfalse;
+    if ( ! ref($self->{universal_default}) ) {
+        if ( $self->{universal_default}  ) {
+            $self->{universal_default} = $RHNC::_xmltrue;
+        }
+        else {
+            $self->{universal_default} = $RHNC::_xmlfalse;
+        }
     }
 
     # FIXME : pas la bonne façon de savoir si on veut les créer...
@@ -143,6 +145,8 @@ sub new {
 }
 
 =head2 name
+
+    $name = $ak->name;
 
 =cut
 
@@ -158,6 +162,8 @@ sub name {
 
 =head2 description
 
+  $description = $ak->description;
+
 =cut
 
 sub description {
@@ -170,7 +176,26 @@ sub description {
     return $self->{description};
 }
 
+
+=head2 universal_default
+
+  $universal_default = $ak->universal_default;
+
+=cut
+
+sub universal_default {
+    my ( $self, @p ) = @_;
+
+    if ( defined $self->{universal_default} ) {
+        return $self->{universal_default}->value();
+    }
+    return;
+}
+
 =head2 create
+
+    $ak->create();
+    $ak = RHNC::ActivationKey->create( @parms );
 
 =cut
 
@@ -247,6 +272,7 @@ sub list {
 
     my $res = $rhnc->call( 'activationkey.listActivationKeys' );
     
+#    print STDERR Dumper($res);
     my @l;
     foreach my $o (@$res) {
         push @l, RHNC::ActivationKey->new($o);
