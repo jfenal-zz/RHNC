@@ -12,8 +12,11 @@ use Carp;
 
 use Frontier::Client;
 use RHNC::Session;
+use RHNC::Kickstart;
+use RHNC::KickstartTree;
 use RHNC::Org;
 use RHNC::SystemGroup;
+use RHNC::Channel;
 use RHNC::ActivationKey;
 use Data::Dumper;
 
