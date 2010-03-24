@@ -1,4 +1,16 @@
 
+=head1 Quick TODO list.
+
+ Tests :
+ - include possibility to test without a Satellite or Spacewalk server
+
+ API :
+ - complete API coverage.
+
+ Scripts :
+ - complete scripts coverage to allow usage of API from shell.
+
+
 =head1 Developement Ideas
 
  With this package, we want to achieve :
