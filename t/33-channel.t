@@ -11,7 +11,9 @@ plan tests => $tests;
 
 my $rhnc = RHNC::Session->new();
 
-my $channels = RHNC::Channel::list($rhnc);
+my @channels = RHNC::Channel::list($rhnc);
 BEGIN { $tests++; }
-ok( $channels > 1, 'got a list of channels' );
+ok( scalar @channels >= 0, 'got a list of '. scalar(@channels) .' channels' );
+
+
 
