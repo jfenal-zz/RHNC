@@ -2,11 +2,11 @@ package RHNC::Session;
 
 use warnings;
 use strict;
+use Carp;
 use English;
 use Frontier::Client;
 use Params::Validate;
 use Config::IniFiles;
-
 use base qw( RHNC );
 
 # $Id$
@@ -28,6 +28,7 @@ Version 0.01
 =cut
 
 our $VERSION = '0.01';
+my $ONE_HOUR = 3600;
 
 =head1 SYNOPSIS
 
@@ -79,54 +80,183 @@ sub _readconfig {
 
 =head2 new
 
+ # Clone session
+ $rhnsession = $oldrhnsession->new();
+
+ # Create session, read from configuration file, use "rhn" section.
+ $rhnsession = RHNC::Session->new();
+
+ # Same, but use "rhn2" section in the $filename file.
+ $rhnsession = RHNC::Session->new( config => $filename, section => 'rhnc2');
+
+ # Create new session, retrieve existing session information file.
+ $rhnsession = RHNC::Session->new( username => 'user', server => 'server');
+
+ # Create new session, using full information given
+ $rhnsession = RHNC::Session->new( server => 'server', username => 'user', password => 's3kr3t' );
+
 =cut
+
+my @files = ( '/etc/satellite_api.conf', "$ENV{HOME}/.rhnrc" );
 
 sub new {
     my ( $class, @args ) = @_;
     $class = ref($class) || $class;
 
-    my @files = ( '/etc/satellite_api.conf', "$ENV{HOME}/.rhnrc" );
-    my %p = validate( @args, { config => 0, section => 0 } );
+    my %p = validate(
+        @args,
+        {
+            config   => 0,
+            section  => 0,
+            username => 0,
+            password => 0,
+            server   => 0
+        }
+    );
     my $self = {};
     bless $self, $class;
 
+    # Set defaults
     $self->{server}   = 'localserver';
-    $self->{user}     = 'rhn-admin';
+    $self->{username} = 'rhn-admin';
     $self->{password} = 'none';
     $self->{section}  = 'rhn';
+    if ( defined $p{section} ) {
+        $self->{section} = $p{section};
+    }
 
+    # Clone case
     if ( ref $class ) {
         $self->{server}   = $class->{server};
-        $self->{user}     = $class->{user};
+        $self->{username} = $class->{username};
         $self->{password} = $class->{password};
         $self->{section}  = $class->{section};
     }
 
-    # load all config files in order
-    foreach my $f ( @files, $p{config} ) {
-        if ( defined $f && -f $f ) {
+    # Retrieve session from disk if available
+    if ( $self->session_to_disk() ) {
+        croak "Session loaded, but not defined, should not happen"
+          if not defined $self->{session};
+        return $self;
+    }
 
-            #            print {*STDERR} "Trying $f\n";
-            $self->_readconfig( $f, $self->{section} );
+    # No session on disk, try to work from config file or parameters.
+
+    # 1: from parameters
+    if ( defined $p{server} && defined $p{username} && defined $p{password} ) {
+        $self->{server}   = $p{server};
+        $self->{username} = $p{username};
+        $self->{password} = $p{password};
+    }
+    else {
+
+        # load all config files in order, reading from $p{config} if exists
+        foreach my $f ( @files, $p{config} ) {
+            if ( defined $f && -f $f ) {
+                $self->_readconfig( $f, $self->{section} );
+            }
         }
     }
 
     $self->{client} =
       Frontier::Client->new( url => 'https://' . $self->{server} . '/rpc/api' );
     my $session =
-      $self->{client}->call( 'auth.login', $self->{user}, $self->{password} );
+      $self->{client}
+      ->call( 'auth.login', $self->{username}, $self->{password} );
     $self->{session} = $session;
 
+    # Retrieve api & system versions
     $self->{apiversion}    = $self->{client}->call('api.getVersion');
-#    $self->{apiversion} += 0;
     $self->{systemversion} = $self->{client}->call('api.systemVersion');
-#    $self->{systemversion} += 0;
-    my $r = $self->call( 'user.getDetails', $self->{user} );
+
+    # Retrieve user details, to get org_id.
+    my $r = $self->call( 'user.getDetails', $self->{username} );
     $self->{org_id} = $r->{org_id};
 
     # forget password
     delete $self->{password};
     return $self;
+}
+
+=head2 session_to_disk
+
+    # server & username already in object. Retrieve $sessions
+    $session = $rhnc->session;
+
+    # retrieve from file : specify which server/username to retrieve
+    # key for
+    $session = $rhnc->session( $server, $username );
+
+
+Retrieve current session from F<$HOME/.rhn.server.username> or create a new
+one if we can.
+Do nothing if nothing could be done (no session file nor session
+information in Session object).
+
+=cut
+
+sub session_to_disk {
+    my ( $self, @args ) = @_;
+
+    my ( $username, $server );
+
+    # object context, username & server keys defined.
+    if (   ref $self eq __PACKAGE__
+        && defined $self->server
+        && defined $self->username )
+    {
+        $server   = $self->server;
+        $username = $self->username;
+    }
+    else {
+        ( $username, $server ) = @args;
+        if ( !defined $username || !defined $server ) {
+            croak 'Can\'t do anything without username & server.  Exiting.';
+        }
+    }
+
+    my $session_file_name = "$ENV{HOME}/.rhn.$server.$username";
+
+    #
+    # if we have a file, assume it's still ok, get its content, and
+    # return the session key.
+    #
+    if ( -w $session_file_name ) {
+        my $mtime = ( stat($session_file_name) )[9];
+
+        if ( abs( time - $mtime ) < $ONE_HOUR ) {
+            open my $f, '<', $session_file_name
+              or croak "Cannot open session file $session_file_name for read";
+            my $session = <$f>;
+            close $f
+              or croak "Cannot close session file $session_file_name for read";
+
+            $self->{session} = $session;
+            return $session;
+        }
+        else {
+
+            # file too old, try other options
+            unlink $session_file_name;
+        }
+    }
+
+    #
+    # no file, check if we have a session key to create one
+    #
+    if ( defined $self->session ) {
+        open my $f, '>', $session_file_name
+          or croak "Cannot open session file $session_file_name for write";
+        print {$f} $self->session;
+        close $f
+          or croak "Cannot close session file $session_file_name for write";
+
+        return $self->session;
+    }
+    else {
+        return
+          ; # do nothing, return nothing, as no current session, nor file to read from
+    }
 }
 
 =head2 call
@@ -154,6 +284,22 @@ sub call {
     return $result;
 }
 
+=head2 session
+
+Returns or updates current session
+
+=cut
+
+sub session {
+    my ( $self, @args ) = @_;
+
+    if ( @args == 1 ) {
+        $self->{org_id} = $args[0];
+    }
+
+    return $self->{org_id};
+}
+
 =head2 org_id
 
 Returns current org_id
@@ -168,7 +314,7 @@ sub org_id {
 
 =head2 server
 
-Returns current org_id
+Returns current server name
 
 =cut
 
@@ -176,6 +322,18 @@ sub server {
     my ( $self, @args ) = @_;
 
     return $self->{server};
+}
+
+=head2 username
+
+Returns current user name
+
+=cut
+
+sub username {
+    my ( $self, @args ) = @_;
+
+    return $self->{username};
 }
 
 =head2 apiversion
