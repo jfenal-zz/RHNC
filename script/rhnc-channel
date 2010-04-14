@@ -11,6 +11,18 @@ use vars qw($rhnc);
 #
 # Subs
 #
+
+=head2 add_packages
+
+TODO
+
+=cut
+
+sub add_packages {
+    croak "not implemented yet";
+    1;
+}
+
 sub create {
     my @args = @_;
 
@@ -28,7 +40,41 @@ sub destroy {
             $chan->delete( $rhnc, $kname );
         }
     }
+
+    return 1;
 }
+
+=head2 get_detail_packages
+
+TODO
+
+=cut
+
+sub get_detail_packages {
+    my @args = @_;
+
+    carp "not implemented yet";
+    1;
+}
+
+=head2 get_details
+
+TODO
+
+=cut
+
+sub get_details {
+    my @args = @_;
+
+    carp "not implemented yet";
+    1;
+}
+
+=head2 list
+
+List channels
+
+=cut
 
 sub list {
     my @args = @_;
@@ -40,17 +86,90 @@ sub list {
 
     my $nr = 0;
     foreach my $chan (@channel) {
-        printf(
-            "%-44s: %5d pkg, %5d systems, %s, %-40s\n",
-            $chan->label(),
-            $chan->packages,
-            $chan->systems(),
-            $chan->provider_name(),
-            $chan->name(),
-        );
+        printf( "%-44s: %5d pkg, %5d systems, %s, %-40s\n",
+            $chan->label(), $chan->packages, $chan->systems(),
+            $chan->provider_name(), $chan->name(), );
         print Dumper $chan if $verbose;
     }
     print "\n" . scalar(@channel) . " Channels\n";
+}
+
+=head2 list_arches
+
+TODO
+
+=cut
+
+sub list_arches {
+    my @args = @_;
+
+    carp "not implemented yet";
+    1;
+}
+
+=head2 list_errata
+
+TODO
+
+=cut
+
+sub list_errata {
+    my @args = @_;
+
+    carp "not implemented yet";
+    1;
+}
+
+=head2 list_last_packages
+
+TODO
+
+=cut
+
+sub list_last_packages {
+    my @args = @_;
+
+    carp "not implemented yet";
+    1;
+}
+
+=head2 list_packages
+
+TODO
+
+=cut
+
+sub list_packages {
+    my @args = @_;
+
+    carp "not implemented yet";
+    1;
+}
+
+=head2 list_systems
+
+TODO
+
+=cut
+
+sub list_systems {
+    my @args = @_;
+
+    carp "not implemented yet";
+    1;
+}
+
+=head2 rm_packages
+
+TODO
+
+=cut
+
+sub rm_packages {
+    my @args = @_;
+
+    carp "not implemented yet";
+    1;
 }
 
 #
@@ -67,7 +186,20 @@ my $cmd  = shift @args;
 SWITCH: for ($cmd) {
 
     #    /create/  && create(@args) && last SWITCH;
-    /^(?:l|li|lis|list)$/ && list(@args) && last SWITCH;
+
+## Please see file perltidy.ERR
+    /^(?:ap|AddPackages)$/i        && add_packages(@args)        && last SWITCH;
+    /^(?:c|Create)$/i              && create(@args)              && last SWITCH;
+    /^(?:d|Destroy)$/i             && destroy(@args)             && last SWITCH;
+    /^(?:gdp|GetDetailPackages)$/i && get_detail_packages(@args) && last SWITCH;
+    /^(?:gd|GetDetail)$/i          && get_details(@args)         && last SWITCH;
+    /^(?:l|li|lis|list)$/i         && list(@args)                && last SWITCH;
+    /^(?:la|ListArches)$/i         && list_arches(@args)         && last SWITCH;
+    /^(?:le|ListErrata)$/i         && list_errata(@args)         && last SWITCH;
+    /^(?:llp|ListLastPackages)$/i  && list_last_packages(@args)  && last SWITCH;
+    /^(?:lp|ListPackages)$/i       && list_packages(@args)       && last SWITCH;
+    /^(?:ls|ListSystems)$/i        && list_systems(@args)        && last SWITCH;
+    /^(?:rp|RmPackages)$/i         && rm_packages(@args)         && last SWITCH;
 
     #    /destroy/ && destroy(@args) && last SWITCH;
 
