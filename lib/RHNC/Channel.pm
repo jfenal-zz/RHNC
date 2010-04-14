@@ -66,12 +66,21 @@ my %properties = (
     name                 => [ 1, undef, undef, undef ],
     label                => [ 1, undef, undef, undef ],
     summary              => [ 1, undef, undef, undef ],
+    description          => [ 1, undef, undef, undef ],
     parent_channel_label => [ 1, q(),   undef, undef ],
     id                   => [ 0, undef, undef, undef ],
     provider_name        => [ 0, undef, undef, undef ],
     packages             => [ 0, undef, undef, undef ],
     systems              => [ 0, undef, undef, undef ],
     arch_name            => [ 1, undef, undef, undef ],
+    maintainer_name      => [ 0, undef, undef, undef ],
+    maintainer_email     => [ 0, undef, undef, undef ],
+    maintainer_phone     => [ 0, undef, undef, undef ],
+    support_policy       => [ 0, undef, undef, undef ],
+    gpg_key_url          => [ 0, undef, undef, undef ],
+    gpg_key_id           => [ 0, undef, undef, undef ],
+    gpg_key_fp           => [ 0, undef, undef, undef ],
+    end_of_life          => [ 0, undef, undef, undef ],
 );
 
 my %channel_type_for = (
@@ -110,6 +119,7 @@ sub _missing_parameter {
 
 
 =cut
+
 sub new {
     my ( $class, @args ) = @_;
     $class = ref($class) || $class;
@@ -297,10 +307,13 @@ sub list {
 
     my $res = $rhnc->call("channel.$call");
 
-    print STDERR Dumper($res);
+    #    print STDERR Dumper($res);
+
     my @l;
-    foreach my $o (@$res) {
-        push @l, RHNC::Channel->new($o);
+    foreach my $output (@$res) {
+        my $c = RHNC::Channel->new($output);
+        $rhnc->manage($c);
+        push @l, $c;
     }
 
     return @l;
@@ -313,36 +326,40 @@ sub list {
 sub get {
     my ( $self, @p ) = @_;
     my $rhnc;
+    my $id_or_name;
 
     if ( ref $self eq 'RHNC::Channel' && defined $self->{rhnc} ) {
-
-        # OO context, eg $ak-list
+        # OO context, eg $channel->list
         $rhnc = $self->{rhnc};
+        $id_or_name = $self->{label};
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
 
-        # Called as RHNC::Channel::List($rhnc)
+        # Called as RHNC::Channel::get($rhnc)
         $rhnc = $self;
+        $id_or_name = shift @p
     }
     elsif ( $self eq __PACKAGE__ ) {
 
-        # Called as RHNC::Channel->List($rhnc)
+        # Called as RHNC::Channel->get($rhnc)
         $rhnc = shift @p;
+        $id_or_name = shift @p
     }
     else {
         croak "No RHNC client given";
     }
 
-    my $k = shift @p
-      or croak "No activation key specified in get";
+    if (! defined $id_or_name) {
+        croak "No channel id or name specified in get";
+    }        
 
-    my $res = $rhnc->call( 'activationkey.getDetails', $k );
+    my $res = $rhnc->call( 'channel.software.getDetails', $id_or_name );
 
-    my $ak = __PACKAGE__->new( %{$res} );
+    my $channel = __PACKAGE__->new( %{$res} );
 
-    $rhnc->manage($ak);
+    $rhnc->manage($channel);
 
-    return $ak;
+    return $channel;
 }
 
 =head1 DIAGNOSTICS
