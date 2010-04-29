@@ -9,9 +9,8 @@ use Carp;
 use RHNC;
 use Data::Dumper;
 
-use base qw( RHNC );
-
 use vars qw( %properties %valid_prefix );
+our @EXPORTS = qw( %properties );
 
 =head1 NAME
 
@@ -67,12 +66,14 @@ my %properties = (
     label                => [ 1, undef, undef, undef ],
     summary              => [ 1, undef, undef, undef ],
     description          => [ 1, undef, undef, undef ],
-    parent_channel_label => [ 1, q(),   undef, undef ],
+    parent_label         => [ 0, q(),   undef, undef ],
+    parent_channel_label => [ 0, q(),   undef, undef ],
     id                   => [ 0, undef, undef, undef ],
     provider_name        => [ 0, undef, undef, undef ],
     packages             => [ 0, undef, undef, undef ],
     systems              => [ 0, undef, undef, undef ],
     arch_name            => [ 1, undef, undef, undef ],
+    arch                 => [ 1, undef, undef, undef ],
     maintainer_name      => [ 0, undef, undef, undef ],
     maintainer_email     => [ 0, undef, undef, undef ],
     maintainer_phone     => [ 0, undef, undef, undef ],
@@ -174,6 +175,22 @@ sub label {
     return $self->{label};
 }
 
+=head2 parent_label
+
+  $label = $ch->parent_label;
+
+=cut
+
+sub parent_label {
+    my ( $self, @p ) = @_;
+
+    if ( !defined $self->{parent_label} ) {
+        return q();
+    }
+
+    return $self->{parent_label};
+}
+
 =head2 provider_name
 
   $provider_name = $ch->provider_name;
@@ -192,21 +209,43 @@ sub provider_name {
 
 =head2 packages
 
-Return number of packages in the channel.
+Return the packages in the channel.
 
-  $packages = $ch->packages;
+  $packages = $ch->packages();
 
 =cut
 
 sub packages {
     my ( $self, @p ) = @_;
 
-    if ( defined $self->{packages} ) {
-        return $self->{packages};
+    if ( ! defined $self->{packages} ) {
+        $self->{packages} = $self->{rhnc}->call( 'channel.software.listAllPackages', $self->label() );
+    }
+    $self->{nbpackages} = scalar @{$self->{packages}} ;
+
+    return wantarray ? $self->{packages} : $self->{nbpackages};
+}
+
+
+=head2 nbpackages
+
+Return number of packages in the channel.
+
+  $nbpackages = $ch->nbpackages();
+
+=cut
+
+sub nbpackages {
+    my ( $self, @p ) = @_;
+
+    if ( ! defined $self->{nbpackages} ) {
+        $self->packages();
     }
 
-    return;
+    return $self->{nbpackages};
 }
+
+
 
 =head2 systems
 
@@ -302,7 +341,7 @@ sub list {
         $call = $channel_type_for{$q};
     }
     else {
-        $call = $channel_type_for{all};
+        $call = $channel_type_for{software};
     }
 
     my $res = $rhnc->call("channel.$call");
@@ -321,6 +360,12 @@ sub list {
 
 =head2 get
 
+Return detailled information about channel.
+
+  my $chan  = RHNC::Channel::get( $rhnc, $label );  # $label or $id
+  my $chan2 = $chan->get( $label );                 # $label or $id
+  my $chan3 = RHNC::Channel->get( $rhnc, $label );  # $label or $id
+
 =cut
 
 sub get {
@@ -328,7 +373,7 @@ sub get {
     my $rhnc;
     my $id_or_name;
 
-    if ( ref $self eq 'RHNC::Channel' && defined $self->{rhnc} ) {
+    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
         # OO context, eg $channel->list
         $rhnc = $self->{rhnc};
         $id_or_name = $self->{label};
