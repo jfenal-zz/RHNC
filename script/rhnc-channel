@@ -2,6 +2,7 @@
 use lib qw( . .. lib ../lib );
 use RHNC;
 use RHNC::Session;
+use RHNC::Channel;
 use Carp;
 use Getopt::Long qw(GetOptionsFromArray);
 use Data::Dumper;
@@ -66,8 +67,27 @@ TODO
 sub get_details {
     my @args = @_;
 
-    carp "not implemented yet";
-    1;
+    print "gd|GetDetails\n";
+    print "=============\n";
+    
+    my $chan;
+    while ($chan = shift @args) {
+        print "$chan:\n";
+        my $channel = RHNC::Channel::get( $rhnc, $chan );
+        $channel->nbpackages();
+        foreach my $k (sort ( keys %{$channel}) ) {
+            next if $k eq 'rhnc';
+            if ( $k eq 'packages' ) {
+                print "$k: ";
+                %pkg = map{ $_->{name} => 1 } @{$channel->{$k}};
+                print join (', ',  sort keys %pkg );
+                print "\n";
+            }
+            else {
+                print "  $k : $channel->{$k}\n";
+            }
+        }
+    }
 }
 
 =head2 list
@@ -86,8 +106,11 @@ sub list {
 
     my $nr = 0;
     foreach my $chan (@channel) {
+        my $parent = $chan->parent_label();
+        my $child = $chan->label();
+        if ($parent ne '') { print "\t"; }
         printf( "%-44s: %5d pkg, %5d systems, %s, %-40s\n",
-            $chan->label(), $chan->packages, $chan->systems(),
+            $chan->label(), $chan->nbpackages(), $chan->systems(),
             $chan->provider_name(), $chan->name(), );
         print Dumper $chan if $verbose;
     }
@@ -141,8 +164,20 @@ TODO
 
 sub list_packages {
     my @args = @_;
+    my $label_or_id;
+    while ( $label_or_id = shift @args) {
+        my $chan = RHNC::Channel::get($rhnc, $label_or_id);
+        my @pkglist = $chan->packages();
 
-    carp "not implemented yet";
+        print '-' x 60 . "\n";
+        print 'Packages for channel ' . $chan->label() . "\n";
+        print '-' x 60 . "\n";
+        foreach my $pkg ( @pkglist ) {
+            print
+            "$pkg->{name}-$pkg->{version}-$pkg->{release}-$pkg->{epoch}-$pkg->{arch_label}\n";
+        }
+    }
+
     1;
 }
 
@@ -192,7 +227,7 @@ SWITCH: for ($cmd) {
     /^(?:c|Create)$/i              && create(@args)              && last SWITCH;
     /^(?:d|Destroy)$/i             && destroy(@args)             && last SWITCH;
     /^(?:gdp|GetDetailPackages)$/i && get_detail_packages(@args) && last SWITCH;
-    /^(?:gd|GetDetail)$/i          && get_details(@args)         && last SWITCH;
+    /^(?:gd|GetDetails)$/i         && get_details(@args)         && last SWITCH;
     /^(?:l|li|lis|list)$/i         && list(@args)                && last SWITCH;
     /^(?:la|ListArches)$/i         && list_arches(@args)         && last SWITCH;
     /^(?:le|ListErrata)$/i         && list_errata(@args)         && last SWITCH;
@@ -202,7 +237,5 @@ SWITCH: for ($cmd) {
     /^(?:rp|RmPackages)$/i         && rm_packages(@args)         && last SWITCH;
 
     #    /destroy/ && destroy(@args) && last SWITCH;
-
-    croak "no valid command given";
 }
 
