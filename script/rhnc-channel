@@ -47,15 +47,33 @@ sub destroy {
 
 =head2 get_detail_packages
 
-TODO
+Print details for packages in the channel.
 
 =cut
 
 sub get_detail_packages {
-    my @args = @_;
+    my (@args) = @_;
 
-    carp "not implemented yet";
-    1;
+    foreach my $chan (@args) {
+        my $channel = RHNC::Channel::get( $rhnc, $chan );
+
+        print 'Packages for channel '
+          . $channel->label . ' ('
+          . $channel->name() . ")\n";
+        my @plist = $channel->packages();
+        @plist = sort {
+            "$a->{name}-$a->{version}-$a->{release}-$a->{arch_label}" cmp
+              "$b->{name}-$b->{version}-$b->{release}-$b->{arch_label}"
+        } @plist;
+
+        #@plist = sort { $a->{last_modified} cmp $b->{last_modified} } @plist;
+        foreach my $p (@plist) {
+            print "  $p->{name}-$p->{version}-$p->{release}-$p->{arch_label}: ";
+            print join ", ", map { "$_=$p->{$_}" } qw( id last_modified);
+            print "\n";
+        }
+    }
+
 }
 
 =head2 get_details
@@ -69,18 +87,18 @@ sub get_details {
 
     print "gd|GetDetails\n";
     print "=============\n";
-    
+
     my $chan;
-    while ($chan = shift @args) {
+    while ( $chan = shift @args ) {
         print "$chan:\n";
         my $channel = RHNC::Channel::get( $rhnc, $chan );
         $channel->nbpackages();
-        foreach my $k (sort ( keys %{$channel}) ) {
+        foreach my $k ( sort ( keys %{$channel} ) ) {
             next if $k eq 'rhnc';
             if ( $k eq 'packages' ) {
                 print "$k: ";
-                %pkg = map{ $_->{name} => 1 } @{$channel->{$k}};
-                print join (', ',  sort keys %pkg );
+                %pkg = map { $_->{name} => 1 } @{ $channel->{$k} };
+                print join( ', ', sort keys %pkg );
                 print "\n";
             }
             else {
@@ -107,14 +125,15 @@ sub list {
     my $nr = 0;
     foreach my $chan (@channel) {
         my $parent = $chan->parent_label();
-        my $child = $chan->label();
-        if ($parent ne '') { print "\t"; }
-        printf( "%-44s: %5d pkg, %5d systems, %s, %-40s\n",
-            $chan->label(), $chan->nbpackages(), $chan->systems(),
-            $chan->provider_name(), $chan->name(), );
-        print Dumper $chan if $verbose;
+        my $child  = $chan->label();
+        if ( $parent ne '' ) { print "\t"; }
+        printf(
+            "%-44s: %5d pkg, %5d systems, %s, %-40s\n",
+            $chan->label(),         $chan->nbpackages(), $chan->systems(),
+            $chan->provider_name(), $chan->name(),
+        );
     }
-    print "\n" . scalar(@channel) . " Channels\n";
+    print "\nTotal: " . scalar(@channel) . " Channels\n";
 }
 
 =head2 list_arches
@@ -165,16 +184,16 @@ TODO
 sub list_packages {
     my @args = @_;
     my $label_or_id;
-    while ( $label_or_id = shift @args) {
-        my $chan = RHNC::Channel::get($rhnc, $label_or_id);
+    while ( $label_or_id = shift @args ) {
+        my $chan = RHNC::Channel::get( $rhnc, $label_or_id );
         my @pkglist = $chan->packages();
 
         print '-' x 60 . "\n";
         print 'Packages for channel ' . $chan->label() . "\n";
         print '-' x 60 . "\n";
-        foreach my $pkg ( @pkglist ) {
+        foreach my $pkg (@pkglist) {
             print
-            "$pkg->{name}-$pkg->{version}-$pkg->{release}-$pkg->{epoch}-$pkg->{arch_label}\n";
+"$pkg->{name}-$pkg->{version}-$pkg->{release}-$pkg->{epoch}-$pkg->{arch_label}\n";
         }
     }
 
