@@ -111,11 +111,11 @@ sub _missing_parameter {
 =head2 new
     
     $c = RHNC::Channel->new(
-        label -> "label",
-        name -> "name",
-        summary -> "summary",
-        archLabel -> "summary", # arch_name in structure from getDetails
-        parentLabel -> "parent-label",
+        label => "label",
+        name => "name",
+        summary => "summary",
+        archLabel => "summary", # arch_name in structure from getDetails
+        parentLabel => "parent-label",
         );
 
 
@@ -185,10 +185,36 @@ sub parent_label {
     my ( $self, @p ) = @_;
 
     if ( !defined $self->{parent_label} ) {
-        return q();
+        if ( defined $self->{parent_channel_label} ) {
+            $self->{parent_label} = $self->{parent_channel_label};
+        }
+        else {
+            $self->{parent_label} = q();
+        }
     }
 
     return $self->{parent_label};
+}
+
+=head2 arch
+
+  $arch = $ch->arch;
+
+=cut
+
+sub arch {
+    my ( $self, @p ) = @_;
+
+    if ( ! defined $self->{arch} ) {
+        if ( defined $self->{arch_name}) {
+            $self->{arch} = $self->{arch_name};
+        }
+        else {
+            croak "Arch not defined for this channel $self->{label}";
+        }
+    }
+
+    return $self->{arch};
 }
 
 =head2 provider_name
@@ -221,9 +247,9 @@ sub packages {
     if ( ! defined $self->{packages} ) {
         $self->{packages} = $self->{rhnc}->call( 'channel.software.listAllPackages', $self->label() );
     }
-    $self->{nbpackages} = scalar @{$self->{packages}} ;
+    $self->{nbpackages} = scalar (@{$self->{packages}}) ;
 
-    return wantarray ? $self->{packages} : $self->{nbpackages};
+    return @{$self->{packages}};
 }
 
 
