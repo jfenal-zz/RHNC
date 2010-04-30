@@ -143,6 +143,43 @@ sub new {
     return $self;
 }
 
+=head2 list_arches
+
+Returns the list of available arches, as a HASH ref ( C<label => name> ).
+
+  my @arches_list = RHNC::Channel::list_arches($rhnc);
+  my @arches_list = RHNC::Channel->list_arches($rhnc);
+  my @arches_list = $channel->list_arches();
+
+=cut
+
+sub list_arches {
+    my ( $self, @p ) = @_;
+    my $rhnc;
+
+    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+        # OO context, eg $ch->list_arches
+        $rhnc = $self->{rhnc};
+    }
+    elsif ( ref $self eq 'RHNC::Session' ) {
+
+        # Called as RHNC::Channel::list_arches($rhnc)
+        $rhnc = $self;
+    }
+    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+        # Called as RHNC::Channel->list_arches($rhnc)
+        $rhnc = shift @p;
+    }
+    else {
+        croak "No RHNC client given here";
+    }
+
+    my $res = $rhnc->call("channel.software.listArches");
+
+    my %arches = map { $_->{label} => $_->{name} } @{$res};
+    return %arches;
+}
+
 =head2 name
 
   $name = $ch->name;
@@ -336,15 +373,20 @@ sub destroy {
 
 =head2 list
 
+List channels. Returns list of objects of type C<RHNC::Channel>.
+
+  my @channel_list = RHNC::Channel::list($rhnc);
+  my @channel_list = RHNC::Channel->list($rhnc);
+  my @channel_list = $channel->list();
+
 =cut
 
 sub list {
     my ( $self, @p ) = @_;
     my $rhnc;
 
-    if ( ref $self eq 'RHNC::Channel' && defined $self->{rhnc} ) {
-
-        # OO context, eg $ak-list
+    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+        # OO context, eg $ch->list
         $rhnc = $self->{rhnc};
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
@@ -376,7 +418,7 @@ sub list {
 
     my @l;
     foreach my $output (@$res) {
-        my $c = RHNC::Channel->new($output);
+        my $c = __PACKAGE__->new($output);
         $rhnc->manage($c);
         push @l, $c;
     }

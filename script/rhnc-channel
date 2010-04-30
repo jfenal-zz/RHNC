@@ -145,8 +145,12 @@ TODO
 sub list_arches {
     my @args = @_;
 
-    carp "not implemented yet";
-    1;
+    my %arches = RHNC::Channel->list_arches($rhnc);
+
+    print "Arches available: \n";
+    foreach my $a ( keys %arches ) {
+        print "$a: $arches{$a}\n";
+    }
 }
 
 =head2 list_errata
