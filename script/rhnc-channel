@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+use strict;
+use warnings;
+
 use lib qw( . .. lib ../lib );
 use RHNC;
 use RHNC::Session;
@@ -7,7 +10,9 @@ use Carp;
 use Getopt::Long qw(GetOptionsFromArray);
 use Data::Dumper;
 
-use vars qw($rhnc);
+use vars qw( $rhnc );
+
+=head1 COMMANDS
 
 #
 # Subs
@@ -20,8 +25,9 @@ TODO
 =cut
 
 sub add_packages {
-    croak "not implemented yet";
-    1;
+    carp "not implemented yet";
+
+    return;
 }
 
 sub create {
@@ -29,7 +35,9 @@ sub create {
 
     # FIXME : this cannot work as it is. Add argument parsing here
     # using Getopt::Long
-    RHNC::Channel->create( rhnc => $rhnc, @args );
+    my $rc = RHNC::Channel->create( rhnc => $rhnc, @args );
+
+    return $rc;
 }
 
 sub destroy {
@@ -74,6 +82,7 @@ sub get_detail_packages {
         }
     }
 
+    return 1;
 }
 
 =head2 gd|get_details
@@ -103,6 +112,8 @@ sub get_details {
             }
         }
     }
+
+    return 1;
 }
 
 =head2 l|list
@@ -113,7 +124,7 @@ List channels
 
 sub list {
     my @args = @_;
-    my ( $verbose, $reactivationkey );
+    my ( $verbose );
 
     my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
 
@@ -131,6 +142,8 @@ sub list {
         );
     }
     print "\nTotal: " . scalar(@channel) . " Channels\n";
+
+    return 1;
 }
 
 =head2 la|list_arches
@@ -148,6 +161,8 @@ sub list_arches {
     foreach my $a ( keys %arches ) {
         print "$a: $arches{$a}\n";
     }
+
+    return 1;
 }
 
 =head2 le|list_errata
@@ -166,6 +181,8 @@ sub list_errata {
 "$erratum ($errata{$erratum}{issue_date}): $errata{$erratum}{synopsis}\n";
         }
     }
+
+    return 1;
 }
 
 =head2 llp|list_last_packages
@@ -178,7 +195,8 @@ sub list_last_packages {
     my @args = @_;
 
     carp "not implemented yet";
-    1;
+
+    return 1;
 }
 
 =head2 lp|list_packages
@@ -195,16 +213,16 @@ sub list_packages {
         my $chan = RHNC::Channel::get( $rhnc, $label_or_id );
         my @pkglist = $chan->packages();
 
-        print '-' x 60 . "\n";
+        print( '-' x 60 ) . "\n";
         print 'Packages for channel ' . $chan->label() . "\n";
-        print '-' x 60 . "\n";
+        print( '-' x 60 ) . "\n";
         foreach my $pkg (@pkglist) {
             print
 "$pkg->{name}-$pkg->{version}-$pkg->{release}-$pkg->{arch_label}: $pkg->{id}\n";
         }
     }
 
-    1;
+    return 1;
 }
 
 =head2 ls|list_systems
@@ -223,6 +241,8 @@ sub list_systems {
             print "$system: $systems{$system}\n";
         }
     }
+
+    return 1;
 }
 
 =head2 rm_packages
@@ -235,7 +255,8 @@ sub rm_packages {
     my @args = @_;
 
     carp "not implemented yet";
-    1;
+
+    return 1;
 }
 
 #
