@@ -200,8 +200,7 @@ sub list_packages {
         print 'Packages for channel ' . $chan->label() . "\n";
         print '-' x 60 . "\n";
         foreach my $pkg (@pkglist) {
-            print
-"$pkg->{name}-$pkg->{version}-$pkg->{release}-$pkg->{epoch}-$pkg->{arch_label}\n";
+            print "$pkg->{name}-$pkg->{version}-$pkg->{release}-$pkg->{epoch}-$pkg->{arch_label}\n";
         }
     }
 
@@ -216,9 +215,13 @@ TODO
 
 sub list_systems {
     my @args = @_;
-
-    carp "not implemented yet";
-    1;
+    my $channel;
+    while ($channel = shift @args ) {
+        my %systems = RHNC::Channel->list_systems( $rhnc, $channel );
+        foreach my $system ( sort keys %systems ) {
+            print "$system ($systems{$system})\n";
+        }
+    }
 }
 
 =head2 rm_packages
