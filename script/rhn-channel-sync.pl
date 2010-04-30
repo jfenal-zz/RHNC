@@ -237,6 +237,8 @@ source.
 
 =head1 OPTIONS
 
+=over 4
+
 =item * -e
 
 =item * --errata
@@ -244,7 +246,7 @@ source.
 Activate errata synchronisation between the two channels. Usually not
 required, but here for completeness. See L<BUGS> for possible issue.
 
-=over
+=back
 
 
 =head1 DIAGNOSTICS
