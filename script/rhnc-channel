@@ -161,9 +161,13 @@ TODO
 
 sub list_errata {
     my @args = @_;
-
-    carp "not implemented yet";
-    1;
+    my $channel;
+    while ($channel = shift @args ) {
+        my %errata = RHNC::Channel->list_errata( $rhnc, $channel );
+        foreach my $erratum ( sort keys %errata ) {
+            print "$erratum: $errata{$erratum}{synopsis} ($errata{$erratum}{issue_date})\n";
+        }
+    }
 }
 
 =head2 list_last_packages

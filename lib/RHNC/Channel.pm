@@ -180,6 +180,52 @@ sub list_arches {
     return %arches;
 }
 
+=head2 list_errata
+
+Returns the list of errata for the channels specified.
+
+  my @errata_list = RHNC::Channel::list_errata($rhnc, $channel);
+  my @errata_list = RHNC::Channel->list_errata($rhnc, $channel);
+  my @errata_list = $channel->list_errata();
+
+=cut
+
+sub list_errata {
+    my ( $self, @p ) = @_;
+    my $rhnc;
+    my $id_or_name;
+
+    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+        # OO context, eg $ch->list_errata
+        $rhnc = $self->{rhnc};
+        $id_or_name = shift @p;
+        if ( ! defined $id_or_name ) {
+            $id_or_name = $self->label();
+        }
+        print "1\n";
+    }
+    elsif ( ref $self eq 'RHNC::Session' ) {
+        # Called as RHNC::Channel::list_errata($rhnc)
+        $rhnc = $self;
+        $id_or_name = shift @p;
+        print "2\n";
+    }
+    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+        # Called as RHNC::Channel->list_errata($rhnc)
+        $rhnc = shift @p;
+        $id_or_name = shift @p;
+    }
+    else {
+        croak "No RHNC client given here";
+    }
+
+    my $res = $rhnc->call('channel.software.listErrata', $id_or_name );
+
+    my %errata = map { $_->{advisory} => $_ } @{$res};
+    print Dumper \%errata;
+    return %errata;
+}
+
 =head2 name
 
   $name = $ch->name;
@@ -431,8 +477,9 @@ sub list {
 Return detailled information about channel.
 
   my $chan  = RHNC::Channel::get( $rhnc, $label );  # $label or $id
-  my $chan2 = $chan->get( $label );                 # $label or $id
-  my $chan3 = RHNC::Channel->get( $rhnc, $label );  # $label or $id
+  my $chan2 = RHNC::Channel->get( $rhnc, $label );  # $label or $id
+  my $chan3 = $chan->get( $label );                 # $label or $id
+  my $chan4 = $chan->get();                         # $label or $id
 
 =cut
 
@@ -444,7 +491,10 @@ sub get {
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
         # OO context, eg $channel->list
         $rhnc = $self->{rhnc};
-        $id_or_name = $self->{label};
+        $id_or_name = shift @p;
+        if ( ! defined $id_or_name ) {
+            $id_or_name = $self->label();
+        }
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
 
@@ -452,11 +502,10 @@ sub get {
         $rhnc = $self;
         $id_or_name = shift @p
     }
-    elsif ( $self eq __PACKAGE__ ) {
+    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
 
         # Called as RHNC::Channel->get($rhnc)
         $rhnc = shift @p;
-        $id_or_name = shift @p
     }
     else {
         croak "No RHNC client given";
