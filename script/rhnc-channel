@@ -45,7 +45,7 @@ sub destroy {
     return 1;
 }
 
-=head2 get_detail_packages
+=head2 gdp|get_detail_packages
 
 Print details for packages in the channel.
 
@@ -76,17 +76,14 @@ sub get_detail_packages {
 
 }
 
-=head2 get_details
+=head2 gd|get_details
 
-TODO
+Print detailed information about the given channel(s).
 
 =cut
 
 sub get_details {
     my @args = @_;
-
-    print "gd|GetDetails\n";
-    print "=============\n";
 
     my $chan;
     while ( $chan = shift @args ) {
@@ -108,7 +105,7 @@ sub get_details {
     }
 }
 
-=head2 list
+=head2 l|list
 
 List channels
 
@@ -126,7 +123,7 @@ sub list {
     foreach my $chan (@channel) {
         my $parent = $chan->parent_label();
         my $child  = $chan->label();
-        if ( $parent ne '' ) { print "\t"; }
+        if ( $parent ne '' ) { print "  "; }
         printf(
             "%-44s: %5d pkg, %5d systems, %s, %-40s\n",
             $chan->label(),         $chan->nbpackages(), $chan->systems(),
@@ -136,9 +133,9 @@ sub list {
     print "\nTotal: " . scalar(@channel) . " Channels\n";
 }
 
-=head2 list_arches
+=head2 la|list_arches
 
-TODO
+Prints a list of available arches.
 
 =cut
 
@@ -153,24 +150,25 @@ sub list_arches {
     }
 }
 
-=head2 list_errata
+=head2 le|list_errata
 
-TODO
+List all available errata in the channel(s)
 
 =cut
 
 sub list_errata {
     my @args = @_;
     my $channel;
-    while ($channel = shift @args ) {
+    while ( $channel = shift @args ) {
         my %errata = RHNC::Channel->list_errata( $rhnc, $channel );
         foreach my $erratum ( sort keys %errata ) {
-            print "$erratum ($errata{$erratum}{issue_date}): $errata{$erratum}{synopsis}\n";
+            print
+"$erratum ($errata{$erratum}{issue_date}): $errata{$erratum}{synopsis}\n";
         }
     }
 }
 
-=head2 list_last_packages
+=head2 llp|list_last_packages
 
 TODO
 
@@ -183,15 +181,16 @@ sub list_last_packages {
     1;
 }
 
-=head2 list_packages
+=head2 lp|list_packages
 
-TODO
+List packages (NVRA) in the channel(s)
 
 =cut
 
 sub list_packages {
     my @args = @_;
     my $label_or_id;
+
     while ( $label_or_id = shift @args ) {
         my $chan = RHNC::Channel::get( $rhnc, $label_or_id );
         my @pkglist = $chan->packages();
@@ -200,26 +199,28 @@ sub list_packages {
         print 'Packages for channel ' . $chan->label() . "\n";
         print '-' x 60 . "\n";
         foreach my $pkg (@pkglist) {
-            print "$pkg->{name}-$pkg->{version}-$pkg->{release}-$pkg->{epoch}-$pkg->{arch_label}\n";
+            print
+"$pkg->{name}-$pkg->{version}-$pkg->{release}-$pkg->{arch_label}: $pkg->{id}\n";
         }
     }
 
     1;
 }
 
-=head2 list_systems
+=head2 ls|list_systems
 
-TODO
+List the systems subscribed to the channel(s).
 
 =cut
 
 sub list_systems {
     my @args = @_;
     my $channel;
-    while ($channel = shift @args ) {
+
+    while ( $channel = shift @args ) {
         my %systems = RHNC::Channel->list_systems( $rhnc, $channel );
         foreach my $system ( sort keys %systems ) {
-            print "$system ($systems{$system})\n";
+            print "$system: $systems{$system}\n";
         }
     }
 }
@@ -242,30 +243,31 @@ sub rm_packages {
 #
 
 $rhnc = RHNC::Session->new();
-print "API version : ", $rhnc->apiversion(), " | ";
-print "Org ID : ",      $rhnc->org_id(),     "\n";
+
+#print "API version : ", $rhnc->apiversion(), " | ";
+#print "Org ID : ",      $rhnc->org_id(),     "\n";
 
 my @args = @ARGV;
 my $cmd  = shift @args;
 
 SWITCH: for ($cmd) {
-
-    #    /create/  && create(@args) && last SWITCH;
-
-## Please see file perltidy.ERR
-    /^(?:ap|AddPackages)$/i        && add_packages(@args)        && last SWITCH;
-    /^(?:c|Create)$/i              && create(@args)              && last SWITCH;
-    /^(?:d|Destroy)$/i             && destroy(@args)             && last SWITCH;
-    /^(?:gdp|GetDetailPackages)$/i && get_detail_packages(@args) && last SWITCH;
-    /^(?:gd|GetDetails)$/i         && get_details(@args)         && last SWITCH;
-    /^(?:l|li|lis|list)$/i         && list(@args)                && last SWITCH;
-    /^(?:la|ListArches)$/i         && list_arches(@args)         && last SWITCH;
-    /^(?:le|ListErrata)$/i         && list_errata(@args)         && last SWITCH;
-    /^(?:llp|ListLastPackages)$/i  && list_last_packages(@args)  && last SWITCH;
-    /^(?:lp|ListPackages)$/i       && list_packages(@args)       && last SWITCH;
-    /^(?:ls|ListSystems)$/i        && list_systems(@args)        && last SWITCH;
-    /^(?:rp|RmPackages)$/i         && rm_packages(@args)         && last SWITCH;
-
-    #    /destroy/ && destroy(@args) && last SWITCH;
+    /^(?:ap|AddPackages|add_packages)$/i && add_packages(@args) && last SWITCH;
+    /^(?:c|Create)$/i                    && create(@args)       && last SWITCH;
+    /^(?:d|Destroy)$/i                   && destroy(@args)      && last SWITCH;
+    /^(?:gdp|GetDetailPackages|get_detail_packages)$/i
+      && get_detail_packages(@args)
+      && last SWITCH;
+    /^(?:gd|GetDetails|get_details)$/i && get_details(@args) && last SWITCH;
+    /^(?:l|li|lis|list)$/i             && list(@args)        && last SWITCH;
+    /^(?:la|ListArches|list_arches)$/i && list_arches(@args) && last SWITCH;
+    /^(?:le|ListErrata|list_errata)$/i && list_errata(@args) && last SWITCH;
+    /^(?:llp|ListLastPackages|list_last_packages)$/i
+      && list_last_packages(@args)
+      && last SWITCH;
+    /^(?:lp|ListPackages|list_packages)$/i
+      && list_packages(@args)
+      && last SWITCH;
+    /^(?:ls|ListSystems|list_systems)$/i && list_systems(@args) && last SWITCH;
+    /^(?:rp|RmPackages|rm_packages)$/i   && rm_packages(@args)  && last SWITCH;
 }
 

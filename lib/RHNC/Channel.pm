@@ -158,6 +158,7 @@ sub list_arches {
     my $rhnc;
 
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+
         # OO context, eg $ch->list_arches
         $rhnc = $self->{rhnc};
     }
@@ -167,6 +168,7 @@ sub list_arches {
         $rhnc = $self;
     }
     elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+
         # Called as RHNC::Channel->list_arches($rhnc)
         $rhnc = shift @p;
     }
@@ -196,28 +198,31 @@ sub list_errata {
     my $id_or_name;
 
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+
         # OO context, eg $ch->list_errata
-        $rhnc = $self->{rhnc};
+        $rhnc       = $self->{rhnc};
         $id_or_name = shift @p;
-        if ( ! defined $id_or_name ) {
+        if ( !defined $id_or_name ) {
             $id_or_name = $self->label();
         }
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
+
         # Called as RHNC::Channel::list_errata($rhnc)
-        $rhnc = $self;
+        $rhnc       = $self;
         $id_or_name = shift @p;
     }
     elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+
         # Called as RHNC::Channel->list_errata($rhnc)
-        $rhnc = shift @p;
+        $rhnc       = shift @p;
         $id_or_name = shift @p;
     }
     else {
         croak "No RHNC client given here";
     }
 
-    my $res = $rhnc->call('channel.software.listErrata', $id_or_name );
+    my $res = $rhnc->call( 'channel.software.listErrata', $id_or_name );
 
     my %errata = map { $_->{advisory} => $_ } @{$res};
     return %errata;
@@ -239,30 +244,34 @@ sub list_systems {
     my $id_or_name;
 
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+
         # OO context, eg $ch->list_systems
-        $rhnc = $self->{rhnc};
+        $rhnc       = $self->{rhnc};
         $id_or_name = shift @p;
-        if ( ! defined $id_or_name ) {
+        if ( !defined $id_or_name ) {
             $id_or_name = $self->label();
         }
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
+
         # Called as RHNC::Channel::list_systems($rhnc)
-        $rhnc = $self;
+        $rhnc       = $self;
         $id_or_name = shift @p;
     }
     elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+
         # Called as RHNC::Channel->list_systems($rhnc)
-        $rhnc = shift @p;
+        $rhnc       = shift @p;
         $id_or_name = shift @p;
     }
     else {
         croak "No RHNC client given here";
     }
 
-    my $res = $rhnc->call('channel.software.listSubscribedSystems', $id_or_name );
+    my $res =
+      $rhnc->call( 'channel.software.listSubscribedSystems', $id_or_name );
 
-    my %systems = map { $_->{name} => $_->{id} } @{$res};
+    my %systems = map { $_->{id} => $_->{name} } @{$res};
     return %systems;
 }
 
@@ -328,8 +337,8 @@ sub parent_label {
 sub arch {
     my ( $self, @p ) = @_;
 
-    if ( ! defined $self->{arch} ) {
-        if ( defined $self->{arch_name}) {
+    if ( !defined $self->{arch} ) {
+        if ( defined $self->{arch_name} ) {
             $self->{arch} = $self->{arch_name};
         }
         else {
@@ -353,7 +362,7 @@ sub provider_name {
         return $self->{provider_name};
     }
 
-    return;
+    return q();
 }
 
 =head2 packages
@@ -367,14 +376,15 @@ Return the packages in the channel.
 sub packages {
     my ( $self, @p ) = @_;
 
-    if ( ! defined $self->{packages} ) {
-        $self->{packages} = $self->{rhnc}->call( 'channel.software.listAllPackages', $self->label() );
+    if ( !defined $self->{packages} ) {
+        $self->{packages} =
+          $self->{rhnc}
+          ->call( 'channel.software.listAllPackages', $self->label() );
     }
-    $self->{nbpackages} = scalar (@{$self->{packages}}) ;
+    $self->{nbpackages} = scalar( @{ $self->{packages} } );
 
-    return @{$self->{packages}};
+    return @{ $self->{packages} };
 }
-
 
 =head2 nbpackages
 
@@ -387,14 +397,12 @@ Return number of packages in the channel.
 sub nbpackages {
     my ( $self, @p ) = @_;
 
-    if ( ! defined $self->{nbpackages} ) {
+    if ( !defined $self->{nbpackages} ) {
         $self->packages();
     }
 
     return $self->{nbpackages};
 }
-
-
 
 =head2 systems
 
@@ -472,6 +480,7 @@ sub list {
     my $rhnc;
 
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+
         # OO context, eg $ch->list
         $rhnc = $self->{rhnc};
     }
@@ -529,18 +538,19 @@ sub get {
     my $id_or_name;
 
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+
         # OO context, eg $channel->list
-        $rhnc = $self->{rhnc};
+        $rhnc       = $self->{rhnc};
         $id_or_name = shift @p;
-        if ( ! defined $id_or_name ) {
+        if ( !defined $id_or_name ) {
             $id_or_name = $self->label();
         }
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
 
         # Called as RHNC::Channel::get($rhnc)
-        $rhnc = $self;
-        $id_or_name = shift @p
+        $rhnc       = $self;
+        $id_or_name = shift @p;
     }
     elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
 
@@ -551,9 +561,9 @@ sub get {
         croak "No RHNC client given";
     }
 
-    if (! defined $id_or_name) {
+    if ( !defined $id_or_name ) {
         croak "No channel id or name specified in get";
-    }        
+    }
 
     my $res = $rhnc->call( 'channel.software.getDetails', $id_or_name );
 
