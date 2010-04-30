@@ -222,7 +222,6 @@ sub list_errata {
     my $res = $rhnc->call('channel.software.listErrata', $id_or_name );
 
     my %errata = map { $_->{advisory} => $_ } @{$res};
-    print Dumper \%errata;
     return %errata;
 }
 

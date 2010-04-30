@@ -165,7 +165,7 @@ sub list_errata {
     while ($channel = shift @args ) {
         my %errata = RHNC::Channel->list_errata( $rhnc, $channel );
         foreach my $erratum ( sort keys %errata ) {
-            print "$erratum: $errata{$erratum}{synopsis} ($errata{$erratum}{issue_date})\n";
+            print "$erratum ($errata{$erratum}{issue_date}): $errata{$erratum}{synopsis}\n";
         }
     }
 }
