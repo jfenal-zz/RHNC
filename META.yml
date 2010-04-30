@@ -24,6 +24,9 @@ provides:
   RHNC::Kickstart:
     file: lib/RHNC/Kickstart.pm
     version: 0.01
+  RHNC::KickstartTree:
+    file: lib/RHNC/KickstartTree.pm
+    version: 0.01
   RHNC::Org:
     file: lib/RHNC/Org.pm
     version: 0.01
