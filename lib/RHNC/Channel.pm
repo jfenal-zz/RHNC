@@ -228,6 +228,50 @@ sub list_errata {
     return %errata;
 }
 
+=head2 latest_packages
+
+Returns the list of latest_packages for the channels specified.
+
+  my @latest_packages_list = RHNC::Channel::list_latest_packages($rhnc, $channel);
+  my @latest_packages_list = RHNC::Channel->list_latest_packages($rhnc, $channel);
+  my @latest_packages_list = $channel->list_latest_packages();
+
+=cut
+
+sub latest_packages {
+    my ( $self, @p ) = @_;
+    my $rhnc;
+    my $id_or_name;
+
+    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+        # OO context, eg $ch->list_latest_packages
+        $rhnc       = $self->{rhnc};
+        $id_or_name = shift @p;
+        if ( !defined $id_or_name ) {
+            $id_or_name = $self->label();
+        }
+    }
+    elsif ( ref $self eq 'RHNC::Session' ) {
+        # Called as RHNC::Channel::list_latest_packages($rhnc)
+        $rhnc       = $self;
+        $id_or_name = shift @p;
+    }
+    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+        # Called as RHNC::Channel->list_latest_packages($rhnc)
+        $rhnc       = shift @p;
+        $id_or_name = shift @p;
+    }
+    else {
+        croak "No RHNC client given here";
+    }
+
+    my $res =
+      $rhnc->call( 'channel.software.listLatestPackages', $id_or_name );
+
+    return @{$res};
+}
+
+
 =head2 list_systems
 
 Returns the list of systems for the channels specified.

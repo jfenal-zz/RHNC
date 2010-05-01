@@ -103,7 +103,7 @@ sub get_details {
             next if $k eq 'rhnc';
             if ( $k eq 'packages' ) {
                 print "$k: ";
-                %pkg = map { $_->{name} => 1 } @{ $channel->{$k} };
+                my %pkg = map { $_->{name} => 1 } @{ $channel->{$k} };
                 print join( ', ', sort keys %pkg );
                 print "\n";
             }
@@ -191,10 +191,21 @@ TODO
 
 =cut
 
-sub list_last_packages {
+sub list_latest_packages {
     my @args = @_;
+    my $label_or_id;
 
-    carp "not implemented yet";
+    while ( $label_or_id = shift @args ) {
+        my $chan = RHNC::Channel::get( $rhnc, $label_or_id );
+        my @pkglist = $chan->latest_packages();
+
+        print '-' x 60  . "\n";
+        print 'Latest packages for channel ' . $chan->label() . "\n";
+        print '-' x 60  . "\n";
+        foreach my $pkg (@pkglist) {
+            print "$pkg->{name}-$pkg->{version}-$pkg->{release}-$pkg->{arch_label}: $pkg->{id}\n";
+        }
+    }
 
     return 1;
 }
@@ -213,9 +224,9 @@ sub list_packages {
         my $chan = RHNC::Channel::get( $rhnc, $label_or_id );
         my @pkglist = $chan->packages();
 
-        print( '-' x 60 ) . "\n";
+        print '-' x 60  . "\n";
         print 'Packages for channel ' . $chan->label() . "\n";
-        print( '-' x 60 ) . "\n";
+        print '-' x 60 . "\n";
         foreach my $pkg (@pkglist) {
             print
 "$pkg->{name}-$pkg->{version}-$pkg->{release}-$pkg->{arch_label}: $pkg->{id}\n";
@@ -282,8 +293,8 @@ SWITCH: for ($cmd) {
     /^(?:l|li|lis|list)$/i             && list(@args)        && last SWITCH;
     /^(?:la|ListArches|list_arches)$/i && list_arches(@args) && last SWITCH;
     /^(?:le|ListErrata|list_errata)$/i && list_errata(@args) && last SWITCH;
-    /^(?:llp|ListLastPackages|list_last_packages)$/i
-      && list_last_packages(@args)
+    /^(?:llp|ListLatestPackages|list_latest_packages)$/i
+      && list_latest_packages(@args)
       && last SWITCH;
     /^(?:lp|ListPackages|list_packages)$/i
       && list_packages(@args)
