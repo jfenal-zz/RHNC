@@ -109,6 +109,8 @@ sub _missing_parameter {
 }
 
 =head2 new
+
+Create a new RHNC::Channel object from its description.
     
     $c = RHNC::Channel->new(
         label => "label",
@@ -117,7 +119,6 @@ sub _missing_parameter {
         archLabel => "summary", # arch_name in structure from getDetails
         parentLabel => "parent-label",
         );
-
 
 =cut
 
@@ -622,9 +623,21 @@ sub get {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
+See L<RHNC>.
+
 =head1 DEPENDENCIES
 
+=over 4
+
+=item 1 L<Frontier::Client>
+
+=item 1 L<Params::Validate>
+
+=back
+
 =head1 INCOMPATIBILITIES
+
+Requires Red Hat Network Satellite 5.3 minimum.
 
 =head1 BUGS AND LIMITATIONS
 
