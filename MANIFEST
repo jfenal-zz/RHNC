@@ -19,6 +19,7 @@ script/rhn-channel-sync.pl
 script/rhn-org
 script/rhnc-org
 script/rhnc-channel
+script/rhnc-kickstart
 t/00-load.t
 t/10-new.t
 t/20-org.t
