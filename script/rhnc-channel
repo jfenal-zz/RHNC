@@ -83,7 +83,7 @@ sub get_detail_packages {
         print 'Packages for channel '
           . $channel->label . ' ('
           . $channel->name() . ")\n";
-        my @plist = $channel->packages();
+        my @plist = $channel->list_packages();
         @plist = sort {
             "$a->{name}-$a->{version}-$a->{release}-$a->{arch_label}" cmp
               "$b->{name}-$b->{version}-$b->{release}-$b->{arch_label}"
@@ -241,7 +241,7 @@ sub list_packages {
 
     while ( $label_or_id = shift @args ) {
         my $chan = RHNC::Channel::get( $rhnc, $label_or_id );
-        my @pkglist = $chan->packages();
+        my @pkglist = $chan->list_packages();
 
         print 'Packages for channel ' . $chan->label() . "\n";
         foreach my $pkg (@pkglist) {

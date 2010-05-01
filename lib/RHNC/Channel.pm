@@ -410,11 +410,30 @@ sub provider_name {
     return q();
 }
 
+=head2 list_packages
+
+Return the list of packages in the channel.
+
+  $packages = $ch->list_packages();
+
+=cut
+
+sub list_packages {
+    my ( $self, @p ) = @_;
+
+    if ( !defined $self->{list_packages} ) {
+        $self->{list_packages} = $self->{rhnc}->call( 'channel.software.listAllPackages', $self->label() );
+    }
+    $self->{packages} = scalar( @{ $self->{list_packages} } );
+
+    return $self->{list_packages};
+}
+
 =head2 packages
 
-Return the packages in the channel.
+Return number of packages in the channel.
 
-  $packages = $ch->packages();
+  $nbpackages = $ch->packages();
 
 =cut
 
@@ -422,31 +441,10 @@ sub packages {
     my ( $self, @p ) = @_;
 
     if ( !defined $self->{packages} ) {
-        $self->{packages} =
-          $self->{rhnc}
-          ->call( 'channel.software.listAllPackages', $self->label() );
-    }
-    $self->{nbpackages} = scalar( @{ $self->{packages} } );
-
-    return @{ $self->{packages} };
-}
-
-=head2 nbpackages
-
-Return number of packages in the channel.
-
-  $nbpackages = $ch->nbpackages();
-
-=cut
-
-sub nbpackages {
-    my ( $self, @p ) = @_;
-
-    if ( !defined $self->{nbpackages} ) {
-        $self->packages();
+        $self->list_packages();
     }
 
-    return $self->{nbpackages};
+    return $self->{packages};
 }
 
 =head2 systems
@@ -462,7 +460,7 @@ sub systems {
         return $self->{systems};
     }
 
-    return;
+    return 0;
 }
 
 =head2 create
@@ -543,22 +541,26 @@ sub list {
         croak "No RHNC client given here";
     }
 
-    my $q = shift @p;
-    my $call;
-    if ( defined $q && defined $channel_type_for{$q} ) {
-        $call = $channel_type_for{$q};
-    }
-    else {
-        $call = $channel_type_for{software};
+    # 1st, query all channels
+    my $res1 = $rhnc->call('channel.listAllChannels');
+    my %hres1 = map { $_->{label} => $_ } @$res1;
+
+    # 2nd, query software channels, to get more information
+    my $res2 = $rhnc->call('channel.listSoftwareChannels');
+    my %hres2 = map { $_->{label} => $_ } @$res2;
+
+    # put information in %hres2 in %hres1
+    foreach my $softchan ( keys %hres2 ) {
+        foreach my $j ( keys %{$hres2{$softchan}} ) {
+            $hres1{$softchan}{$j} = $hres2{$softchan}{$j};
+        }
     }
 
-    my $res = $rhnc->call("channel.$call");
-
-    #    print STDERR Dumper($res);
+print Dumper \%hres1;
 
     my @l;
-    foreach my $output (@$res) {
-        my $c = __PACKAGE__->new($output);
+    foreach my $output (keys %hres1) {
+        my $c = __PACKAGE__->new($hres1{$output});
         $rhnc->manage($c);
         push @l, $c;
     }
@@ -614,6 +616,7 @@ sub get {
 
     my $channel = __PACKAGE__->new( %{$res} );
 
+    $self->packages();
     $rhnc->manage($channel);
 
     return $channel;
