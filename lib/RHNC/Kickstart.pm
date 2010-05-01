@@ -152,6 +152,24 @@ sub new {
     return $self;
 }
 
+=head2 child_channels
+
+Return kickstart child channels
+
+  my $name = $ks->child_channels();
+
+=cut
+
+sub child_channels {
+    my ( $self, @p ) = @_;
+
+    if ( !defined $self->{child_channels} ) {
+        croak 'child_channels not defined';
+    }
+
+    return @{$self->{child_channels}};
+}
+
 =head2 name
 
 Return kickstart name
@@ -287,20 +305,63 @@ sub advanced_mode {
 Return (and/or populate inside the C<$ks> object) a table of advanced
 options for the kickstart.
 
-  my $advanced_options = $ks->advanced_options();
+  my @advanced_options = $ks->advanced_options();
 
 =cut
 
 sub advanced_options {
     my ( $self, @p ) = @_;
+    my @ao;
 
     if ( !defined $self->{advanced_options} ) {
-        my $res = $self->call( 'getAdvancedOptions', $self->label() );
-
-        print Dumper $res;
+        my $res = $self->{rhnc}->call( 'kickstart.profile.getAdvancedOptions', $self->name() );
+        $self->{advanced_options} = $res;
     }
 
-    return $self->{advanced_options};
+    return @{ $self->{advanced_options} };
+}
+
+
+=head2 custom_options
+
+Return (and/or populate inside the C<$ks> object) a table of custom
+options for the kickstart.
+
+  my @custom_options = $ks->custom_options();
+
+=cut
+
+sub custom_options {
+    my ( $self, @p ) = @_;
+    my @ao;
+
+    if ( !defined $self->{custom_options} ) {
+        my $res = $self->{rhnc}->call( 'kickstart.profile.getCustomOptions', $self->name() );
+        $self->{custom_options} = $res;
+    }
+
+    return @{ $self->{custom_options} };
+}
+
+=head2 variables
+
+Return (and/or populate inside the C<$ks> object) a table of variables
+for the kickstart.
+
+  my @variables = $ks->variables();
+
+=cut
+
+sub variables {
+    my ( $self, @p ) = @_;
+    my @ao;
+
+    if ( !defined $self->{variables} ) {
+        my $res = $self->{rhnc}->call( 'kickstart.profile.getVariables', $self->name() );
+        $self->{variables} = $res;
+    }
+
+    return %{$self->{variables}};
 }
 
 =head2 create
@@ -490,16 +551,19 @@ sub get {
     # TODO : Step 3:
     # Get channels
     $res = $rhnc->call( 'kickstart.profile.getChildChannels', $self->label() );
-print STDERR Dumper( $res );
+    $self->{child_channels} = $res;
 
     # TODO : Step 4:
     # Get advanced options
+    $self->advanced_options();
 
     # TODO : Step 5:
     # Get Custom options
+    $self->custom_options();
 
     # TODO : Step 6:
     # Get Variables
+    $self->variables();
 
     # TODO : Step 7:
     # Get Profile options :

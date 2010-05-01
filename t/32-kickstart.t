@@ -11,7 +11,7 @@ plan tests => $tests;
 
 my $rhnc = RHNC::Session->new();
 
-$insttypes = RHNC::KickstartTree::list_install_types($rhnc);
+#$insttypes = RHNC::KickstartTree::list_install_types($rhnc);
 
 #print Dumper $insttypes;
 #print Dumper $kstrees;
@@ -40,7 +40,7 @@ $ks = ();
 $ks = RHNC::Kickstart::get( $rhnc, $key );
 BEGIN { $tests++ }
 like(
-    $ks->label,
+    $ks->label(),
     qr{ \w+ }imxs,
     "Kickstart name defined after get : $ks->{label}"
 );
