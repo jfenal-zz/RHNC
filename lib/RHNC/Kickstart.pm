@@ -455,23 +455,30 @@ sub get {
         return;
     }
 
-    # Step 2:
-    # Get advanced options
+    # Step 2: 
+    # Get kickstart_tree (TODO : check if not already given by Step 1).
 
     # Step 3: 
     # Get channels
-
+    
+    
     # Step 4:
-    # Get activation keys
+    # Get advanced options
 
     # Step 5: 
-    # Get kickstart_tree (TODO : check if not already given by Step 1).
-
-    # Step 6: 
     # Get Custom options
 
-    # Step 7: 
+    # Step 6: 
     # Get Variables
+
+    # Step 7: 
+    # Get Profile options :
+    # - Locale
+    # - Partitioning scheme
+    # - SELinux
+    # - ConfigManagement
+    # - RemoteCommands
+    # - FilePreservationList
 
     return $self;
 }
