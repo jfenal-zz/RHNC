@@ -13,7 +13,7 @@ use base qw( RHNC );
 
 use vars qw( %properties %virt_type %advanced_options );
 
-%advanced_options = qw(
+%advanced_options = map { $_ => 1 } qw(
   autostep interactive install upgrade text network cdrom
   harddrive nfs url lang langsupport keyboard mouse device
   deviceprobe zerombr clearpart bootloader timezone auth rootpw selinux
@@ -142,8 +142,8 @@ sub new {
         $self->{server} = $self->{rhnc}->name();
     }
 
-    # FIXME : pas la bonne faÃ§on de savoir si on veut les crÃ©er...
-    # peut-Ãªtre pas la chose Ã  faire par dÃ©faut, mÃªme...
+    # FIXME : pas la bonne façon de savoir si on veut les créer...
+    # peut-être pas la chose à faire par défaut, même...
     if ( defined $self->{rhnc} ) {
         $self->create();
         $self->{rhnc}->manage($self);
@@ -249,6 +249,8 @@ Getter/(setter TODO) for virt_type.
 
   my $org = $ks->virt_type();
 
+BUG: currently, no call exists to retrieve this information.
+
 =cut
 
 sub virt_type {
@@ -278,6 +280,27 @@ sub advanced_mode {
     }
 
     return $self->{advanced_mode}->value;
+}
+
+=head2 advanced_options
+
+Return (and/or populate inside the C<$ks> object) a table of advanced
+options for the kickstart.
+
+  my $advanced_options = $ks->advanced_options();
+
+=cut
+
+sub advanced_options {
+    my ( $self, @p ) = @_;
+
+    if ( !defined $self->{advanced_options} ) {
+        my $res = $self->call( 'getAdvancedOptions', $self->label() );
+
+        print Dumper $res;
+    }
+
+    return $self->{advanced_options};
 }
 
 =head2 create
@@ -388,7 +411,8 @@ sub list {
 
     my $res = $rhnc->call('kickstart.listKickstarts');
 
-    #    print STDERR Dumper($res);
+    #    print STDERR Dumper $res;
+
     my @l;
     foreach my $o (@$res) {
         push @l, __PACKAGE__->new($o);
@@ -412,14 +436,17 @@ sub get {
     my $rhnc;
 
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+
         # OO context, eg $ks->list()
         $rhnc = $self->{rhnc};
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
+
         # Called as RHNC::Kickstart::get($rhnc)
         $rhnc = $self;
     }
     elsif ( $self eq __PACKAGE__ ) {
+
         # Called as RHNC::Kickstart->get($rhnc)
         $rhnc = shift @p;
     }
@@ -436,6 +463,7 @@ sub get {
 
     my $found = 0;
     foreach my $ks ( @{$res} ) {
+
         #        print Dumper $k;
         #        print "label: $k->{label}\n";
         if ( $ks->{label} eq $name ) {
@@ -445,33 +473,35 @@ sub get {
                 $rhnc->manage($self);
             }
 
-            foreach my $k (keys $ks) {
-                $self->{$k} = $ks{$k};
+            foreach my $k ( keys %{$ks} ) {
+                $self->{$k} = $ks->{$k};
             }
         }
     }
-    if ($found == 0) {
+    if ( $found == 0 ) {
         carp "No kickstart named $name found";
         return;
     }
 
-    # Step 2: 
+    # TODO : Step 2:
     # Get kickstart_tree (TODO : check if not already given by Step 1).
 
-    # Step 3: 
+
+    # TODO : Step 3:
     # Get channels
-    
-    
-    # Step 4:
+    $res = $rhnc->call( 'kickstart.profile.getChildChannels', $self->label() );
+print STDERR Dumper( $res );
+
+    # TODO : Step 4:
     # Get advanced options
 
-    # Step 5: 
+    # TODO : Step 5:
     # Get Custom options
 
-    # Step 6: 
+    # TODO : Step 6:
     # Get Variables
 
-    # Step 7: 
+    # TODO : Step 7:
     # Get Profile options :
     # - Locale
     # - Partitioning scheme
@@ -493,13 +523,15 @@ sub get {
 
 =head1 BUGS AND LIMITATIONS
 
-Please report any bugs or feature requests to C<bug-rhn-session at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
+Please report any bugs or feature requests to C<bug-rhn-session at rt.cpan.org>,
+or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.  I
+will be notified, and then you'll automatically be notified of
+progress on your bug as I make changes.
 
 =head1 AUTHOR
 
-JÃ©rÃ´me Fenal, C<< <jfenal at redhat.com> >>
+Jérôme Fenal, L<jfenal@redhat.com>.
 
 
 =head1 SUPPORT
@@ -513,19 +545,27 @@ You can also look for information at:
 
 =over 4
 
-=item * RT: CPAN's request tracker
+=item *
+
+RT: CPAN's request tracker
 
 L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=RHNC-Session>
 
-=item * AnnoCPAN: Annotated CPAN documentation
+=item *
+
+AnnoCPAN: Annotated CPAN documentation
 
 L<http://annocpan.org/dist/RHNC-Session>
 
-=item * CPAN Ratings
+=item *
+
+CPAN Ratings
 
 L<http://cpanratings.perl.org/d/RHNC-Session>
 
-=item * Search CPAN
+=item *
+
+Search CPAN
 
 L<http://search.cpan.org/dist/RHNC-Session/>
 
@@ -537,7 +577,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2009 JÃ©rÃ´me Fenal, all rights reserved.
+Copyright 2009 Jérôme Fenal, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

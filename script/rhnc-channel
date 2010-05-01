@@ -18,11 +18,11 @@ use vars qw( $rhnc );
 
 =head1 NAME
 
-rhnc-kickstart - Operate on Satellite managed kickstarts.
+rhnc-channel - Operate on Satellite managed software channels
 
 =head1 USAGE
 
-  rhnc-kickstart command [options or parameters]
+  rhnc-channel command [options or parameters]
 
 =head1 REQUIRED ARGUMENTS
 
@@ -113,7 +113,6 @@ sub get_details {
     while ( $chan = shift @args ) {
         print "$chan:\n";
         my $channel = RHNC::Channel::get( $rhnc, $chan );
-        $channel->nbpackages();
         foreach my $k ( sort ( keys %{$channel} ) ) {
             next if $k eq 'rhnc';
             if ( $k eq 'packages' ) {
@@ -149,10 +148,16 @@ sub list {
     foreach my $chan (@channel) {
         my $parent = $chan->parent_label();
         my $child  = $chan->label();
-        if ( $parent ne q() ) { print q(  ); }
+        my $format;
+        if ( $parent eq q() ) { 
+            $format = "%-48s: %5d pkg, %5d systems, %s, %-40s\n",
+            }
+            else {
+            $format = "  %-46s: %5d pkg, %5d systems, %s, %-40s\n",
+            }
         printf(
-            "%-44s: %5d pkg, %5d systems, %s, %-40s\n",
-            $chan->label(),         $chan->nbpackages(), $chan->systems(),
+            $format,
+            $chan->label(),         $chan->packages(), $chan->systems(),
             $chan->provider_name(), $chan->name(),
         );
     }
@@ -284,8 +289,7 @@ sub rm_packages {
 
 =head1 OPTIONS
 
-Options are specific to each command.
-
+See various commands for options available.
 
 =head1 DIAGNOSTICS
 
@@ -305,17 +309,9 @@ See L<RHNC>.
 
 =over 4
 
-=item *
+=item * L<RHNC>
 
-RHNC
-
-=item *
-
-RHNC::Kickstart
-
-=item *
-
-RHNC::KickstartTree
+=item * L<RHNC::Channel>
 
 =back
 
@@ -325,7 +321,7 @@ See L<RHNC>.
 
 =head1 BUGS AND LIMITATIONS
 
-
+See L<RHNC>.
 
 =head1 AUTHOR
 
@@ -351,6 +347,11 @@ $rhnc = RHNC::Session->new();
 
 my @args = @ARGV;
 my $cmd  = shift @args;
+my $rc=1;
+
+if ( ! defined $cmd )  {
+    croak "Not command given, exiting...\n";
+}
 
 SWITCH: for ($cmd) {
     m/^(?:ap|AddPackages|add_packages)$/imxs
@@ -377,5 +378,5 @@ SWITCH: for ($cmd) {
     m/^(?:rp|RmPackages|rm_packages)$/imxs && rm_packages(@args) && last SWITCH;
 }
 
-exit 0;
+exit $rc;
 
