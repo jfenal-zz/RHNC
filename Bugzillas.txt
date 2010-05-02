@@ -1,0 +1,38 @@
+
+TO OPEN :
+
+Inconsistency in object content between channel calls :
+- channel.listSoftwareChannels : returns parent_label & arch
+- channel.software.getDetails : returns parent_channel_label &
+  arch_name
+- channel.software.create : expects parentLabel & archLabel (but
+  positioned parameters, not named parameters, but still confusing).
+
+See: 
+https://$satname/rhn/apidoc/handlers/ChannelHandler.jsp#listSoftwareChannels
+https://$satname/rhn/apidoc/handlers/ChannelSoftwareHandler.jsp#getDetails
+https://$satname/rhn/apidoc/handlers/ChannelSoftwareHandler.jsp#create
+
+
+TO OPEN :
+
+kickstart.createProfile requires virtualizationType to be set, but
+there is no mean to retrieve this information from any call in
+kickstart namespace.
+Nor in kickstart.profile nor kickstart.profile.system.
+
+TO OPEN  :
+
+kickstart.profile.getCustomOptions is documented to return an array of
+struct( int id, string arguments ).
+However, in Satellite 5.3, it returns an array of struct (string name,
+string arguments), same as kickstart.profile.getAdvancedOptions.
+
+
+TO OPEN : 
+
+kickstart.profile.getVariables is documented to return an array of
+struct ( string key, string value ).
+However, in Satellite 5.3, it returns the struct directly, not using
+the (useless, I agree) array.
+
