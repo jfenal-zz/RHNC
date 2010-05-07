@@ -120,3 +120,6 @@ http://github.com/aparsons/spacecmd
 http://people.redhat.com/aparsons/
 
 
+
+# Commandes dans les scripts :
+# - help | rien => pod2usage

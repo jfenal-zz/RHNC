@@ -164,7 +164,6 @@ sub list_arches {
         $rhnc = $self->{rhnc};
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
-
         # Called as RHNC::Channel::list_arches($rhnc)
         $rhnc = $self;
     }
@@ -616,7 +615,7 @@ sub get {
 
     my $channel = __PACKAGE__->new( %{$res} );
 
-    $self->packages();
+    $channel->packages();
     $rhnc->manage($channel);
 
     return $channel;
