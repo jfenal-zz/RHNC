@@ -16,7 +16,6 @@ META.yml
 README
 script/rhnc-ak
 script/rhn-channel-sync.pl
-script/rhn-org
 script/rhnc-org
 script/rhnc-channel
 script/rhnc-ks

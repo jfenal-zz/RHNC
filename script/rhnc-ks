@@ -1,0 +1,261 @@
+#!/usr/bin/perl
+#
+# $Id$
+#
+use strict;
+use warnings;
+
+use lib qw( . .. lib ../lib );
+use RHNC;
+use RHNC::Session;
+use Carp;
+use Getopt::Long qw(GetOptionsFromArray);
+use Data::Dumper;
+
+use vars qw($rhnc);
+
+=head1 NAME
+
+rhnc-ks - Operate on Satellite managed kickstarts.
+
+=head1 USAGE
+
+  rhnc-kickstart command [options or parameters]
+
+=head1 REQUIRED ARGUMENTS
+
+At least command is required for this script to operate. No shell is
+currently offered, although this may come in the future.
+
+=head1 DESCRIPTION
+
+The following commands are available:
+
+=head2 create
+
+TODO : not implemented yet.
+
+=cut
+
+sub create {
+    my @args = @_;
+    carp 'not implemented yet';
+
+    # FIXME : this cannot work as it is. Add argument parsing here
+    # using Getopt::Long
+    RHNC::Kickstart->create( rhnc => $rhnc, @args );
+
+    return 0;
+}
+
+=head2 destroy
+
+Destroy the named kickstart(s) from Satellite
+
+=cut
+
+sub destroy {
+    my @args = @_;
+
+    foreach my $kname (@args) {
+        my $ks = RHNC::Kickstart->get( $rhnc, $kname );
+        if ( defined $ks ) {
+            $ks->destroy( $rhnc );
+        }
+    }
+
+    return 0;
+}
+
+=head2 list
+
+List all kickstarts.  Print label, name, and various informations.
+
+Options:
+
+=over 4
+
+=list * -v
+=list * --verbose
+
+Be verbose
+
+=back
+
+=cut
+
+sub list {
+    my @args = @_;
+    my ($verbose);
+
+    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
+
+    my @ks_list = RHNC::Kickstart->list($rhnc);
+
+    my $nr = 0;
+
+    foreach my $ks (@ks_list) {
+        my $isre = 0;
+
+        printf(
+            "%-15s : %s, od:%d, active:%d, tree:%s, virt:%s\n",
+            $ks->name(), $ks->label(),      $ks->org_default(),
+            $ks->active, $ks->tree_label(), $ks->virt_type()
+        );
+        if ($verbose) {
+            print Dumper($ks);
+        }
+    }
+    print "\n" . scalar(@ks_list) . " kickstarts\n";
+
+    return 0;
+}
+
+=head2 get|getDetails|get_details
+
+Print detailed information about kickstart(s).
+
+Options:
+
+=over 4
+
+=list * -v
+=list * --verbose
+
+Be verbose
+
+=back
+
+=cut
+
+sub get_details {
+    my @args = @_;
+    my ($verbose);
+
+    my $result =
+      GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
+
+    foreach my $ks_name ( @args ) {
+        my $ks = RHNC::Kickstart->get( $rhnc, $ks_name );
+
+        print "Label: " . $ks->label();
+        print "\n Name: " . $ks->name();
+        print "\n Org Default: " . $ks->org_default();
+        print "\n Active: " . $ks->active();
+        print "\n Tree Label: " . $ks->tree_label();
+        print "\n Virt Type: " . $ks->virt_type();
+        print "\n Subchannels: " . join( q(, ), $ks->child_channels() );
+        print "\n Advanced options: \n";
+        foreach my $ao ( sort { $a->{name} cmp $b->{name} }  $ks->advanced_options() ) {
+            if ( defined $ao->{arguments} ) {
+                print "  $ao->{name} $ao->{arguments}\n";
+            }
+            else {
+                print "  $ao->{name}\n";
+            }
+        }
+        
+        print " Custom options: \n";
+        foreach my $co ( sort { $a->{name} cmp $b->{name} } $ks->custom_options() ) {
+            if ( defined $co->{arguments} ) {
+                print "  $co->{name} $co->{arguments}";
+            }
+            else {
+                print "  $co->{name}\n";
+            }
+        }
+        
+        print "\n Variables: \n";
+        my %v =  $ks->variables();
+        foreach my $k ( sort keys %v ) {
+            print "  $k = $v{$k}\n";
+        }
+        
+        print "\n";
+        if ($verbose) {
+            print Dumper($ks);
+        }
+    }
+
+    return 0;
+}
+
+=head1 OPTIONS 
+
+See various commands for options available.
+
+=head1 DIAGNOSTICS
+
+TODO
+
+=head1 EXIT STATUS
+
+TODO
+
+=head1 CONFIGURATION
+
+See L<RHNC>.
+
+=head1 DEPENDENCIES
+
+=over 4
+
+=item * L<Frontier::Client>
+
+=item * L<RHNC>
+
+=item * L<RHNC::Kickstart>
+
+=item * L<RHNC::KickstartTree>
+
+=back
+
+=head1 INCOMPATIBILITIES
+
+See <RHNC>.
+
+=head1 BUGS AND LIMITATIONS
+
+See <RHNC>.
+
+=head1 AUTHOR
+
+Jérôme Fenal L<< <jfenal@redhat.com> >>.
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2009, 2010 Jérôme Fenal, all rights reserved.
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
+
+#
+# Main
+#
+
+$rhnc = RHNC::Session->new();
+
+my @args = @ARGV;
+my $cmd  = shift @args;
+my $rc   = 0;
+
+if ( !defined $cmd ) {
+    croak "Not command given, exiting...\n";
+}
+
+SWITCH: for ($cmd) {
+
+    #    /create/  && create(@args) && last SWITCH;
+    m/\A (?: l | li | lis | list ) \z/imxs
+      && ( $rc = list(@args) )
+      && last SWITCH;
+    m/\A (?: get | getDetails | get_details ) \z/imxs
+      && get_details(@args)
+      && last SWITCH;
+
+    #    /destroy/ && destroy(@args) && last SWITCH;
+}
+
+exit $rc;
