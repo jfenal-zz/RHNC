@@ -6,8 +6,6 @@ use Data::Dumper;
 use Params::Validate;
 use Carp;
 
-use RHNC;
-
 use base qw( RHNC );
 use vars qw( $AUTOLOAD %properties %valid_prefix );
 

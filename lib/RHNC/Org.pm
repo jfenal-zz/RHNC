@@ -4,7 +4,6 @@ use warnings;
 use strict;
 use Params::Validate;
 use Carp;
-use RHNC;
 
 use base 'RHNC';
 

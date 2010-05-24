@@ -6,7 +6,6 @@ use warnings;
 use strict;
 use Params::Validate;
 use Carp;
-use RHNC;
 use Data::Dumper;
 
 use base qw( RHNC );
