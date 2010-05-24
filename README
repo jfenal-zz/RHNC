@@ -23,6 +23,13 @@ For testing, you will currently need a valid Satellite or Spacewalk
 connexion, to document in either /etc/satellite_api.conf or
 $HOME/.rhnrc to set up as documented in the RHNC module.
 
+In order to test coverage, you will need not only Devel::Cover, but
+also a special invocation to make it work:
+
+    ./Build testcover
+    perl -MDevel::Cover script/rhnc-channel l
+    cover
+
 SUPPORT AND DOCUMENTATION
 
 After installing, you can find documentation for this module with the
