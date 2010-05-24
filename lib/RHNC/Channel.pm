@@ -2,11 +2,10 @@ package RHNC::Channel;
 
 # $Id$
 
-use warnings;
 use strict;
+use warnings;
 use Params::Validate;
 use Carp;
-use RHNC;
 use Data::Dumper;
 
 use vars qw( %properties %valid_prefix );
@@ -103,7 +102,7 @@ sub _setdefaults {
 }
 
 sub _missing_parameter {
-    my $parm = shift;
+    my ($parm) = @_;
 
     croak "Missing parameter $parm";
 }
@@ -164,6 +163,7 @@ sub list_arches {
         $rhnc = $self->{rhnc};
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
+
         # Called as RHNC::Channel::list_arches($rhnc)
         $rhnc = $self;
     }
@@ -244,6 +244,7 @@ sub latest_packages {
     my $id_or_name;
 
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+
         # OO context, eg $ch->list_latest_packages
         $rhnc       = $self->{rhnc};
         $id_or_name = shift @p;
@@ -252,11 +253,13 @@ sub latest_packages {
         }
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
+
         # Called as RHNC::Channel::list_latest_packages($rhnc)
         $rhnc       = $self;
         $id_or_name = shift @p;
     }
     elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+
         # Called as RHNC::Channel->list_latest_packages($rhnc)
         $rhnc       = shift @p;
         $id_or_name = shift @p;
@@ -265,12 +268,10 @@ sub latest_packages {
         croak "No RHNC client given here";
     }
 
-    my $res =
-      $rhnc->call( 'channel.software.listLatestPackages', $id_or_name );
+    my $res = $rhnc->call( 'channel.software.listLatestPackages', $id_or_name );
 
     return @{$res};
 }
-
 
 =head2 list_systems
 
@@ -420,10 +421,12 @@ Return the list of packages in the channel.
 sub list_packages {
     my ( $self, @p ) = @_;
 
-    if ( !defined $self->{list_packages} ) {
-        $self->{list_packages} = $self->{rhnc}->call( 'channel.software.listAllPackages', $self->label() );
+    if ( !defined $self->{list_packages} && defined $self->{rhnc} ) {
+        $self->{list_packages} =
+          $self->{rhnc}
+          ->call( 'channel.software.listAllPackages', $self->label() );
+        $self->{packages} = scalar( @{ $self->{list_packages} } );
     }
-    $self->{packages} = scalar( @{ $self->{list_packages} } );
 
     return $self->{list_packages};
 }
@@ -473,7 +476,11 @@ sub create {
         $self = __PACKAGE__->new(@args);
     }
 
-    foreach my $p (qw( )) {
+    foreach my $p (
+        qw( label name summary arch_name
+        parent_channel_label  )
+      )
+    {
         if ( !defined $self->{$p} ) {
             _missing_parameter($p);
         }
@@ -482,12 +489,13 @@ sub create {
     croak 'No RHNC client to persist to, exiting'
       if !defined $self->{rhnc};
 
-    my $res =
+    my $res;
+    $res =
       $self->{rhnc}
       ->call( 'channel.software.create', $self->{label}, $self->{name},
         $self->{summary}, $self->{arch_name}, $self->{parent_channel_label},
       );
-    croak 'Create did not work' if !defined $res;
+    croak "Create $self->{label} did not work" if !defined $res;
     $self->{key} = $res;
 
     return $self;
@@ -500,7 +508,7 @@ sub create {
 sub destroy {
     my ( $self, @args ) = @_;
 
-    my $res = $self->{rhnc}->call( 'activationkey.delete', $self->{key} );
+    my $res = $self->{rhnc}->call( 'channel.software.delete', $self->{label} );
 
     undef $self;
 
@@ -550,16 +558,14 @@ sub list {
 
     # put information in %hres2 in %hres1
     foreach my $softchan ( keys %hres2 ) {
-        foreach my $j ( keys %{$hres2{$softchan}} ) {
+        foreach my $j ( keys %{ $hres2{$softchan} } ) {
             $hres1{$softchan}{$j} = $hres2{$softchan}{$j};
         }
     }
 
-print Dumper \%hres1;
-
     my @l;
-    foreach my $output (keys %hres1) {
-        my $c = __PACKAGE__->new($hres1{$output});
+    foreach my $output ( keys %hres1 ) {
+        my $c = __PACKAGE__->new( $hres1{$output} );
         $rhnc->manage($c);
         push @l, $c;
     }
