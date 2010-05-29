@@ -10,6 +10,7 @@ use lib qw( . .. lib ../lib );
 use RHNC;
 use RHNC::Session;
 use RHNC::Channel;
+use Pod::Usage;
 use Carp;
 use Getopt::Long qw(GetOptionsFromArray);
 use Data::Dumper;
@@ -52,7 +53,8 @@ sub create {
     # using Getopt::Long
     my $rc = RHNC::Channel->create( rhnc => $rhnc, @args );
 
-    return $rc;
+    return 1 if !$rc;
+    return 0;
 }
 
 sub destroy {
@@ -65,7 +67,7 @@ sub destroy {
         }
     }
 
-    return 1;
+    return 0;
 }
 
 =head2 gdp|get_detail_packages
@@ -97,7 +99,7 @@ sub get_detail_packages {
         }
     }
 
-    return 1;
+    return 0;
 }
 
 =head2 gd|get_details
@@ -116,18 +118,16 @@ sub get_details {
         foreach my $k ( sort ( keys %{$channel} ) ) {
             next if $k eq 'rhnc';
             if ( $k eq 'packages' ) {
-                print "$k: ";
-                my %pkg = map { $_->{name} => 1 } @{ $channel->{$k} };
-                print join( ', ', sort keys %pkg );
-                print "\n";
+                print "  $k: " . $channel->packages() . "\n";
             }
             else {
-                print "  $k : $channel->{$k}\n";
+                print "  $k : $channel->{$k}\n"
+                  if defined $channel->{$k};
             }
         }
     }
 
-    return 1;
+    return 0;
 }
 
 =head2 l|list
@@ -149,21 +149,19 @@ sub list {
         my $parent = $chan->parent_label();
         my $child  = $chan->label();
         my $format;
-        if ( $parent eq q() ) { 
-            $format = "%-48s: %5d pkg, %5d systems, %s, %-40s\n",
-            }
-            else {
-            $format = "  %-46s: %5d pkg, %5d systems, %s, %-40s\n",
-            }
-        printf(
-            $format,
+        if ( $parent eq q() ) {
+            $format = "%-48s: %5d pkg, %5d systems, %s, %-40s\n",;
+        }
+        else {
+            $format = "  %-46s: %5d pkg, %5d systems, %s, %-40s\n",;
+        }
+        printf( $format,
             $chan->label(),         $chan->packages(), $chan->systems(),
-            $chan->provider_name(), $chan->name(),
-        );
+            $chan->provider_name(), $chan->name(), );
     }
     print "\nTotal: " . scalar(@channel) . " Channels\n";
 
-    return 1;
+    return 0;
 }
 
 =head2 la|list_arches
@@ -182,7 +180,7 @@ sub list_arches {
         print "$a: $arches{$a}\n";
     }
 
-    return 1;
+    return 0;
 }
 
 =head2 le|list_errata
@@ -202,7 +200,7 @@ sub list_errata {
         }
     }
 
-    return 1;
+    return 0;
 }
 
 =head2 llp|list_last_packages
@@ -226,7 +224,7 @@ sub list_latest_packages {
         }
     }
 
-    return 1;
+    return 0;
 }
 
 =head2 lp|list_packages
@@ -250,7 +248,7 @@ sub list_packages {
         }
     }
 
-    return 1;
+    return 0;
 }
 
 =head2 ls|list_systems
@@ -270,7 +268,7 @@ sub list_systems {
         }
     }
 
-    return 1;
+    return 0;
 }
 
 =head2 rm_packages
@@ -284,7 +282,7 @@ sub rm_packages {
 
     carp "not implemented yet";
 
-    return 1;
+    return 0;
 }
 
 =head1 OPTIONS
@@ -311,7 +309,7 @@ See L<RHNC>.
 
 =item * L<RHNC>
 
-=item * L<RHNC::Channel>
+=item * L<Pod::Usage>
 
 =back
 
@@ -336,46 +334,48 @@ under the same terms as Perl itself.
 
 =cut
 
+package main;
 #
 # Main
 #
 
-$rhnc = RHNC::Session->new();
+my @args = @ARGV;
+my $cmd  = shift @args;
+my $rc   = 0;
 
+if ( !defined $cmd ) {
+    print STDERR "No command given, exiting...\n";
+    exit 0;
+#    pod2usage( -verbose => 2, -message => "No command given, exiting...\n", -exitval => 0);
+}
+
+$rhnc = RHNC::Session->new();
 #print "API version : ", $rhnc->apiversion(), " | ";
 #print "Org ID : ",      $rhnc->org_id(),     "\n";
 
-my @args = @ARGV;
-my $cmd  = shift @args;
-my $rc=1;
+my %func = (
+    '^(?:ap|AddPackages|add_packages)$'               => \&add_packages,
+    '^(?:c|Create)$'                                  => \&create,
+    '^(?:d|Destroy)$'                                 => \&destroy,
+    '^(?:gdp|GetDetailPackages|get_detail_packages)$' => \&get_detail_packages,
+    '^(?:gd|GetDetails|get_details)$'                 => \&get_details,
+    '^(?:l|li|lis|list)$'                             => \&list,
+    '^(?:la|ListArches|list_arches)$'                 => \&list_arches,
+    '^(?:le|ListErrata|list_errata)$'                 => \&list_errata,
+    '^(?:lp|ListPackages|list_packages)$'             => \&list_packages,
+    '^(?:ls|ListSystems|list_systems)$'               => \&list_systems,
+    '^(?:rp|RmPackages|rm_packages)$'                 => \&rm_packages,
+    '^(?:llp|ListLatestPackages|list_latest_packages)$' =>
+      \&list_latest_packages,
+);
 
-if ( ! defined $cmd )  {
-    croak "Not command given, exiting...\n";
-}
-
-SWITCH: for ($cmd) {
-    m/^(?:ap|AddPackages|add_packages)$/imxs
-      && add_packages(@args)
-      && last SWITCH;
-    m/^(?:c|Create)$/imxs  && create(@args)  && last SWITCH;
-    m/^(?:d|Destroy)$/imxs && destroy(@args) && last SWITCH;
-    m/^(?:gdp|GetDetailPackages|get_detail_packages)$/imxs
-      && get_detail_packages(@args)
-      && last SWITCH;
-    m/^(?:gd|GetDetails|get_details)$/imxs && get_details(@args) && last SWITCH;
-    m/^(?:l|li|lis|list)$/imxs             && list(@args)        && last SWITCH;
-    m/^(?:la|ListArches|list_arches)$/imxs && list_arches(@args) && last SWITCH;
-    m/^(?:le|ListErrata|list_errata)$/imxs && list_errata(@args) && last SWITCH;
-    m/^(?:llp|ListLatestPackages|list_latest_packages)$/imxs
-      && list_latest_packages(@args)
-      && last SWITCH;
-    m/^(?:lp|ListPackages|list_packages)$/imxs
-      && list_packages(@args)
-      && last SWITCH;
-    m/^(?:ls|ListSystems|list_systems)$/imxs
-      && list_systems(@args)
-      && last SWITCH;
-    m/^(?:rp|RmPackages|rm_packages)$/imxs && rm_packages(@args) && last SWITCH;
+SWITCH: foreach my $c ($cmd) {
+    foreach my $re ( keys %func ) {
+        if ( $c =~ m/$re/imxs ) {
+            $rc = $func{$re}->(@args);
+            last SWITCH;
+        }
+    }
 }
 
 exit $rc;
