@@ -4,7 +4,6 @@ use Test::More;
 
 use lib qw( . lib lib/RHNC );
 use RHNC;
-use RHNC::Session;
 
 
 #BEGIN { use_ok( 'RHNC::Session' ); } 
