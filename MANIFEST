@@ -26,6 +26,7 @@ t/21-systemgroup.t
 t/31-activationkey.t
 t/32-kickstart.t
 t/33-channel.t
+t/s01-channel.t
 t/boilerplate.t
 TODO.pod
 t/pod-coverage.t
