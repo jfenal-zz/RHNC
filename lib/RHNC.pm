@@ -15,6 +15,7 @@ use RHNC::Session;
 use RHNC::Kickstart;
 use RHNC::KickstartTree;
 use RHNC::Org;
+use RHNC::System;
 use RHNC::SystemGroup;
 use RHNC::Channel;
 use RHNC::ActivationKey;

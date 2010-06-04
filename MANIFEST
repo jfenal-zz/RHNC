@@ -19,6 +19,7 @@ script/rhn-channel-sync.pl
 script/rhnc-org
 script/rhnc-channel
 script/rhnc-ks
+script/rhnc-sg
 t/00-load.t
 t/10-new.t
 t/20-org.t
@@ -27,6 +28,7 @@ t/31-activationkey.t
 t/32-kickstart.t
 t/33-channel.t
 t/s01-channel.t
+t/s01-sg.t
 t/boilerplate.t
 TODO.pod
 t/pod-coverage.t

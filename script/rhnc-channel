@@ -8,8 +8,6 @@ use warnings;
 
 use lib qw( . .. lib ../lib );
 use RHNC;
-use RHNC::Session;
-use RHNC::Channel;
 use Pod::Usage;
 use Carp;
 use Getopt::Long qw(GetOptionsFromArray);

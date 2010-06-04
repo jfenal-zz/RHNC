@@ -7,6 +7,7 @@ use Params::Validate;
 use Carp;
 
 use base qw( RHNC );
+
 use vars qw( $AUTOLOAD %properties %valid_prefix );
 
 =head1 NAME
@@ -219,6 +220,54 @@ sub system_count {
 
     return;
 }
+
+=head2 add_servers
+
+    my $rc = $sg->add_servers( @profile_names, @profile_ids,
+    @RHNC::System );
+
+=cut
+sub add_servers {
+    my ( $self, @args ) = @_;
+    my @systems;
+    while (my $s = shift @args) {
+        if (ref $s eq 'ARRAY') {
+            push @systems, @{$s};
+        }
+        elsif (ref $s eq 'SCALAR') {
+            push @systems, $s;
+        }
+        else {
+            carp 'RHNC::SystemGroup::add_servers: should pass arrays or list of systems only, not ' . ref($s);
+        }
+    }
+
+    my @system_id;
+    foreach my $s ( @systems ) {
+        if (RHNC::System::is_systemid( $s ) ) {
+            push @system_id, $s;
+        }
+        elsif ( ref $s eq 'RHNC::Ssytem' ) {
+            push @system_id, $s->id();
+        }
+        else {
+            push @system_id, RHNC::System::id( $self->rhnc, $s);
+        }
+    }
+
+    return;
+}
+
+=head2 remove_servers
+
+    my $rc = $sg->remove_servers( @profile_names, @profile_ids );
+
+=cut
+sub remove_servers {
+
+    carp 'not implemented yet !';
+}
+
 
 =head2 get
 
