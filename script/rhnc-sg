@@ -1,0 +1,252 @@
+#!/usr/bin/perl
+#
+# $Id$
+#
+
+use strict;
+use warnings;
+
+use lib qw( . .. lib ../lib );
+use RHNC;
+use Pod::Usage;
+use Carp;
+use Getopt::Long qw(GetOptionsFromArray);
+use Data::Dumper;
+
+use vars qw( $rhnc );
+
+=head1 NAME
+
+rhnc-sg - Operate on Satellite managed system groups
+
+=head1 USAGE
+
+  rhnc-sg command [options or parameters]
+
+=head1 REQUIRED ARGUMENTS
+
+At least command is required for this script to operate. No shell is
+currently offered, although this may come in the future.
+
+=head1 DESCRIPTION
+
+The following commands are available:
+
+=head2 add_packages
+
+TODO
+
+=cut
+
+sub create {
+    my @args = @_;
+
+    carp "not implemented yet";
+    # FIXME : this cannot work as it is. Add argument parsing here
+    # using Getopt::Long
+    my $rc = RHNC::Channel->create( rhnc => $rhnc, @args );
+
+    return 1 if !$rc;
+    return 0;
+}
+
+sub destroy {
+    my @args = @_;
+
+    carp "not implemented yet";
+    foreach my $kname (@args) {
+        my $chan = RHNC::Channel->get( $rhnc, $kname );
+        if ( defined $chan ) {
+            $chan->delete( $rhnc, $kname );
+        }
+    }
+
+    return 0;
+}
+
+=head2 gd|get_details
+
+Print detailed information about the given channel(s).
+
+=cut
+
+sub get_details {
+    my @args = @_;
+
+    my $chan;
+    while ( $chan = shift @args ) {
+        print "$chan:\n";
+        my $channel = RHNC::Channel::get( $rhnc, $chan );
+        foreach my $k ( sort ( keys %{$channel} ) ) {
+            next if $k eq 'rhnc';
+            if ( $k eq 'packages' ) {
+                print "  $k: " . $channel->packages() . "\n";
+            }
+            else {
+                print "  $k : $channel->{$k}\n"
+                  if defined $channel->{$k};
+            }
+        }
+    }
+
+    return 0;
+}
+
+=head2 l|list
+
+List system groups
+
+=cut
+
+sub list {
+    my @args = @_;
+    my ($verbose);
+    carp "not implemented yet";
+
+    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
+
+    my @channel = RHNC::Channel->list($rhnc);
+
+    my $nr = 0;
+    foreach my $chan (@channel) {
+        my $parent = $chan->parent_label();
+        my $child  = $chan->label();
+        my $format;
+        if ( $parent eq q() ) {
+            $format = "%-48s: %5d pkg, %5d systems, %s, %-40s\n",;
+        }
+        else {
+            $format = "  %-46s: %5d pkg, %5d systems, %s, %-40s\n",;
+        }
+        printf( $format,
+            $chan->label(),         $chan->packages(), $chan->systems(),
+            $chan->provider_name(), $chan->name(), );
+    }
+    print "\nTotal: " . scalar(@channel) . " Channels\n";
+
+    return 0;
+}
+
+=head2 ls|list_systems
+
+List the systems inside a system group
+
+=cut
+
+sub list_systems {
+    my @args = @_;
+    my $channel;
+    carp "not implemented yet";
+
+    while ( $channel = shift @args ) {
+        my %systems = RHNC::Channel->list_systems( $rhnc, $channel );
+        foreach my $system ( sort keys %systems ) {
+            print "$system: $systems{$system}\n";
+        }
+    }
+
+    return 0;
+}
+
+=head2 rm_system
+
+TODO
+
+=cut
+
+sub rm_system {
+    my @args = @_;
+
+    carp "not implemented yet";
+
+    return 0;
+}
+
+=head1 OPTIONS
+
+See various commands for options available.
+
+=head1 DIAGNOSTICS
+
+See L<EXIT STATUS>.
+
+=head1 EXIT STATUS
+
+TODO. 
+This script will return 1 for success, 0 for failure. Not very
+consistent for now, likely to change.
+
+=head1 CONFIGURATION
+
+See L<RHNC>.
+
+=head1 DEPENDENCIES
+
+=over 4
+
+=item * L<RHNC>
+
+=item * L<Pod::Usage>
+
+=back
+
+=head1 INCOMPATIBILITIES
+
+See L<RHNC>.
+
+=head1 BUGS AND LIMITATIONS
+
+See L<RHNC>.
+
+=head1 AUTHOR
+
+Jérôme Fenal L<< <jfenal@redhat.com> >>.
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2009, 2010 Jérôme Fenal, all rights reserved.
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
+
+package main;
+#
+# Main
+#
+
+my @args = @ARGV;
+my $cmd  = shift @args;
+my $rc   = 0;
+
+if ( !defined $cmd ) {
+    print STDERR "No command given, exiting...\n";
+    exit 0;
+#    pod2usage( -verbose => 2, -message => "No command given, exiting...\n", -exitval => 0);
+}
+
+$rhnc = RHNC::Session->new();
+
+my %func = (
+    '^(?:c|Create)$'                                  => \&create,
+    '^(?:d|Destroy)$'                                 => \&destroy,
+    '^(?:gd|GetDetails|get_details)$'                 => \&get_details,
+    '^(?:l|li|lis|list)$'                             => \&list,
+    '^(?:ls|ListSystems|list_systems)$'               => \&list_systems,
+    '^(?:rp|RmSystems|rm_systems)$'                 => \&rm_systems,
+    '^(?:llp|ListLatestPackages|list_latest_packages)$' =>
+      \&list_latest_packages,
+);
+
+SWITCH: foreach my $c ($cmd) {
+    foreach my $re ( keys %func ) {
+        if ( $c =~ m/$re/imxs ) {
+            $rc = $func{$re}->(@args);
+            last SWITCH;
+        }
+    }
+}
+
+exit $rc;
+
