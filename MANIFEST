@@ -33,4 +33,5 @@ t/pod-coverage.t
 t/pod.t
 t/s01-channel.t
 t/s01-sg.t
+t/s31-activationkey.t
 t/script-pod-coverage.t
