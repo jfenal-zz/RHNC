@@ -11,16 +11,46 @@ use Data::Dumper;
 
 use vars qw($rhnc);
 
-#
-# Subs
-#
+=head1 NAME
+
+rhnc-org - Operate on Satellite managed organisations
+
+=head1 USAGE
+
+  rhnc-ak command [options or parameters]
+
+=head1 REQUIRED ARGUMENTS
+
+At least command is required for this script to operate. No shell is
+currently offered, although this may come in the future.
+
+=head1 DESCRIPTION
+
+The following commands are available:
+
+=cut
+
+=head2 create
+
+TODO : not implemented yet
+
+=cut
+
 sub create {
     my @args = @_;
 
     # FIXME : this cannot work as it is. Add argument parsing here
     # using Getopt::Long
-    RHNC::Org->create( rhnc => $rhnc, @args );
+    #    RHNC::Org->create( rhnc => $rhnc, @args );
 }
+
+=head2 destroy
+
+Destroy an organisation;
+
+  rhnc-org destroy org-name
+
+=cut
 
 sub destroy {
     my @args = @_;
@@ -33,45 +63,103 @@ sub destroy {
     }
 }
 
+=head2 list
+
+List organisations
+
+  rhnc-org list
+  rhnc-org list -v  # not yet implemented
+
+=cut
+
 sub list {
     my @args = @_;
     my ( $verbose, $reactivationkey );
 
-    my $result = GetOptionsFromArray(
-        \@args,
-        'verbose|v'          => \$verbose,
-        'reactivationkeys|r' => \$reactivationkey,
-    );
+    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
 
-    my @orgl = RHNC::Org->list($rhnc);
+    my $orgl = RHNC::Org->list($rhnc);
 
     my $nr = 0;
-    foreach my $org (@orgl) {
-        my $desc = $org->name();
-        printf( "%-36s \n", $org->name() );
+    foreach my $org (@$orgl) {
+        my $desc = $org->name;
+        printf( "%-36s \n", $org->name );
         print Dumper $org if $verbose;
     }
-    print "\n" . scalar(@orgl) . " activation or reactivation keys\n";
+    print "\n" . scalar(@$orgl) . " organisation(s)\n";
+
+    return 0;
 }
 
-#
-# Main
-#
+=head1 OPTIONS
+
+See the various commands for options available.
+
+=head1 DIAGNOSTICS
+
+See L<EXIT STATUS>.
+
+=head1 EXIT STATUS
+
+TODO. 
+This script will return 1 for success, 0 for failure. Not very
+consistent for now, likely to change.
+
+=head1 CONFIGURATION
+
+See L<RHNC>.
+
+=head1 DEPENDENCIES
+
+=over 4
+
+=item * L<RHNC>
+
+=item * L<Pod::Usage>
+
+=back
+
+=head1 INCOMPATIBILITIES
+
+See L<RHNC>.
+
+=head1 BUGS AND LIMITATIONS
+
+See L<RHNC>.
+
+=head1 AUTHOR
+
+Jérôme Fenal L<< <jfenal@redhat.com> >>.
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2009, 2010 Jérôme Fenal, all rights reserved.
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
 
 $rhnc = RHNC::Session->new();
-print "API version : ", $rhnc->apiversion(), " | ";
-print "Org ID : ",      $rhnc->org_id(),     "\n";
 
 my @args = @ARGV;
 my $cmd  = shift @args;
+my $rc = 0;
 
-SWITCH: for ($cmd) {
+my %func = (
+    '^(?:l|li|lis|list)$' => \&list,
+    '^destroy$'           => \&destroy,
+);
 
-    #    /create/  && create(@args) && last SWITCH;
-    /^(?:l|li|lis|list)$/ && list(@args) && last SWITCH;
-
-    #    /destroy/ && destroy(@args) && last SWITCH;
-
-    croak "no valid command given";
+SWITCH: foreach my $c ($cmd) {
+    next SWITCH if ! defined $c;
+    foreach my $re ( keys %func ) {
+        if ( $c =~ m/$re/oimxs ) {
+            $rc = $func{$re}->(@args);
+            last SWITCH;
+        }
+    }
 }
+
+exit $rc;
 
