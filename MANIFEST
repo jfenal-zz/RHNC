@@ -15,10 +15,10 @@ MANIFEST
 META.yml
 README
 script/rhnc-ak
-script/rhn-channel-sync.pl
-script/rhnc-org
 script/rhnc-channel
+script/rhn-channel-sync.pl
 script/rhnc-ks
+script/rhnc-org
 script/rhnc-sg
 t/00-load.t
 t/10-new.t
@@ -27,9 +27,10 @@ t/21-systemgroup.t
 t/31-activationkey.t
 t/32-kickstart.t
 t/33-channel.t
-t/s01-channel.t
-t/s01-sg.t
 t/boilerplate.t
 TODO.pod
 t/pod-coverage.t
 t/pod.t
+t/s01-channel.t
+t/s01-sg.t
+t/script-pod-coverage.t
