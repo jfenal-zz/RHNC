@@ -47,6 +47,7 @@ sub add_packages {
 sub create {
     my @args = @_;
 
+    #my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
     # FIXME : this cannot work as it is. Add argument parsing here
     # using Getopt::Long
     my $rc = RHNC::Channel->create( rhnc => $rhnc, @args );
@@ -132,30 +133,45 @@ sub get_details {
 
 List channels
 
+Options: 
+
+=over 4
+
+=item * C<-v|--verbose> : be verbose
+
+=item * C<-a|--all> : list all channels, including those with no
+system subscribed.
+
+=back
+
 =cut
 
 sub list {
     my @args = @_;
-    my ($verbose);
+    my ($verbose, $all);
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
+    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, 'all|a' => \$all, );
 
     my @channel = RHNC::Channel->list($rhnc);
 
     my $nr = 0;
     foreach my $chan (@channel) {
+        my $systems = $chan->systems();
         my $parent = $chan->parent_label();
         my $child  = $chan->label();
         my $format;
-        if ( $parent eq q() ) {
-            $format = "%-48s: %5d pkg, %5d systems, %s, %-40s\n",;
+
+        if ( $systems != 0 || $all) {
+            if ( $parent eq q() ) {
+                $format = "%-48s: %5d pkg, %5d systems, %s, %-40s\n",;
+            }
+            else {
+                $format = "  %-46s: %5d pkg, %5d systems, %s, %-40s\n",;
+            }
+            printf( $format,
+                $chan->label(),         $chan->packages(), $chan->systems(),
+                $chan->provider_name(), $chan->name(), );
         }
-        else {
-            $format = "  %-46s: %5d pkg, %5d systems, %s, %-40s\n",;
-        }
-        printf( $format,
-            $chan->label(),         $chan->packages(), $chan->systems(),
-            $chan->provider_name(), $chan->name(), );
     }
     print "\nTotal: " . scalar(@channel) . " Channels\n";
 
@@ -375,6 +391,7 @@ SWITCH: foreach my $c ($cmd) {
         }
     }
 }
+
 
 exit $rc;
 

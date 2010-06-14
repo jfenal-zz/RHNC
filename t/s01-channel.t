@@ -43,8 +43,8 @@ ok( defined $s, "script to test found : $s");
 my ( $rc, $stdout, $stderr );
 
 BEGIN { $tests++; }
-run_ok( $s, [ qw( list ) ], 'run list' );
+run_ok( $s, [ qw( list ) ], "$script list" );
 
 BEGIN { $tests++; }
-run_ok( $s, [ qw( list -a ) ], 'run list -a' );
+run_ok( $s, [ qw( list -a ) ], "$script list -a" );
 
