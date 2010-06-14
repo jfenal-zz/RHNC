@@ -143,6 +143,10 @@ sub new {
 
 =head2 create
 
+Create an organisation
+
+Required parameters : name, login, password, prefix, firstname,
+lastname, email, usepam.
 
 =cut
 
