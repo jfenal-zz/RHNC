@@ -19,11 +19,12 @@
 use strict;
 use warnings;
 use lib qw( . lib lib/RHNC );
+use Cwd qw( abs_path ) ;
 
 use Test::More;    # last test to print
 my $script = 'rhnc-channel';
 
-eval "use Test::Script";
+eval "use Test::Script::Run";
 plan skip_all => "Test::Script::Run required for testing $script" if $@;
 
 my $s;
@@ -31,20 +32,19 @@ for my $d ( qw( . script ../script ) ) {
     $s = "$d/$script" if -f "$d/$script";
 }
 
+$s = abs_path $s;
+
 my $tests;
 plan tests => $tests;
 
 BEGIN { $tests++; }
 ok( defined $s, "script to test found : $s");
 
-BEGIN { $tests++; }
-script_compiles( $s, "$s compiles" );
-
-=pod
-my ( $return, $stdout, $stderr );
+my ( $rc, $stdout, $stderr );
 
 BEGIN { $tests++; }
-( $return, $stdout, $stderr ) = run_script( $s, [ 'list' ] );
-is( $return, 0, "rcode : $return" );
+run_ok( $s, [ qw( list ) ], 'run list' );
 
-=cut
+BEGIN { $tests++; }
+run_ok( $s, [ qw( list -a ) ], 'run list -a' );
+
