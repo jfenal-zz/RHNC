@@ -48,3 +48,9 @@ run_ok( $s, [ qw( list ) ], "$script list" );
 BEGIN { $tests++; }
 run_ok( $s, [ qw( list -r) ], "$script list -r" );
 
+BEGIN { $tests++; }
+run_ok( $s, [ qw( list -v) ], "$script list -v" );
+
+BEGIN { $tests++; }
+run_ok( $s, [ qw( wrong command) ], "$script wrong command" );
+

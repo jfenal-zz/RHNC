@@ -337,7 +337,7 @@ sub list {
     my $res = $rhnc->call('systemgroup.listAllGroups');
     my @list;
 
-    foreach my $g (@list) {
+    foreach my $g ( @$res ) {
         my $sg = RHNC::SystemGroup->new(
             id           => $g->{id},
             name         => $g->{name},

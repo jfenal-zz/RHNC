@@ -245,17 +245,20 @@ if ( !defined $cmd ) {
     croak "Not command given, exiting...\n";
 }
 
-SWITCH: for ($cmd) {
+my %func = (
+    '\A (?: l | li | lis | list ) \z' => \&list,
+    '\A (?: get | getDetails | get_details ) \z' => \&get_details,
+    '\A destroy \z' => \&destroy,
 
-    #    /create/  && create(@args) && last SWITCH;
-    m/\A (?: l | li | lis | list ) \z/imxs
-      && ( $rc = list(@args) )
-      && last SWITCH;
-    m/\A (?: get | getDetails | get_details ) \z/imxs
-      && get_details(@args)
-      && last SWITCH;
+);
 
-    #    /destroy/ && destroy(@args) && last SWITCH;
+SWITCH: foreach my $c ($cmd) {
+    foreach my $re ( keys %func ) {
+        if ( $c =~ m/$re/imxs ) {
+            $rc = $func{$re}->(@args);
+            last SWITCH;
+        }
+    }
 }
 
 exit $rc;

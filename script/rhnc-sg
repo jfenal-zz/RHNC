@@ -44,10 +44,9 @@ sub create {
     carp "not implemented yet";
     # FIXME : this cannot work as it is. Add argument parsing here
     # using Getopt::Long
-    my $rc = RHNC::Channel->create( rhnc => $rhnc, @args );
+    my $rc = RHNC::SystemGroup->create( rhnc => $rhnc, @args );
 
-    return 1 if !$rc;
-    return 0;
+    return $rc ? 0 : 1;
 }
 
 sub destroy {
@@ -55,9 +54,9 @@ sub destroy {
 
     carp "not implemented yet";
     foreach my $kname (@args) {
-        my $chan = RHNC::Channel->get( $rhnc, $kname );
-        if ( defined $chan ) {
-            $chan->delete( $rhnc, $kname );
+        my $sg = RHNC::SystemGroup->get( $rhnc, $kname );
+        if ( defined $sg ) {
+            $sg->delete( $rhnc, $kname );
         }
     }
 
@@ -66,25 +65,25 @@ sub destroy {
 
 =head2 gd|get_details
 
-Print detailed information about the given channel(s).
+Print detailed information about the given systemgroup(s).
 
 =cut
 
 sub get_details {
     my @args = @_;
 
-    my $chan;
-    while ( $chan = shift @args ) {
-        print "$chan:\n";
-        my $channel = RHNC::Channel::get( $rhnc, $chan );
-        foreach my $k ( sort ( keys %{$channel} ) ) {
+    my $sg;
+    while ( $sg = shift @args ) {
+        print "$sg:\n";
+        my $systemgroup = RHNC::SystemGroup::get( $rhnc, $sg );
+        foreach my $k ( sort ( keys %{$systemgroup} ) ) {
             next if $k eq 'rhnc';
             if ( $k eq 'packages' ) {
-                print "  $k: " . $channel->packages() . "\n";
+                print "  $k: " . $systemgroup->packages() . "\n";
             }
             else {
-                print "  $k : $channel->{$k}\n"
-                  if defined $channel->{$k};
+                print "  $k : $systemgroup->{$k}\n"
+                  if defined $systemgroup->{$k};
             }
         }
     }
@@ -101,28 +100,18 @@ List system groups
 sub list {
     my @args = @_;
     my ($verbose);
-    carp "not implemented yet";
 
     my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
 
-    my @channel = RHNC::Channel->list($rhnc);
+    my @systemgroup = RHNC::SystemGroup->list($rhnc);
 
     my $nr = 0;
-    foreach my $chan (@channel) {
-        my $parent = $chan->parent_label();
-        my $child  = $chan->label();
-        my $format;
-        if ( $parent eq q() ) {
-            $format = "%-48s: %5d pkg, %5d systems, %s, %-40s\n",;
-        }
-        else {
-            $format = "  %-46s: %5d pkg, %5d systems, %s, %-40s\n",;
-        }
+    foreach my $sg (@systemgroup) {
+        my $format = "%-40s (%d-%d): %5d systems, %s\n",;
         printf( $format,
-            $chan->label(),         $chan->packages(), $chan->systems(),
-            $chan->provider_name(), $chan->name(), );
+            $sg->name(), $sg->org_id(), $sg->id(), $sg->system_count(), $sg->description(), );
     }
-    print "\nTotal: " . scalar(@channel) . " Channels\n";
+    print "\nTotal: " . scalar(@systemgroup) . " system groups\n";
 
     return 0;
 }
@@ -135,11 +124,11 @@ List the systems inside a system group
 
 sub list_systems {
     my @args = @_;
-    my $channel;
+    my $systemgroup;
     carp "not implemented yet";
 
-    while ( $channel = shift @args ) {
-        my %systems = RHNC::Channel->list_systems( $rhnc, $channel );
+    while ( $systemgroup = shift @args ) {
+        my %systems = RHNC::SystemGroup->list_systems( $rhnc, $systemgroup );
         foreach my $system ( sort keys %systems ) {
             print "$system: $systems{$system}\n";
         }
