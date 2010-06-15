@@ -88,32 +88,20 @@ sub new {
     }
 
     return $self;
-
 }
 
 =head2 create
 
 Persist system group, create it if needed.
 
-  $sg = RHNC::SystemGroup->create((
-    rhnc        => $rhnc,
-    name        => 'name',
-    description => 'new group',
-  );
+  $sg = $sg->create();
 
 =cut
 
 sub create {
-    my ( $self, @args ) = @_;
+    my ( $self ) = @_;
 
-    #   $self = ref($self) || $self;
-    if ( !ref $self ) {
-        $self = RHNC::SystemGroup->new(@args);
-    }
-
-    my $res =
-      $self->{rhnc}
-      ->call( 'systemgroup.create', $self->{name}, $self->{description}, );
+    my $res = $self->{rhnc}->call( 'systemgroup.create', $self->{name}, $self->{description}, );
 
     return $self;
 }
@@ -127,12 +115,8 @@ sub destroy {
     my ( $self, @args ) = @_;
 
     #   $self = ref($self) || $self;
-    if ( ref $self eq 'RHNC::SystemGroup' ) {
-        my $res = $self->{rhnc} ->call( 'systemgroup.delete', $self->{name} );
-        return 1;
-    }
-
-    return;
+    my $res = $self->{rhnc} ->call( 'systemgroup.delete', $self->{name} );
+    return $res;
 }
 
 
@@ -145,7 +129,7 @@ sub destroy {
 sub name {
     my ( $self, @args ) = @_;
 
-    if ( ref $self eq 'RHNC::SystemGroup' && defined $self->{name} ) {
+    if ( defined $self->{name} ) {
         return $self->{name};
     }
 
@@ -162,13 +146,8 @@ sub name {
 sub id {
     my ( $self, @args ) = @_;
 
-    if ( ref $self eq 'RHNC::SystemGroup' && defined $self->{id} ) {
-        return $self->{id};
-    }
-
-    return;
+    return $self->{id};
 }
-
 
 
 =head2 description
@@ -180,12 +159,7 @@ sub id {
 sub description {
     my ( $self, @args ) = @_;
 
-    if ( ref $self eq 'RHNC::SystemGroup' && defined
-    $self->{description} ) {
-        return $self->{description};
-    }
-
-    return;
+    return $self->{description};
 }
 
 =head2 org_id
@@ -197,11 +171,7 @@ sub description {
 sub org_id {
     my ( $self, @args ) = @_;
 
-    if ( ref $self eq 'RHNC::SystemGroup' && defined $self->{org_id} ) {
-        return $self->{org_id};
-    }
-
-    return;
+    return $self->{org_id};
 }
 
 
@@ -214,11 +184,7 @@ sub org_id {
 sub system_count {
     my ( $self, @args ) = @_;
 
-    if ( ref $self eq 'RHNC::SystemGroup' && defined $self->{system_count} ) {
-        return $self->{system_count};
-    }
-
-    return;
+    return $self->{system_count};
 }
 
 =head2 add_servers
@@ -247,7 +213,7 @@ sub add_servers {
         if (RHNC::System::is_systemid( $s ) ) {
             push @system_id, $s;
         }
-        elsif ( ref $s eq 'RHNC::Ssytem' ) {
+        elsif ( ref $s eq 'RHNC::System' ) {
             push @system_id, $s->id();
         }
         else {
@@ -284,27 +250,21 @@ By name:
 =cut
 
 sub get {
-    my ( $self, $parm, $sg_id_or_name) = @_;
+    my ( $class, $rhnc, $sg_id_or_name) = @_;
 
-    my $rhnc;
-    if ( ref $self && defined $self->{rhnc} ) {    # OO context
-        $rhnc = $self->{rhnc};
-    }
-    else {                # package context
-        $rhnc = $parm;
-    }
+    carp "No rhnc client given " if ref( $rhnc ) ne 'RHNC::Session';
 
     my $res = $rhnc->call('systemgroup.getDetails', $sg_id_or_name );
     my @list;
 
-        my $sg = RHNC::SystemGroup->new(
-            id           => $res->{id},
-            name         => $res->{name},
-            description  => $res->{description},
-            org_id       => $res->{org_id},
-            system_count => $res->{system_count},
-        );
-        $rhnc->manage($sg);
+    my $sg = RHNC::SystemGroup->new(
+        id           => $res->{id},
+        name         => $res->{name},
+        description  => $res->{description},
+        org_id       => $res->{org_id},
+        system_count => $res->{system_count},
+    );
+    $rhnc->manage($sg);
 
     return $sg;
 
@@ -327,7 +287,7 @@ sub list {
     my ( $self, $parm ) = @_;
 
     my $rhnc;
-    if ( ref $self && defined $self->{rhnc} ) {    # OO context
+    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {    # OO context
         $rhnc = $self->{rhnc};
     }
     else {                # package context
@@ -338,7 +298,7 @@ sub list {
     my @list;
 
     foreach my $g ( @$res ) {
-        my $sg = RHNC::SystemGroup->new(
+        my $sg = __PACKAGE__->new(
             id           => $g->{id},
             name         => $g->{name},
             description  => $g->{description},
