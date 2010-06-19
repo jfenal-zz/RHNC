@@ -317,6 +317,78 @@ sub name {
     return $self->{name};
 }
 
+=head2 kickstart_profiles 
+
+Return number of kickstart_profiles in an org.
+
+=cut
+
+sub kickstart_profiles {
+    my $self = shift;
+
+    return $self->{kickstart_profiles};
+}
+
+=head2 systems
+
+Return number of systems in an org.
+
+=cut
+
+sub systems {
+    my $self = shift;
+
+    return $self->{systems};
+}
+
+=head2 active_users
+
+Return number of active_users in an org.
+
+=cut
+
+sub active_users {
+    my $self = shift;
+
+    return $self->{active_users};
+}
+
+=head2 activation_keys
+
+Return number of activation_keys in an org.
+
+=cut
+
+sub activation_keys {
+    my $self = shift;
+
+    return $self->{activation_keys};
+}
+
+=head2 system_groups
+
+Return number of system_groups in an org.
+
+=cut
+
+sub system_groups {
+    my $self = shift;
+
+    return $self->{system_groups};
+}
+
+=head2 configuration_channels
+
+Return number of configuration_channels in an org.
+
+=cut
+
+sub configuration_channels {
+    my $self = shift;
+
+    return $self->{configuration_channels};
+}
+
 =head2 prefix 
 
 Return prefix for org user
@@ -326,8 +398,7 @@ Return prefix for org user
 sub prefix {
     my $self = shift;
 
-    return $self->{prefix} if defined $self->{prefix};
-    return;
+    return $self->{prefix};
 }
 
 =head2 firstname 
@@ -339,8 +410,7 @@ Return firstname for org user
 sub firstname {
     my $self = shift;
 
-    return $self->{firstname} if defined $self->{firstname};
-    return;
+    return $self->{firstname};
 }
 
 =head2 lastname 
@@ -352,8 +422,7 @@ Return lastname for org user
 sub lastname {
     my $self = shift;
 
-    return $self->{lastname} if defined $self->{lastname};
-    return;
+    return $self->{lastname};
 }
 
 =head2 email 
@@ -365,8 +434,7 @@ Return email for org user
 sub email {
     my $self = shift;
 
-    return $self->{email} if defined $self->{email};
-    return;
+    return $self->{email};
 }
 
 =head2 usepam 
@@ -378,8 +446,7 @@ Return usepam for org user
 sub usepam {
     my $self = shift;
 
-    return $self->{usepam} if defined $self->{usepam};
-    return;
+    return $self->{usepam};
 }
 
 =head2 login 
@@ -391,8 +458,7 @@ Return login for organisation
 sub login {
     my $self = shift;
 
-    return $self->{login} if defined $self->{login};
-    return;
+    return $self->{login};
 }
 
 =head2 id 
@@ -404,8 +470,7 @@ Return id of organisation
 sub id {
     my $self = shift;
 
-    return $self->{id} if defined $self->{id};
-    return '';
+    return $self->{id};
 }
 
 =head2 list

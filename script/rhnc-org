@@ -165,7 +165,7 @@ sub get {
         active_users activation_keys system_groups )
       )
     {
-        print "$i: $org->{$i}\n";
+        print "$i: " . $org->$i() . "\n";
     }
 
     return 0;
