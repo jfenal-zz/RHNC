@@ -99,8 +99,8 @@ my %properties = (
     id                     => [ 0, 0,                  undef, undef ],
     rhnc                   => [ 0, undef,              undef, undef ],
     name                   => [ 1, undef,              undef, undef ],
-    login                  => [ 0, undef,              undef, undef ],
-    password               => [ 0, undef,              undef, undef ],
+    login                  => [ 1, undef,              undef, undef ],
+    password               => [ 1, undef,              undef, undef ],
     firstname              => [ 0, 'John',             undef, undef ],
     lastname               => [ 0, 'Doe',              undef, undef ],
     usepam                 => [ 0, 0,                  undef, undef ],
@@ -125,7 +125,7 @@ sub new {
     my $self = {};
     bless $self, $class;
 
-    my %v = map { $_ => 0 } ( 'id', keys(%properties) );
+    my %v = map { $_ => 0 } ( keys(%properties) );
 
     my %p = validate( @args, \%v );
 
@@ -133,10 +133,9 @@ sub new {
         $self->{$i} = $p{$i};
     }
 
-    if (defined $self->{rhnc}) {
+    if ( defined $self->{rhnc} ) {
         $self->{rhnc}->manage($self);
     }
-
 
     return $self;
 }
@@ -151,17 +150,20 @@ lastname, email, usepam.
 =cut
 
 sub _missing_parameter {
-    my $parm = shift;
+    my ( $self, $parm ) = @_;
 
-    croak "Missing parameter $parm";
+    if ( !defined $properties{$parm}[DEFAULT] ) {
+        croak "Missing parameter $parm";
+    }
 
+    $self->{$parm} = $properties{$parm}[DEFAULT];
+    return $self->{$parm};
 }
 
 sub create {
     my ( $self, @args ) = @_;
 
     #    $self = ref($self) || $self;
-
     if ( !ref $self ) {
         $self = __PACKAGE__->new(@args);
     }
@@ -170,7 +172,7 @@ sub create {
       my $p (qw( name login password prefix firstname lastname email usepam))
     {
         if ( !defined $self->{$p} ) {
-            _missing_parameter($p);
+            $self->_missing_parameter($p);
         }
     }
     my $res = $self->{rhnc}->call(
@@ -184,10 +186,12 @@ sub create {
         $self->{email},
         $self->{usepam} ? $RHNC::_xmltrue : $RHNC::_xmlfalse,
     );
+    if ( defined $res ) {
+        $self->{id} = $res->{id};
 
-    $self->{id} = $res->{id};
-
-    return $self;
+        return $self;
+    }
+    return;
 }
 
 =head2 trust
@@ -222,7 +226,7 @@ Save modifications to the object. Name only. See also C<name()>.
 =cut
 
 sub save {
-    my ( $self ) = @_;
+    my ($self) = @_;
 
     # We can only save name for an organisation...
     $self->name( $self->{name} );
@@ -286,8 +290,6 @@ sub AUTOLOAD {
 }
 =cut
 
-
-
 =head2 name 
 
 Return name of organisation
@@ -343,7 +345,6 @@ sub firstname {
     return;
 }
 
-
 =head2 lastname 
 
 Return lastname for org user
@@ -357,7 +358,6 @@ sub lastname {
     return;
 }
 
-
 =head2 email 
 
 Return email for org user
@@ -370,7 +370,6 @@ sub email {
     return $self->{email} if defined $self->{email};
     return;
 }
-
 
 =head2 usepam 
 
@@ -430,6 +429,7 @@ sub list {
     my $rhnc;
 
     if ( ref $self eq 'RHNC::Kickstart' && defined $self->{rhnc} ) {
+
         # OO context, eg $ak-list
         $rhnc = $self->{rhnc};
     }
@@ -464,22 +464,22 @@ sub list {
     return \@orgs;
 }
 
-=head2 info
+=head2 get
 
 Return information about organisation.
 
 Can work in OO context if you have already an organisation at hand.
 
-    @orgs = $org->info();
+    @orgs = $org->get();
 
 More likely in package context :
 
-    $org = RHNC::Org->info( $RHNC, $name); # Need to specify a RHN client
-    $org = RHNC::Org->info( $RHNC, $id);   # Need to specify a RHN client
+    $org = RHNC::Org->get( $RHNC, $name); # Need to specify a RHN client
+    $org = RHNC::Org->get( $RHNC, $id);   # Need to specify a RHN client
 
 =cut
 
-sub info {
+sub get {
     my ( $self, @p ) = @_;
 
     my $rhnc;
@@ -491,8 +491,8 @@ sub info {
     }
     my $k = shift @p;
 
-    my $res = $rhnc->call('org.getDetails', $k);
-    my $o   = __PACKAGE__->new( %{$res} );
+    my $res = $rhnc->call( 'org.getDetails', $k );
+    my $o = __PACKAGE__->new( %{$res} );
 
     $rhnc->manage($o);
 
@@ -501,16 +501,15 @@ sub info {
 
 =head1 AUTHOR
 
-JÃ©rÃ´me Fenal, C<< <jfenal at redhat.com> >>
+Jérôme Fenal, C<< <jfenal at redhat.com> >>
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-rhn at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
+Please report any bugs or feature requests to C<bug-rhn at rt.cpan.org>,
+or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>. I will
+be notified, and then you'll automatically be notified of progress on
+your bug as I make changes.
 
 =head1 SUPPORT
 
@@ -547,7 +546,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2009 JÃ©rÃ´me Fenal, all rights reserved.
+Copyright © 2009, 2010 Jérôme Fenal, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

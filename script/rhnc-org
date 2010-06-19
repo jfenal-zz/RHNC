@@ -7,6 +7,7 @@ use RHNC;
 use RHNC::Session;
 use Carp;
 use Getopt::Long qw(GetOptionsFromArray);
+use Pod::Usage;
 use Data::Dumper;
 
 use vars qw($rhnc);
@@ -17,7 +18,7 @@ rhnc-org - Operate on Satellite managed organisations
 
 =head1 USAGE
 
-  rhnc-ak command [options or parameters]
+  rhnc-org command [options or parameters]
 
 =head1 REQUIRED ARGUMENTS
 
@@ -30,18 +31,60 @@ The following commands are available:
 
 =cut
 
-=head2 create
+sub _usage {
+    pod2usage( -verbose => 2 );
+}
 
-TODO : not implemented yet
+=head2 create 
+
+Create a new organisation in Satellite.
+
+  rhnc-org create orgname -l login -p password -x prefix -f firstname \
+                          -n lastname -e email
+
+  rhnc-org create orgname --login login --password password --prefix prefix \
+                    --firstname firstname --lastname lastname --email email
 
 =cut
 
 sub create {
     my @args = @_;
+    my ( $orgname, $login, $password, $prefix, $firstname, $lastname, $email );
 
-    # FIXME : this cannot work as it is. Add argument parsing here
-    # using Getopt::Long
-    #    RHNC::Org->create( rhnc => $rhnc, @args );
+    my $result = GetOptionsFromArray(
+        \@args,
+        'l|login=s'      => \$login,
+        'p|password=s'   => \$password,
+        'x|prefix=s'     => \$prefix,
+        'f|firstname=s'  => \$firstname,
+        'n|lastname=s'   => \$lastname,
+        'e|email|mail=s' => \$email,
+      )
+      or pod2usage(
+        -exitval => 1,
+        -message => 'Wrong parameters for create',
+        -verbose => 1
+      );
+
+    # Get remaining args (org name)
+    $orgname = shift @args;
+
+    my $org = RHNC::Org->create(
+        rhnc      => $rhnc,
+        name      => $orgname,
+        login     => $login,
+        password  => $password,
+        prefix    => $prefix,
+        firstname => $firstname,
+        lastname  => $lastname,
+        email     => $email,
+        usepam    => 0,
+    );
+
+    croak "Creating org $orgname failed" if not defined $org;
+
+    print "Org $orgname created\n";
+    return 0;
 }
 
 =head2 destroy
@@ -58,15 +101,16 @@ sub destroy {
     foreach my $kname (@args) {
         my $org = RHNC::Org->get( $rhnc, $kname );
         if ( defined $org ) {
-            $org->delete( $rhnc, $kname );
+            $org->destroy( $rhnc, $kname );
         }
     }
 }
 
-=head2 list
+=head2 l|list
 
 List organisations
 
+  rhnc-org l
   rhnc-org list
   rhnc-org list -v  # not yet implemented
 
@@ -91,9 +135,37 @@ sub list {
     return 0;
 }
 
+=head2 get
+
+Get information about organisation, by name or id.
+
+  rhnc-org get orgname
+  rhnc-org get orgid
+
+=cut
+
+sub get {
+    my @args = @_;
+
+    my $orgname = shift @args;
+
+    my $org = RHNC::Org->get( $rhnc, $orgname );
+    delete $org->{rhnc};
+
+    foreach my $i (
+        qw( name id kickstart_profiles systems configuration_channels active_users activation_keys system_groups )
+      )
+    {
+        print "$i: $org->{$i}\n";
+    }
+
+    return 0;
+}
+
 =head1 OPTIONS
 
 See the various commands for options available.
+Use C<rhnc-org help> for more help.
 
 =head1 DIAGNOSTICS
 
@@ -129,11 +201,11 @@ See L<RHNC>.
 
 =head1 AUTHOR
 
-JÃ©rÃ´me Fenal L<< <jfenal@redhat.com> >>.
+Jérôme Fenal L<< <jfenal@redhat.com> >>.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2009, 2010 JÃ©rÃ´me Fenal, all rights reserved.
+Copyright 2009, 2010 Jérôme Fenal, all rights reserved.
 
 This module is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -144,20 +216,25 @@ $rhnc = RHNC::Session->new();
 
 my @args = @ARGV;
 my $cmd  = shift @args;
-my $rc = 0;
+my $rc   = 0;
 
 my %func = (
-    '^(?:l|li|lis|list)$' => \&list,
-    '^destroy$'           => \&destroy,
+    create  => \&create,
+    l       => \&list,
+    list    => \&list,
+    destroy => \&destroy,
+    h       => \&_usage,
+    help    => \&_usage,
+    get     => \&get,
 );
 
 SWITCH: foreach my $c ($cmd) {
-    next SWITCH if ! defined $c;
-    foreach my $re ( keys %func ) {
-        if ( $c =~ m/$re/oimxs ) {
-            $rc = $func{$re}->(@args);
-            last SWITCH;
-        }
+    if ( defined $func{$c} ) {
+        $rc = $func{$c}->(@args);
+        last SWITCH;
+    }
+    else {
+        pod2usage( -exitval => 0, -message => "No or unknown command given" );
     }
 }
 
