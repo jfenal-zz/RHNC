@@ -53,6 +53,9 @@ BEGIN { $tests++; }
 run_ok( $s, [qw( list )], "$script list" );
 
 BEGIN { $tests++; }
+run_ok( $s, [qw( list -v )], "$script list -v" );
+
+BEGIN { $tests++; }
 run_ok(
     $s,
     [qw( create test-org -l test-admin -p S3kr3t )],
@@ -65,3 +68,22 @@ run_ok( $s, [qw( get test-org )], "$script get test-org" );
 BEGIN { $tests++; }
 run_ok( $s, [qw( destroy test-org )], "$script destroy test-org" );
 
+# Test non existing org.
+BEGIN { $tests++; }
+( $rc, $stdout, $stderr ) = run_script( $s, [qw( get test-org )] );
+is( $rc, 1,  "$script get test-org (non existant)" );
+
+# Destroy non existing org.
+BEGIN { $tests++; }
+( $rc, $stdout, $stderr ) = run_script( $s, [qw( destroy test-org )] );
+is( $rc, 1,  "$script destroy test-org (non existant)" );
+
+# Not enough parameters for create
+BEGIN { $tests++; }
+( $rc, $stdout, $stderr ) = run_script( $s, [qw( create test-org )] );
+is( $rc, 1,  "$script create test-org (not enough parameters)" );
+
+# Wrong parameters for create
+BEGIN { $tests++; }
+( $rc, $stdout, $stderr ) = run_script( $s, [qw( create test-org -j nothing )] );
+is( $rc, 1,  "$script create test-org (wrong parameters)" );

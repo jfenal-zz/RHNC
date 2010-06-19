@@ -89,21 +89,29 @@ sub create {
 
 =head2 destroy
 
-Destroy an organisation;
+Destroy an organisation, by name or id.
 
-  rhnc-org destroy org-name
+  rhnc-org destroy orgname
+  rhnc-org destroy orgid
 
 =cut
 
 sub destroy {
     my @args = @_;
 
-    foreach my $kname (@args) {
-        my $org = RHNC::Org->get( $rhnc, $kname );
-        if ( defined $org ) {
-            $org->destroy( $rhnc, $kname );
-        }
+    foreach my $org_id_or_name (@args) {
+        my $org = RHNC::Org->get( $rhnc, $org_id_or_name );
+        $org->destroy( $rhnc );
+#        if ( defined $org ) {
+#            ... destroy
+#        }
+#        else {
+#            print "Non existing org : $org_id_or_name\n";
+#            return 1;
+#        }
     }
+
+    return 0;
 }
 
 =head2 l|list
@@ -153,7 +161,8 @@ sub get {
     delete $org->{rhnc};
 
     foreach my $i (
-        qw( name id kickstart_profiles systems configuration_channels active_users activation_keys system_groups )
+        qw( name id kickstart_profiles systems configuration_channels
+        active_users activation_keys system_groups )
       )
     {
         print "$i: $org->{$i}\n";

@@ -7,7 +7,7 @@ use Carp;
 
 use base 'RHNC';
 
-use vars qw( $AUTOLOAD %properties %valid_prefix );
+use vars qw( %properties %valid_prefix );
 
 =head1 NAME
 
@@ -253,42 +253,40 @@ sub destroy {
     return 1;
 }
 
-=pod
-
-sub AUTOLOAD {
-    my ( $self, $value ) = @_;
-    my $attr = $AUTOLOAD;
-    $attr =~ s{ \A .*:: }{}imxs;
-
-    if ( !defined $properties{$attr} ) {
-        return 0;
-    }
-
-    if ( defined $value ) {
-        if ( defined $properties{$attr}[TRANSFORM] ) {
-            $value = $properties{$attr}[TRANSFORM]($value);
-        }
-
-        if ( defined $properties{$attr}[VALIDATE] ) {
-            if ( $properties{$attr}[VALIDATE]($value) ) {
-                $self->{$attr} = $value;
-            }
-            else {
-                croak "'$value' cannot be validated for attribute '$attr'";
-            }
-        }
-        else {
-            $self->{$attr} = $value;
-        }
-    }
-
-    if ( !defined $self->{$attr} && defined $properties{$attr}[DEFAULT] ) {
-        $self->{$attr} = $properties{$attr}[DEFAULT];
-    }
-
-    return $self->{$attr};
-}
-=cut
+#
+#sub AUTOLOAD {
+#    my ( $self, $value ) = @_;
+#    my $attr = $AUTOLOAD;
+#    $attr =~ s{ \A .*:: }{}imxs;
+#
+#    if ( !defined $properties{$attr} ) {
+#        return 0;
+#    }
+#
+#    if ( defined $value ) {
+#        if ( defined $properties{$attr}[TRANSFORM] ) {
+#            $value = $properties{$attr}[TRANSFORM]($value);
+#        }
+#
+#        if ( defined $properties{$attr}[VALIDATE] ) {
+#            if ( $properties{$attr}[VALIDATE]($value) ) {
+#                $self->{$attr} = $value;
+#            }
+#            else {
+#                croak "'$value' cannot be validated for attribute '$attr'";
+#            }
+#        }
+#        else {
+#            $self->{$attr} = $value;
+#        }
+#    }
+#
+#    if ( !defined $self->{$attr} && defined $properties{$attr}[DEFAULT] ) {
+#        $self->{$attr} = $properties{$attr}[DEFAULT];
+#    }
+#
+#    return $self->{$attr};
+#}
 
 =head2 name 
 
