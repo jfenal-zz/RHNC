@@ -6,10 +6,21 @@ use RHNC;
 use RHNC::Session;
 use Carp;
 use Getopt::Long qw(GetOptionsFromArray);
+use Pod::Usage;
 use Data::Dumper;
 
-use vars qw($rhnc);
+use vars qw( $rhnc %entitlement );
 
+my %entitlement = (
+    m             => 'monitoring_entitled',
+    monitoring    => 'monitoring_entitled',
+    p             => 'provisioning_entitled',
+    provisioning  => 'provisioning_entitled',
+    vp            => 'virtualization_host_platform',
+    virt_platform => 'virtualization_host_platform',
+    v             => 'virtualization_host',
+    virt          => 'virtualization_host',
+);
 
 =head1 NAME
 
@@ -30,18 +41,62 @@ The following commands are available:
 
 =cut
 
+sub _usage {
+    pod2usage( -verbose => 2 );
+}
+
 =head2 create
 
-TODO : not implemented yet
+Create an activation key.
+
+  rhnc-ak create \
+    -e provisioning,monitoring,virt,virt_platform \
+     -d description,
+    [ -k key_name ],
+    [ -b base_channel ],
+    [ -l usage_limit ],
+    [ -u ],              # define as universal_default
 
 =cut
 
 sub create {
     my @args = @_;
 
-    # FIXME : this cannot work as it is. Add argument parsing here
-    # using Getopt::Long
-    RHNC::ActivationKey->create( rhnc => $rhnc, @args );
+    my ( $entitlements, $name, $base_channel, $usage_limit, $description,
+        $universal_default );
+
+    my $result = GetOptionsFromArray(
+        \@args,
+        'e|entitlement|entitlements=s' => \$entitlements,
+        'n|name=s'                     => \$name,
+        'd|description=s'              => \$description,
+        'b|base_channel=s'             => \$base_channel,
+        'l|usage_limit=i'              => \$usage_limit,
+        'u|universal_default'          => \$universal_default,
+    );
+
+    my @e = map { $entitlement{$_} } split( m/ [,] /imxs, $entitlements );
+
+    my $key = RHNC::ActivationKey->create(
+        rhnc => $rhnc,
+        ( defined $name ? ( key => $name ) : () ),
+        description => $description,
+        ( defined $base_channel ? ( base_channel => $base_channel ) : () ),
+        usage_limit => $usage_limit,
+        (
+            defined $universal_default
+            ? ( universal_default => $universal_default )
+            : ()
+        ),
+        entitlements => [@e],
+    );
+
+    if ( defined $key ) {
+        print "Created Activation Key " . $key->name() . "\n";
+        return 0;
+    }
+
+    return 1;
 }
 
 =head2 destroy
@@ -60,7 +115,7 @@ sub destroy {
     foreach my $kname (@args) {
         my $ak = RHNC::ActivationKey->get( $rhnc, $kname );
         if ( defined $ak ) {
-            $rc = $ak->delete( $rhnc, $kname );
+            $rc = $ak->destroy( $rhnc, $kname );
         }
     }
     return $rc ? 0 : 1;
@@ -106,6 +161,44 @@ sub list {
     return 0;
 }
 
+=head2 get
+
+Get information about activation key
+
+  rhnc-ak get activationkey-name
+  rhnc-ak get id
+
+=cut
+
+sub _print_ak {
+    my ($ak) = @_;
+
+    print "key: " . $ak->name();
+    print "\n  description: " . $ak->description();
+    print "\n  base_channel_label: " . $ak->base_channel_label();
+    print "\n  entitlements: " . join( ',', @{ $ak->entitlements() } );
+    print "\n  universal_default: " . $ak->universal_default();
+    print "\n  package_names: " . join( ',', @{ $ak->packages() } );
+    print "\n  usage_limit: " . $ak->usage_limit();
+    print "\n  server_group_ids: " . join( ',', @{ $ak->server_group_ids() } );
+    print "\n  child_channel_labels: "
+      . join( ',', @{ $ak->child_channel_labels() } );
+    print "\n";
+}
+
+sub get {
+    my @args = @_;
+    my ($verbose);
+
+    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
+
+    foreach my $k (@args) {
+        my $ak = RHNC::ActivationKey->get( $rhnc, $k );
+        _print_ak $ak;
+    }
+
+    return 0;
+}
 
 =head1 OPTIONS
 
@@ -145,11 +238,11 @@ See L<RHNC>.
 
 =head1 AUTHOR
 
-JÃ©rÃ´me Fenal L<< <jfenal@redhat.com> >>.
+Jérôme Fenal L<< <jfenal@redhat.com> >>.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2009, 2010 JÃ©rÃ´me Fenal, all rights reserved.
+Copyright 2009, 2010 Jérôme Fenal, all rights reserved.
 
 This module is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -163,8 +256,14 @@ under the same terms as Perl itself.
 $rhnc = RHNC::Session->new();
 
 my %func = (
-   '^(?:l|li|lis|list)$' => \&list, 
-   '^destroy$' => \&destroy,
+    c       => \&create,
+    create  => \&create,
+    l       => \&list,
+    list    => \&list,
+    destroy => \&destroy,
+    h       => \&_usage,
+    help    => \&_usage,
+    get     => \&get,
 );
 
 my @args = @ARGV;
@@ -172,12 +271,17 @@ my $cmd  = shift @args;
 my $rc;
 
 SWITCH: foreach my $c ($cmd) {
-    foreach my $re ( keys %func ) {
-        if ( $c =~ m/$re/imxs ) {
-            $rc = $func{$re}->(@args);
-            last SWITCH;
-        }
+    if ( defined $func{$c} ) {
+        $rc = $func{$c}->(@args);
+    }
+    else {
+        pod2usage(
+            -exitval => 0,
+            -message => "No or unknown command given"
+        );
+
     }
 }
 
 exit $rc;
+

@@ -62,8 +62,12 @@ if you don't export anything, such as for a purely object-oriented module.
 #
 # Accessors
 #
-my %entitlements = map { $_ => 1 }
-  qw(monitoring_entitled provisioning_entitled virtualization_host virtualization_host_platform);
+my %entitlements = map { $_ => 1 } qw(
+  monitoring_entitled
+  provisioning_entitled
+  virtualization_host
+  virtualization_host_platform
+);
 
 use constant {
     MANDATORY => 0,
@@ -73,8 +77,17 @@ use constant {
 };
 
 my %properties = (
-    rhnc               => [ 0, undef, undef, undef ],
-    key                => [ 0, q(),   undef, undef ],
+    rhnc => [ 0, undef, undef, undef ],
+    key  => [
+        0,
+        sub {
+            my @t = ( 0 .. 9, 'a' .. 'f' );
+            my $l = scalar @t;
+            return join( '', map { $t[ rand $l ] } 1 .. 32 );
+        },
+        undef,
+        undef
+    ],
     description        => [ 1, undef, undef, undef ],
     base_channel_label => [ 0, q(),   undef, undef ],
     usage_limit        => [ 0, 0,     undef, undef ],
@@ -100,7 +113,12 @@ sub _setdefaults {
     my ( $self, @args ) = @_;
 
     foreach ( keys %properties ) {
-        $self->{$_} = $properties{$_}[DEFAULT];
+        if ( ref $properties{$_}[DEFAULT] eq 'CODE' ) {
+            $self->{$_} = $properties{$_}[DEFAULT]();
+        }
+        else {
+            $self->{$_} = $properties{$_}[DEFAULT];
+        }
     }
     return $self;
 }
@@ -112,20 +130,23 @@ sub new {
     my $self = {};
     bless $self, $class;
 
+    # populate object from defaults
+    $self->_setdefaults();
+
     my %v = map { $_ => 0 } ( keys %properties );
 
-    $self->_setdefaults();
+    # validate args given
     my %p = validate( @args, \%v );
 
-    # populate object from either @args or default
+    # populate object from @args
     for my $i ( keys %properties ) {
         if ( defined $p{$i} ) {
             $self->{$i} = $p{$i};
         }
     }
 
-    if ( ! ref($self->{universal_default}) ) {
-        if ( $self->{universal_default}  ) {
+    if ( !ref( $self->{universal_default} ) ) {
+        if ( $self->{universal_default} ) {
             $self->{universal_default} = $RHNC::_xmltrue;
         }
         else {
@@ -133,10 +154,7 @@ sub new {
         }
     }
 
-    # FIXME : pas la bonne façon de savoir si on veut les créer...
-    # peut-être pas la chose à faire par défaut, même...
     if ( defined $self->{rhnc} ) {
-        $self->create();
         $self->{rhnc}->manage($self);
     }
 
@@ -144,6 +162,8 @@ sub new {
 }
 
 =head2 name
+
+Return activation key name (key).
 
     $name = $ak->name;
 
@@ -153,7 +173,10 @@ sub name {
     my ( $self, @p ) = @_;
 
     if ( !defined $self->{key} ) {
-        croak 'key not defined';
+        delete $self->{rhnc};
+
+        print STDERR Dumper $self;
+        croak "Key name not defined";
     }
 
     return $self->{key};
@@ -175,10 +198,9 @@ sub description {
     return $self->{description};
 }
 
-
 =head2 universal_default
 
-  $universal_default = $ak->universal_default;
+  $is_default = $ak->universal_default;
 
 =cut
 
@@ -191,10 +213,113 @@ sub universal_default {
     return;
 }
 
+=head2 base_channel_label
+
+  $label = $ak->base_channel_label;
+
+=cut
+
+sub base_channel_label {
+    my ( $self, @p ) = @_;
+
+    if ( defined $self->{base_channel_label} ) {
+        return $self->{base_channel_label};
+    }
+    return;
+}
+
+=head2 entitlements
+
+  $entitlements = $ak->entitlements;
+
+=cut
+
+sub entitlements {
+    my ( $self, @p ) = @_;
+
+    if ( defined $self->{entitlements} ) {
+        return $self->{entitlements};
+    }
+    return [];
+}
+
+=head2 server_group_ids
+
+  $server_group_ids = $ak->server_group_ids;
+
+=cut
+
+sub server_group_ids {
+    my ( $self, @p ) = @_;
+
+    if ( defined $self->{server_group_ids} ) {
+        return $self->{server_group_ids};
+    }
+    return \[];
+}
+
+=head2 child_channel_labels
+
+  $child_channel_labels = $ak->child_channel_labels;
+
+=cut
+
+sub child_channel_labels {
+    my ( $self, @p ) = @_;
+
+    if ( defined $self->{child_channel_labels} ) {
+        return $self->{child_channel_labels};
+    }
+    return \[];
+}
+
+=head2 usage_limit
+
+  $usage_limit = $ak->usage_limit;
+
+=cut
+
+sub usage_limit {
+    my ( $self, @p ) = @_;
+
+    if ( defined $self->{usage_limit} ) {
+        return $self->{usage_limit};
+    }
+    return 0;
+}
+
+=head2 packages
+
+  $universal_default = $ak->entitlements;
+
+=cut
+
+sub packages {
+    my ( $self, @p ) = @_;
+
+    if ( defined $self->{package_names} ) {
+        return $self->{package_names};
+    }
+    return \[];
+}
+
 =head2 create
 
+Create a new activation key.
+
     $ak->create();
-    $ak = RHNC::ActivationKey->create( @parms );
+    $ak = RHNC::ActivationKey->create(
+        rhnc               => $rhnc,
+        key                => $keyname,       # optional or can be empty
+        description        => $description,
+        base_channel_label => $channel,       # optional or can be empty
+        universal_default  => $bool,
+        entitlements       => [
+            qw( monitoring_entitled provisioning_entitled
+              virtualization_host virtualization_host_platform )
+        ],
+        usage_limit => $bool,
+    );
 
 =cut
 
@@ -209,6 +334,10 @@ sub create {
 
     if ( !ref $self ) {
         $self = __PACKAGE__->new(@args);
+    }
+
+    if ( defined $self->{rhnc} ) {
+        $self->{rhnc}->manage($self);
     }
 
     foreach my $p (qw( )) {
@@ -254,14 +383,17 @@ sub list {
     my $rhnc;
 
     if ( ref $self eq 'RHNC::ActivationKey' && defined $self->{rhnc} ) {
+
         # OO context, eg $ak-list
         $rhnc = $self->{rhnc};
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
+
         # Called as RHNC::ActivationKey::List($rhnc)
         $rhnc = $self;
     }
-    elsif ( $self eq __PACKAGE__ && ref($p[0]) eq 'RHNC::Session' ) {
+    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+
         # Called as RHNC::ActivationKey->List($rhnc)
         $rhnc = shift @p;
     }
@@ -269,9 +401,9 @@ sub list {
         croak "No RHNC client given here";
     }
 
-    my $res = $rhnc->call( 'activationkey.listActivationKeys' );
-    
-#    print STDERR Dumper($res);
+    my $res = $rhnc->call('activationkey.listActivationKeys');
+
+    #    print STDERR Dumper($res);
     my @l;
     foreach my $o (@$res) {
         push @l, RHNC::ActivationKey->new($o);
@@ -289,14 +421,17 @@ sub get {
     my $rhnc;
 
     if ( ref $self eq 'RHNC::ActivationKey' && defined $self->{rhnc} ) {
+
         # OO context, eg $ak-list
         $rhnc = $self->{rhnc};
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
+
         # Called as RHNC::ActivationKey::List($rhnc)
         $rhnc = $self;
     }
     elsif ( $self eq __PACKAGE__ ) {
+
         # Called as RHNC::ActivationKey->List($rhnc)
         $rhnc = shift @p;
     }
