@@ -163,7 +163,6 @@ sub _missing_parameter {
 sub create {
     my ( $self, @args ) = @_;
 
-    #    $self = ref($self) || $self;
     if ( !ref $self ) {
         $self = __PACKAGE__->new(@args);
     }
