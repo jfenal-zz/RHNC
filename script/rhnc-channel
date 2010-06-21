@@ -8,6 +8,7 @@ use warnings;
 
 use lib qw( . .. lib ../lib );
 use RHNC;
+use RHNC::Channel;
 use Pod::Usage;
 use Carp;
 use Getopt::Long qw(GetOptionsFromArray);
@@ -32,6 +33,93 @@ currently offered, although this may come in the future.
 
 The following commands are available:
 
+=head2 create
+
+Create a new channel
+
+  rhnc-channel create label -n name -s summary -a arch
+  rhnc-channel create label -n name -s summary -a arch -p parent_channel_label
+
+=cut
+
+sub create {
+    my @args = @_;
+    my ( $label, $name, $summary, $arch, $parent );
+    my $result = GetOptionsFromArray(
+        \@args,
+        'n|name=s'    => \$name,
+        's|summary=s' => \$summary,
+        'a|arch=s'    => \$arch,
+        'p|parent=s'  => \$parent,
+      )
+      or pod2usage(
+        -exitval => 3,
+        -message => 'Wrong parameters for create',
+        -verbose => 1
+      );
+    $label = shift @args;
+    if ( !defined $label ) {
+        croak "No defined label ($label) to create a channel";
+    }
+
+    if ( !defined $name ) {
+        $name = $label;
+    }
+    if ( !defined $summary ) {
+        $summary = $label;
+    }
+
+    my $arch_ref = RHNC::Channel->list_arches($rhnc);
+
+    if ( !defined $arch_ref->{$arch} ) {
+        $arch = "channel-$arch";
+        if ( !defined $arch_ref->{$arch} ) {
+            croak "No valid architecture specified";
+        }
+    }
+
+    # TODO : validate parent channel existence
+
+    my $c = RHNC::Channel->create(
+        rhnc      => $rhnc,
+        label     => $label,
+        name      => $name,
+        summary   => $summary,
+        arch_name => $arch,
+        ( defined $parent ? ( parent_channel_label => $parent ) : () ),
+    );
+
+    if ( ref $c eq 'RHNC::Channel' ) {
+        print "Created channel : " . $c->label() . "\n";
+        return 0;
+    }
+    return 254;
+}
+
+=head2 destroy
+
+Destroy a channel
+
+  rhnc-channel destroy label [label ...]
+
+=cut
+
+sub destroy {
+    my @args = @_;
+
+    foreach my $chan (@args) {
+        my $chan = RHNC::Channel->get( $rhnc, $chan );
+        if ( defined $chan ) {
+            $chan->destroy();
+        }
+        else {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 =head2 add_packages
 
 TODO
@@ -44,66 +132,13 @@ sub add_packages {
     return;
 }
 
-sub create {
-    my @args = @_;
-
-    #my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
-    # FIXME : this cannot work as it is. Add argument parsing here
-    # using Getopt::Long
-    my $rc = RHNC::Channel->create( rhnc => $rhnc, @args );
-
-    return 1 if !$rc;
-    return 0;
-}
-
-sub destroy {
-    my @args = @_;
-
-    foreach my $kname (@args) {
-        my $chan = RHNC::Channel->get( $rhnc, $kname );
-        if ( defined $chan ) {
-            $chan->delete( $rhnc, $kname );
-        }
-    }
-
-    return 0;
-}
-
-=head2 gdp|get_detail_packages
-
-Print details for packages in the channel.
-
-=cut
-
-sub get_detail_packages {
-    my (@args) = @_;
-
-    foreach my $chan (@args) {
-        my $channel = RHNC::Channel::get( $rhnc, $chan );
-
-        print 'Packages for channel '
-          . $channel->label . ' ('
-          . $channel->name() . ")\n";
-        my @plist = $channel->list_packages();
-        @plist = sort {
-            "$a->{name}-$a->{version}-$a->{release}-$a->{arch_label}" cmp
-              "$b->{name}-$b->{version}-$b->{release}-$b->{arch_label}"
-        } @plist;
-
-        #@plist = sort { $a->{last_modified} cmp $b->{last_modified} } @plist;
-        foreach my $p (@plist) {
-            print "  $p->{name}-$p->{version}-$p->{release}-$p->{arch_label}: ";
-            print join ", ", map { "$_=$p->{$_}" } qw( id last_modified);
-            print "\n";
-        }
-    }
-
-    return 0;
-}
-
-=head2 gd|get_details
+=head2 get|gd|get_details
 
 Print detailed information about the given channel(s).
+
+  rhnc-channel gd channel
+  rhnc-channel get channel
+  rhnc-channel get_details channel
 
 =cut
 
@@ -113,16 +148,21 @@ sub get_details {
     my $chan;
     while ( $chan = shift @args ) {
         print "$chan:\n";
-        my $channel = RHNC::Channel::get( $rhnc, $chan );
-        foreach my $k ( sort ( keys %{$channel} ) ) {
-            next if $k eq 'rhnc';
-            if ( $k eq 'packages' ) {
-                print "  $k: " . $channel->packages() . "\n";
+        my $channel = RHNC::Channel->get( $rhnc, $chan );
+        if ( defined $channel ) {
+            foreach my $c ( sort ( keys %{$channel} ) ) {
+                next if $c eq 'rhnc';
+                if ( $c eq 'packages' ) {
+                    print "  $c: " . $channel->packages() . "\n";
+                }
+                else {
+                    print "  $c : $channel->{$c}\n"
+                      if defined $channel->{$c};
+                }
             }
-            else {
-                print "  $k : $channel->{$k}\n"
-                  if defined $channel->{$k};
-            }
+        }
+        else {
+            croak "Channel $chan does not exist";
         }
     }
 
@@ -148,33 +188,49 @@ system subscribed.
 
 sub list {
     my @args = @_;
-    my ($verbose, $all);
+    my ( $verbose, $all );
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, 'all|a' => \$all, );
+    my $result = GetOptionsFromArray(
+        \@args,
+        'verbose|v' => \$verbose,
+        'all|a'     => \$all,
+    );
 
     my @channel = RHNC::Channel->list($rhnc);
 
     my $nr = 0;
+
+    # sort { $a->{label} cmp $b->{label} }
     foreach my $chan (@channel) {
         my $systems = $chan->systems();
-        my $parent = $chan->parent_label();
-        my $child  = $chan->label();
+        my $parent  = $chan->parent_label();
         my $format;
 
-        if ( $systems != 0 || $all) {
-            if ( $parent eq q() ) {
-                $format = "%-48s: %5d pkg, %5d systems, %s, %-40s\n",;
+        if ( $systems != 0 || $all ) {
+            if ($verbose) {
+                if ( $parent eq q() ) {
+                    $format = "%-48s: %5d pkg, %5d systems, %s, %-40s\n",;
+                }
+                else {
+                    $format = "  %-46s: %5d pkg, %5d systems, %s, %-40s\n",;
+                }
+                printf( $format,
+                    $chan->label(),   $chan->packages(),
+                    $chan->systems(), $chan->provider_name(),
+                    $chan->name(), );
             }
             else {
-                $format = "  %-46s: %5d pkg, %5d systems, %s, %-40s\n",;
+                if ( $parent ne q() ) {
+                    print q(  );
+                }
+                print $chan->label() . "\n";
             }
-            printf( $format,
-                $chan->label(),         $chan->packages(), $chan->systems(),
-                $chan->provider_name(), $chan->name(), );
         }
     }
-    print "\nTotal: " . scalar(@channel) . " Channels\n";
 
+    if ($verbose) {
+        print "\nTotal: " . scalar(@channel) . " Channels\n";
+    }
     return 0;
 }
 
@@ -187,11 +243,11 @@ Prints a list of available arches.
 sub list_arches {
     my @args = @_;
 
-    my %arches = RHNC::Channel->list_arches($rhnc);
+    my $arch_ref = RHNC::Channel->list_arches($rhnc);
 
     print "Arches available: \n";
-    foreach my $a ( keys %arches ) {
-        print "$a: $arches{$a}\n";
+    foreach my $a ( keys %$arch_ref ) {
+        print "$a: $arch_ref->{$a}\n";
     }
 
     return 0;
@@ -206,6 +262,7 @@ List all available errata in the channel(s)
 sub list_errata {
     my @args = @_;
     my $channel;
+
     while ( $channel = shift @args ) {
         my %errata = RHNC::Channel->list_errata( $rhnc, $channel );
         foreach my $erratum ( sort keys %errata ) {
@@ -217,48 +274,59 @@ sub list_errata {
     return 0;
 }
 
-=head2 llp|list_last_packages
-
-TODO
-
-=cut
-
-sub list_latest_packages {
-    my @args = @_;
-    my $label_or_id;
-
-    while ( $label_or_id = shift @args ) {
-        my $chan = RHNC::Channel::get( $rhnc, $label_or_id );
-        my @pkglist = $chan->latest_packages();
-
-        print 'Latest packages for channel ' . $chan->label() . "\n";
-        foreach my $pkg (@pkglist) {
-            print
-"$pkg->{name}-$pkg->{version}-$pkg->{release}-$pkg->{arch_label}: $pkg->{id}\n";
-        }
-    }
-
-    return 0;
-}
-
 =head2 lp|list_packages
 
 List packages (NVRA) in the channel(s)
+
+  rhnc-channel lp channel       # list latest packages NVRA
+  rhnc-channel lp -a channel    # list all packages NVRA
+  rhnc-channel lp -v channel    # list latest packages NVRA and pkg id
+  rhnc-channel lp -av channel   # list all packages NVRA and pkg id
 
 =cut
 
 sub list_packages {
     my @args = @_;
     my $label_or_id;
+    my ( $verbose, $all ) = ( 0, 0 );
+
+    my $result = GetOptionsFromArray(
+        \@args,
+        'verbose|v' => \$verbose,
+        'all|a'     => \$all,
+      )
+      or pod2usage(
+        -exitval => 3,
+        -message => 'Wrong parameters for list_packages',
+        -verbose => 1
+      );
 
     while ( $label_or_id = shift @args ) {
         my $chan = RHNC::Channel::get( $rhnc, $label_or_id );
-        my @pkglist = $chan->list_packages();
+        my @pkglist;
+        if ($all) {
+            @pkglist = @{ $chan->list_packages() };
+        }
+        else {
+            @pkglist = @{ $chan->latest_packages() };
 
-        print 'Packages for channel ' . $chan->label() . "\n";
+        }
+
+        if ($verbose) {
+            print 'Packages for channel ' . $chan->label() . "\n";
+        }
         foreach my $pkg (@pkglist) {
-            print
-"$pkg->{name}-$pkg->{version}-$pkg->{release}-$pkg->{arch_label}: $pkg->{id}\n";
+            print $pkg->{name} . '-'
+              . $pkg->{version} . '-'
+              . $pkg->{release} . '-'
+              . $pkg->{arch_label};
+            if ($verbose) {
+                print ": $pkg->{id}";
+            }
+            if ($all) {
+                print ", $pkg->{last_modified}";
+            }
+            print "\n";
         }
     }
 
@@ -349,49 +417,45 @@ under the same terms as Perl itself.
 =cut
 
 package main;
+
 #
 # Main
 #
+my %func = (
+    ap            => \&add_packages,
+    addpkg        => \&add_packages,
+    add_package   => \&add_packages,
+    add_packages  => \&add_packages,
+    c             => \&create,
+    create        => \&create,
+    d             => \&destroy,
+    destroy       => \&destroy,
+    get           => \&get_details,
+    gd            => \&get_details,
+    get_details   => \&get_details,
+    l             => \&list,
+    list          => \&list,
+    la            => \&list_arches,
+    list_arches   => \&list_arches,
+    le            => \&list_errata,
+    list_errata   => \&list_errata,
+    lp            => \&list_packages,
+    list_packages => \&list_packages,
+    ls            => \&list_systems,
+    list_systems  => \&list_systems,
+    rp            => \&rm_packages,
+    rm_packages   => \&rm_packages,
+);
 
 my @args = @ARGV;
 my $cmd  = shift @args;
-my $rc   = 0;
+my $rc   = 249;
 
-if ( !defined $cmd ) {
-    print STDERR "No command given, exiting...\n";
-    exit 0;
-#    pod2usage( -verbose => 2, -message => "No command given, exiting...\n", -exitval => 0);
+if ( defined $cmd && defined $func{$cmd} ) {
+    $rhnc = RHNC::Session->new();
+    $rc   = $func{$cmd}->(@args);
+    exit $rc;
 }
 
-$rhnc = RHNC::Session->new();
-#print "API version : ", $rhnc->apiversion(), " | ";
-#print "Org ID : ",      $rhnc->org_id(),     "\n";
-
-my %func = (
-    '^(?:ap|AddPackages|add_packages)$'               => \&add_packages,
-    '^(?:c|Create)$'                                  => \&create,
-    '^(?:d|Destroy)$'                                 => \&destroy,
-    '^(?:gdp|GetDetailPackages|get_detail_packages)$' => \&get_detail_packages,
-    '^(?:gd|GetDetails|get_details)$'                 => \&get_details,
-    '^(?:l|li|lis|list)$'                             => \&list,
-    '^(?:la|ListArches|list_arches)$'                 => \&list_arches,
-    '^(?:le|ListErrata|list_errata)$'                 => \&list_errata,
-    '^(?:lp|ListPackages|list_packages)$'             => \&list_packages,
-    '^(?:ls|ListSystems|list_systems)$'               => \&list_systems,
-    '^(?:rp|RmPackages|rm_packages)$'                 => \&rm_packages,
-    '^(?:llp|ListLatestPackages|list_latest_packages)$' =>
-      \&list_latest_packages,
-);
-
-SWITCH: foreach my $c ($cmd) {
-    foreach my $re ( keys %func ) {
-        if ( $c =~ m/$re/imxs ) {
-            $rc = $func{$re}->(@args);
-            last SWITCH;
-        }
-    }
-}
-
-
-exit $rc;
+pod2usage( -exitval => 0, -message => "No or unknown command given" );
 

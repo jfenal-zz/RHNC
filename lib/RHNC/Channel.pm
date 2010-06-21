@@ -9,7 +9,8 @@ use Carp;
 use Data::Dumper;
 
 use vars qw( %properties %valid_prefix );
-our @EXPORTS = qw( %properties );
+use Exporter;
+our @EXPORT_OK = qw( $VERSION %properties $arch_ref );
 
 =head1 NAME
 
@@ -53,11 +54,12 @@ use constant {
     TRANSFORM => 3,
 };
 
-my %arch_label = map { $_ => 1 } qw(
-  channel-ia32    channel-ia64    channel-sparc   channel-alpha
-  channel-s390    channel-s390x   channel-iSeries channel-pSeries
-  channel-x86_64  channel-ppc     channel-sparc-sun-solaris
-  channel-i386-sun-solaris);
+our $arch_ref;
+
+# channel-ia32    channel-ia64    channel-sparc   channel-alpha
+# channel-s390    channel-s390x   channel-iSeries channel-pSeries
+# channel-x86_64  channel-ppc     channel-sparc-sun-solaris
+# channel-i386-sun-solaris
 
 my %properties = (
     rhnc                 => [ 0, undef, undef, undef ],
@@ -104,7 +106,7 @@ sub _setdefaults {
 sub _missing_parameter {
     my ($parm) = @_;
 
-    croak "Missing parameter $parm";
+    confess "Missing parameter $parm";
 }
 
 =head2 new
@@ -173,13 +175,14 @@ sub list_arches {
         $rhnc = shift @p;
     }
     else {
-        croak "No RHNC client given here";
+        confess "No RHNC client given here";
     }
 
     my $res = $rhnc->call("channel.software.listArches");
 
     my %arches = map { $_->{label} => $_->{name} } @{$res};
-    return %arches;
+    $arch_ref = \%arches;
+    return $arch_ref;
 }
 
 =head2 list_errata
@@ -219,7 +222,7 @@ sub list_errata {
         $id_or_name = shift @p;
     }
     else {
-        croak "No RHNC client given here";
+        confess "No RHNC client given here";
     }
 
     my $res = $rhnc->call( 'channel.software.listErrata', $id_or_name );
@@ -228,49 +231,47 @@ sub list_errata {
     return %errata;
 }
 
+=head2 list_packages
+
+Return the list of packages in the channel.
+
+  $packages = $ch->list_packages();
+
+=cut
+
+sub list_packages {
+    my ($self) = @_;
+
+    if ( !defined $self->{list_packages} && defined $self->{rhnc} ) {
+        $self->{list_packages} =
+          $self->{rhnc}
+          ->call( 'channel.software.listAllPackages', $self->label() );
+        $self->{packages} = scalar( @{ $self->{list_packages} } );
+    }
+
+    return $self->{list_packages};
+}
+
 =head2 latest_packages
 
 Returns the list of latest_packages for the channels specified.
 
-  my @latest_packages_list = RHNC::Channel::list_latest_packages($rhnc, $channel);
-  my @latest_packages_list = RHNC::Channel->list_latest_packages($rhnc, $channel);
-  my @latest_packages_list = $channel->list_latest_packages();
+  my $latest_packages = $channel->latest_packages();
 
 =cut
 
 sub latest_packages {
-    my ( $self, @p ) = @_;
+    my ($self) = @_;
     my $rhnc;
     my $id_or_name;
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
-        # OO context, eg $ch->list_latest_packages
-        $rhnc       = $self->{rhnc};
-        $id_or_name = shift @p;
-        if ( !defined $id_or_name ) {
-            $id_or_name = $self->label();
-        }
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Channel::list_latest_packages($rhnc)
-        $rhnc       = $self;
-        $id_or_name = shift @p;
-    }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Channel->list_latest_packages($rhnc)
-        $rhnc       = shift @p;
-        $id_or_name = shift @p;
-    }
-    else {
-        croak "No RHNC client given here";
+    if ( !defined $self->{latest_packages} && defined $self->{rhnc} ) {
+        $self->{latest_packages} =
+          $self->{rhnc}
+          ->call( 'channel.software.listLatestPackages', $self->label() );
     }
 
-    my $res = $rhnc->call( 'channel.software.listLatestPackages', $id_or_name );
-
-    return @{$res};
+    return $self->{latest_packages};
 }
 
 =head2 list_systems
@@ -310,7 +311,7 @@ sub list_systems {
         $id_or_name = shift @p;
     }
     else {
-        croak "No RHNC client given here";
+        confess "No RHNC client given here";
     }
 
     my $res =
@@ -322,6 +323,8 @@ sub list_systems {
 
 =head2 name
 
+Return channel name
+
   $name = $ch->name;
 
 =cut
@@ -330,7 +333,7 @@ sub name {
     my ( $self, @p ) = @_;
 
     if ( !defined $self->{name} ) {
-        croak 'name not defined';
+        confess 'name not defined';
     }
 
     return $self->{name};
@@ -346,13 +349,15 @@ sub label {
     my ( $self, @p ) = @_;
 
     if ( !defined $self->{label} ) {
-        croak 'label not defined';
+        confess 'label not defined';
     }
 
     return $self->{label};
 }
 
 =head2 parent_label
+
+Return parent label.
 
   $label = $ch->parent_label;
 
@@ -375,6 +380,8 @@ sub parent_label {
 
 =head2 arch
 
+Return channel architecture.
+
   $arch = $ch->arch;
 
 =cut
@@ -387,7 +394,7 @@ sub arch {
             $self->{arch} = $self->{arch_name};
         }
         else {
-            croak "Arch not defined for this channel $self->{label}";
+            confess "Arch not defined for this channel $self->{label}";
         }
     }
 
@@ -395,6 +402,8 @@ sub arch {
 }
 
 =head2 provider_name
+
+Return channel provider channel if set, empty string otherwise.
 
   $provider_name = $ch->provider_name;
 
@@ -408,27 +417,6 @@ sub provider_name {
     }
 
     return q();
-}
-
-=head2 list_packages
-
-Return the list of packages in the channel.
-
-  $packages = $ch->list_packages();
-
-=cut
-
-sub list_packages {
-    my ( $self, @p ) = @_;
-
-    if ( !defined $self->{list_packages} && defined $self->{rhnc} ) {
-        $self->{list_packages} =
-          $self->{rhnc}
-          ->call( 'channel.software.listAllPackages', $self->label() );
-        $self->{packages} = scalar( @{ $self->{list_packages} } );
-    }
-
-    return $self->{list_packages};
 }
 
 =head2 packages
@@ -467,6 +455,17 @@ sub systems {
 
 =head2 create
 
+Create a new channel
+
+  $c = RHNC::Channel->create(
+      rhnc                 => $rhnc,
+      label                => $label,
+      name                 => $name,
+      summary              => $summary,
+      arch_name            => $arch,
+      parent_channel_label => $parent,
+  );
+
 =cut
 
 sub create {
@@ -486,7 +485,7 @@ sub create {
         }
     }
 
-    croak 'No RHNC client to persist to, exiting'
+    confess 'No RHNC client to persist to, exiting'
       if !defined $self->{rhnc};
 
     my $res;
@@ -495,8 +494,7 @@ sub create {
       ->call( 'channel.software.create', $self->{label}, $self->{name},
         $self->{summary}, $self->{arch_name}, $self->{parent_channel_label},
       );
-    croak "Create $self->{label} did not work" if !defined $res;
-    $self->{key} = $res;
+    confess "Create $self->{label} did not work" if !defined $res;
 
     return $self;
 }
@@ -508,11 +506,9 @@ sub create {
 sub destroy {
     my ( $self, @args ) = @_;
 
-    my $res = $self->{rhnc}->call( 'channel.software.delete', $self->{label} );
+    my $res = $self->{rhnc}->call( 'channel.software.delete', $self->label() );
 
-    undef $self;
-
-    return 1;
+    return $res;
 }
 
 =head2 list
@@ -545,7 +541,7 @@ sub list {
         $rhnc = shift @p;
     }
     else {
-        croak "No RHNC client given here";
+        confess "No RHNC client given here";
     }
 
     # 1st, query all channels
@@ -607,24 +603,27 @@ sub get {
     elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
 
         # Called as RHNC::Channel->get($rhnc)
-        $rhnc = shift @p;
+        $rhnc       = shift @p;
+        $id_or_name = shift @p;
     }
     else {
-        croak "No RHNC client given";
+        confess "No RHNC client given";
     }
 
     if ( !defined $id_or_name ) {
-        croak "No channel id or name specified in get";
+        confess "No channel id or name specified in get";
     }
 
     my $res = $rhnc->call( 'channel.software.getDetails', $id_or_name );
 
-    my $channel = __PACKAGE__->new( %{$res} );
+    if ( defined $res ) {
+        my $channel = __PACKAGE__->new( %{$res} );
+        $channel->packages();
 
-    $channel->packages();
-    $rhnc->manage($channel);
-
-    return $channel;
+        $rhnc->manage($channel);
+        return $channel;
+    }
+    return;
 }
 
 =head1 DIAGNOSTICS
