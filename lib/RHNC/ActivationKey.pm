@@ -420,7 +420,7 @@ sub get {
     my ( $self, @p ) = @_;
     my $rhnc;
 
-    if ( ref $self eq 'RHNC::ActivationKey' && defined $self->{rhnc} ) {
+    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
 
         # OO context, eg $ak-list
         $rhnc = $self->{rhnc};
