@@ -154,3 +154,8 @@ BEGIN { $tests++; }
   run_script( $s, [qw( get such-a-random-channel-name )], );
 ok( $return_code != 0, "$script get non-existant channel" );
 
+BEGIN { $tests++; }
+( $return_code, $stdout, $stderr ) =
+  run_script( $s, [qw( such_a_random_command )], );
+ok( $return_code != 0, "$script unknown command" );
+
