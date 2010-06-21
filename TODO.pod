@@ -1,3 +1,8 @@
+rhnc-ak :
+- add channels to subscribe
+- add packages.arch to package list
+- toggle univ_default ?
+- change entitlements
 
 =head1 Quick TODO list.
 
