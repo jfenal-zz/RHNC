@@ -220,7 +220,7 @@ sub universal_default {
 =cut
 
 sub base_channel_label {
-    my ( $self, @p ) = @_;
+    my ($self) = @_;
 
     if ( defined $self->{base_channel_label} ) {
         return $self->{base_channel_label};
@@ -235,7 +235,7 @@ sub base_channel_label {
 =cut
 
 sub entitlements {
-    my ( $self, @p ) = @_;
+    my ($self) = @_;
 
     if ( defined $self->{entitlements} ) {
         return $self->{entitlements};
@@ -250,7 +250,7 @@ sub entitlements {
 =cut
 
 sub server_group_ids {
-    my ( $self, @p ) = @_;
+    my ($self) = @_;
 
     if ( defined $self->{server_group_ids} ) {
         return $self->{server_group_ids};
@@ -265,7 +265,7 @@ sub server_group_ids {
 =cut
 
 sub child_channel_labels {
-    my ( $self, @p ) = @_;
+    my ($self) = @_;
 
     if ( defined $self->{child_channel_labels} ) {
         return $self->{child_channel_labels};
@@ -280,7 +280,7 @@ sub child_channel_labels {
 =cut
 
 sub usage_limit {
-    my ( $self, @p ) = @_;
+    my ($self) = @_;
 
     if ( defined $self->{usage_limit} ) {
         return $self->{usage_limit};
@@ -295,7 +295,7 @@ sub usage_limit {
 =cut
 
 sub packages {
-    my ( $self, @p ) = @_;
+    my ($self) = @_;
 
     if ( defined $self->{package_names} ) {
         return $self->{package_names};
@@ -444,11 +444,41 @@ sub get {
 
     my $res = $rhnc->call( 'activationkey.getDetails', $k );
 
-    my $ak = __PACKAGE__->new( %{$res} );
+    if (defined $res) {
+        my $ak = __PACKAGE__->new( %{$res} );
+        $rhnc->manage($ak);
+        return $ak;
+    }
+    return;
+}
 
-    $rhnc->manage($ak);
+=head2 as_string
 
-    return $ak;
+Returns a printable string to describe activation key.
+
+    print $ak->as_string;
+
+=cut
+
+sub as_string {
+    my ($self) = @_;
+
+    my $output;
+
+    $output = "key: " . $self->name();
+    $output .= "\n  description: " . $self->description();
+    $output .= "\n  base_channel_label: " . $self->base_channel_label();
+    $output .= "\n  entitlements: " . join( ',', @{ $self->entitlements() } );
+    $output .= "\n  universal_default: " . $self->universal_default();
+    $output .= "\n  package_names: " . join( ',', @{ $self->packages() } );
+    $output .= "\n  usage_limit: " . $self->usage_limit();
+    $output .=
+      "\n  server_group_ids: " . join( ',', @{ $self->server_group_ids() } );
+    $output .= "\n  child_channel_labels: "
+      . join( ',', @{ $self->child_channel_labels() } );
+    $output .= "\n";
+
+    return $output;
 }
 
 =head1 DIAGNOSTICS

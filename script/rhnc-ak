@@ -81,7 +81,7 @@ sub create {
         rhnc => $rhnc,
         ( defined $name ? ( key => $name ) : () ),
         description => $description,
-        ( defined $base_channel ? ( base_channel => $base_channel ) : () ),
+        ( defined $base_channel ? ( base_channel_label => $base_channel ) : () ),
         usage_limit => $usage_limit,
         (
             defined $universal_default
@@ -91,12 +91,10 @@ sub create {
         entitlements => [@e],
     );
 
-    if ( defined $key ) {
-        print "Created Activation Key " . $key->name() . "\n";
-        return 0;
-    }
+    # RHNC::ActivationKey->create croaks if create did not work
+    print "Created activation key : " . $key->name() . "\n";
 
-    return 1;
+    return 0;
 }
 
 =head2 destroy
@@ -153,7 +151,7 @@ sub list {
         $isre = 1
           if ( $desc =~ /Kickstart re-activation|-activation du kickstart/ );
         next AK if $isre && !$reactivationkey;
-        printf( "%-36s : %s\n", $ak->name(), $ak->description() );
+        printf( "%-34s : %s\n", $ak->name(), $ak->description() );
         print Dumper $ak if $verbose;
     }
     print "\n" . scalar(@akl) . " activation or reactivation keys\n";
@@ -170,22 +168,6 @@ Get information about activation key
 
 =cut
 
-sub _print_ak {
-    my ($ak) = @_;
-
-    print "key: " . $ak->name();
-    print "\n  description: " . $ak->description();
-    print "\n  base_channel_label: " . $ak->base_channel_label();
-    print "\n  entitlements: " . join( ',', @{ $ak->entitlements() } );
-    print "\n  universal_default: " . $ak->universal_default();
-    print "\n  package_names: " . join( ',', @{ $ak->packages() } );
-    print "\n  usage_limit: " . $ak->usage_limit();
-    print "\n  server_group_ids: " . join( ',', @{ $ak->server_group_ids() } );
-    print "\n  child_channel_labels: "
-      . join( ',', @{ $ak->child_channel_labels() } );
-    print "\n";
-}
-
 sub get {
     my @args = @_;
     my ($verbose);
@@ -194,9 +176,8 @@ sub get {
 
     foreach my $k (@args) {
         my $ak = RHNC::ActivationKey->get( $rhnc, $k );
-        _print_ak $ak;
+        print $ak->as_string;
     }
-
     return 0;
 }
 
@@ -271,7 +252,7 @@ my $cmd  = shift @args;
 my $rc;
 
 SWITCH: foreach my $c ($cmd) {
-    if ( defined $func{$c} ) {
+    if ( defined $c && defined $func{$c} ) {
         $rc = $func{$c}->(@args);
     }
     else {
@@ -279,9 +260,7 @@ SWITCH: foreach my $c ($cmd) {
             -exitval => 0,
             -message => "No or unknown command given"
         );
-
     }
 }
 
 exit $rc;
-

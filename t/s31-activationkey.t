@@ -59,19 +59,49 @@ BEGIN { $tests++; }
 run_ok( $s, [qw( list -v)], "$script list -v" );
 
 BEGIN { $tests++; }
-run_ok(
-    $s,
-    [qw( create -e v,m,p -d new-test-key -l 20 )],
-    "$script create (no name)"
-);
-
-BEGIN { $tests++; }
-run_ok(
-    $s,
-    [qw( create -n test-key -e v,m,p -d 'new test key2' -l 20 )],
-    "$script create -n test-key"
-);
-
-BEGIN { $tests++; }
 run_ok( $s, [qw( wrong command)], "$script wrong command" );
 
+my $newak;
+
+BEGIN { $tests++; }
+( $rc, $stdout, $stderr ) =
+  run_script( $s, [qw( create -e v,m,p -d new-test-key -l 20 )], );
+chomp $stdout;
+$newak = $1 if $stdout =~ m/ : \s* (.*) \z/imxs;
+ok( $rc, "$script create (no name)" );
+BEGIN { $tests++; }
+ok( $newak, "we have a name : <$newak>" );
+
+BEGIN { $tests++; }
+run_ok( $s, [ 'get', $newak ], "$script get $newak" );
+
+BEGIN { $tests++; }
+run_ok( $s, [ 'destroy', $newak ], "$script destroy $newak" );
+
+BEGIN { $tests++; }
+( $rc, $stdout, $stderr ) = run_script(
+    $s,
+    [
+        qw( create -n test-key -e v,m,p -u -d ),
+        'new test key2',
+        qw( -l 20 -b rhel-i386-server-5)
+    ],
+);
+chomp $stdout;
+undef $newak;
+$newak = $1 if $stdout =~ m/ : \s* (.*) \z/imxs;
+ok( $rc, "$script create -n test-key" );
+
+BEGIN { $tests++; }
+ok( $newak, "we have a name : <$newak>" );
+
+BEGIN { $tests++; }
+run_ok( $s, [ 'get', $newak ], "$script get $newak" );
+
+BEGIN { $tests++; }
+run_ok( $s, [ 'destroy', $newak ], "$script destroy $newak" );
+
+BEGIN { $tests++; }
+( $rc, $stdout, $stderr )=
+run_script( $s, [ 'destroy', 'such-a-random-key-name' ]);
+ok($rc != 0, "$script destroy non-existant key" );

@@ -238,7 +238,7 @@ my %func = (
 );
 
 SWITCH: foreach my $c ($cmd) {
-    if ( defined $func{$c} ) {
+    if ( defined $c && defined $func{$c} ) {
         $rc = $func{$c}->(@args);
         last SWITCH;
     }
