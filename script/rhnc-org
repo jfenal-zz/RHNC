@@ -31,10 +31,6 @@ The following commands are available:
 
 =cut
 
-sub _usage {
-    pod2usage( -verbose => 2 );
-}
-
 =head2 create 
 
 Create a new organisation in Satellite.
@@ -61,7 +57,7 @@ sub create {
         'e|email|mail=s' => \$email,
       )
       or pod2usage(
-        -exitval => 1,
+        -exitval => 3,
         -message => 'Wrong parameters for create',
         -verbose => 1
       );
@@ -225,7 +221,7 @@ $rhnc = RHNC::Session->new();
 
 my @args = @ARGV;
 my $cmd  = shift @args;
-my $rc   = 0;
+my $rc   = 255;
 
 my %func = (
     create  => \&create,
@@ -237,15 +233,10 @@ my %func = (
     get     => \&get,
 );
 
-SWITCH: foreach my $c ($cmd) {
-    if ( defined $c && defined $func{$c} ) {
-        $rc = $func{$c}->(@args);
-        last SWITCH;
-    }
-    else {
-        pod2usage( -exitval => 0, -message => "No or unknown command given" );
-    }
+if ( defined $cmd && defined $func{$cmd} ) {
+    $rc = $func{$cmd}->(@args);
+    exit $rc;
 }
 
-exit $rc;
+pod2usage( -exitval => 0, -message => "No or unknown command given" );
 
