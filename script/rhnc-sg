@@ -32,50 +32,121 @@ currently offered, although this may come in the future.
 
 The following commands are available:
 
-=head2 add_packages
+=cut
+
+sub _usage {
+    pod2usage( -verbose => 2 );
+}
+
+=head2 add_systems
 
 TODO
 
 =cut
 
-sub create {
+sub add_systems {
     my @args = @_;
 
-    carp "not implemented yet";
+    my ( $name, $systemids, @system_ids );
+    my $result = GetOptionsFromArray(
+        \@args,
+        'systemids|s=s'   => \$systemids,
+    );
+
+    if ( ! defined $systemids ) {
+        # No systems to add...
+        return 0;
+    }
+
+    @system_ids = split( m/ [,] /imxs, $systemids );
+
+    my $res;
+    while ($name = shift @args) {
+        my $sg = RHNC::SystemGroup->get($rhnc, $name);
+        $res += $sg->add_systems( \@system_ids ) ? 0 : 1;
+    }
+    return $res;
+}
+
+=head2 create
+
+Create a new system group.
+
+  rhnc-sg create -d description -s system_id1,system_id2 system_group_name
+
+=cut
+
+sub create {
+    my @args = @_;
+    my ( $name, $description, $systemids, @system_ids );
+
+    my $result = GetOptionsFromArray(
+        \@args,
+        'description|d=s' => \$description,
+        'systemids|s=s'   => \$systemids,
+    );
+
+    $name = shift @args;
+
+    if ( !defined $name ) {
+        croak "No defined name ($name) to create a system group";
+    }
+
+    if ( !defined $description ) {
+        $description = $name;
+    }
+
+    if ( defined $systemids ) {
+        @system_ids = split( m/ [,] /imxs, $systemids );
+    }
+    else {
+        @system_ids = ();
+    }
+
     # FIXME : this cannot work as it is. Add argument parsing here
     # using Getopt::Long
-    my $rc = RHNC::SystemGroup->create( rhnc => $rhnc, @args );
+    my $rc = RHNC::SystemGroup->create(
+        rhnc        => $rhnc,
+        name        => $name,
+        description => $description,
+        system_ids  => \@system_ids,
+    );
 
     return $rc ? 0 : 1;
 }
 
+=head2 destroy
+
+Destroy (delete) a system group.
+
+=cut
+
 sub destroy {
     my @args = @_;
 
-    carp "not implemented yet";
     foreach my $kname (@args) {
         my $sg = RHNC::SystemGroup->get( $rhnc, $kname );
         if ( defined $sg ) {
-            $sg->delete( $rhnc, $kname );
+            $sg->destroy( $rhnc, $kname );
         }
     }
 
     return 0;
 }
 
-=head2 gd|get_details
+=head2 get|gd|get_details
 
 Print detailed information about the given systemgroup(s).
 
 =cut
 
-sub get_details {
+sub get {
     my @args = @_;
 
     my $sg;
     while ( $sg = shift @args ) {
         print "$sg:\n";
-        my $systemgroup = RHNC::SystemGroup::get( $rhnc, $sg );
+        my $systemgroup = RHNC::SystemGroup->get( $rhnc, $sg );
         foreach my $k ( sort ( keys %{$systemgroup} ) ) {
             next if $k eq 'rhnc';
             if ( $k eq 'packages' ) {
@@ -98,8 +169,8 @@ List system groups
 =cut
 
 sub list {
-    my @args = @_;
-    my ($verbose);
+    my @args    = @_;
+    my $verbose = 0;
 
     my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
 
@@ -107,11 +178,17 @@ sub list {
 
     my $nr = 0;
     foreach my $sg (@systemgroup) {
-        my $format = "%-40s (%d-%d): %5d systems, %s\n",;
-        printf( $format,
-            $sg->name(), $sg->org_id(), $sg->id(), $sg->system_count(), $sg->description(), );
+        if ($verbose) {
+            printf( "%-40s (%d-%d): %5d systems, %s\n",
+                $sg->name(), $sg->org_id(), $sg->id(), $sg->system_count(),
+                $sg->description(), );
+        }
+        else {
+            print $sg->name() . "\n";
+        }
     }
-    print "\nTotal: " . scalar(@systemgroup) . " system groups\n";
+    print "\nTotal: " . scalar(@systemgroup) . " system groups\n"
+      if $verbose;
 
     return 0;
 }
@@ -201,41 +278,45 @@ under the same terms as Perl itself.
 =cut
 
 package main;
+
 #
 # Main
 #
+
+$rhnc = RHNC::Session->new();
+
+my %func = (
+    help         => \&_usage,
+    c            => \&create,
+    create       => \&create,
+    d            => \&destroy,
+    destroy      => \&destroy,
+    get          => \&get,
+    gd           => \&get,
+    get_details  => \&get,
+    l            => \&list,
+    list         => \&list,
+    ls           => \&list_systems,
+    list_systems => \&list_systems,
+    as           => \&add_systems,
+    add_system   => \&add_systems,
+    add_systems  => \&add_systems,
+    rs           => \&rm_systems,
+    rm_system    => \&rm_systems,
+    rm_systems   => \&rm_systems,
+);
 
 my @args = @ARGV;
 my $cmd  = shift @args;
 my $rc   = 0;
 
-if ( !defined $cmd ) {
-    print STDERR "No command given, exiting...\n";
-    exit 0;
-#    pod2usage( -verbose => 2, -message => "No command given, exiting...\n", -exitval => 0);
-}
-
-$rhnc = RHNC::Session->new();
-
-my %func = (
-    '^(?:c|Create)$'                                  => \&create,
-    '^(?:d|Destroy)$'                                 => \&destroy,
-    '^(?:gd|GetDetails|get_details)$'                 => \&get_details,
-    '^(?:l|li|lis|list)$'                             => \&list,
-    '^(?:ls|ListSystems|list_systems)$'               => \&list_systems,
-    '^(?:rp|RmSystems|rm_systems)$'                 => \&rm_systems,
-    '^(?:llp|ListLatestPackages|list_latest_packages)$' =>
-      \&list_latest_packages,
-);
-
 SWITCH: foreach my $c ($cmd) {
-    foreach my $re ( keys %func ) {
-        if ( $c =~ m/$re/imxs ) {
-            $rc = $func{$re}->(@args);
-            last SWITCH;
-        }
+    if ( defined $c && defined $func{$c} ) {
+        $rc = $func{$c}->(@args);
+    }
+    else {
+        pod2usage( -exitval => 0, -message => "No or unknown command given" );
     }
 }
 
 exit $rc;
-

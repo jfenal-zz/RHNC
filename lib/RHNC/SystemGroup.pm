@@ -54,11 +54,13 @@ my %properties = (
     org_id       => [ 0, undef, undef, undef ],
     system_count => [ 0, undef, undef, undef ],
     rhnc         => [ 0, undef, undef, undef ],
+    system_ids => [ 0, [], undef, undef ],
 );
 
 =head2 new
 
 Create a new system group.
+No persistance is done on Satellite, see L<create>.
 
   $sg = RHNC::SystemGroup->new(
     rhnc        => $rhnc,
@@ -83,7 +85,7 @@ sub new {
         $self->{$i} = $p{$i};
     }
 
-    if (defined $self->{rhnc}) {
+    if ( defined $self->{rhnc} ) {
         $self->{rhnc}->manage($self);
     }
 
@@ -92,35 +94,61 @@ sub new {
 
 =head2 create
 
-Persist system group, create it if needed.
+Create and persist on Satellite a new system group.
 
-  $sg = $sg->create();
+  $sg = $sg->create(
+    name => $name,
+    description => $description,
+    system_ids => 
+  );
 
 =cut
 
 sub create {
-    my ( $self ) = @_;
+    my ( $self, @args ) = @_;
 
-    my $res = $self->{rhnc}->call( 'systemgroup.create', $self->{name}, $self->{description}, );
+    if ( !ref $self ) {
+        $self = __PACKAGE__->new(@args);
+    }
+
+    foreach my $p (qw(name description)) {
+        if ( !defined $self->{$p} ) {
+            _missing_parameter($p);
+        }
+
+    }
+    my $res =
+      $self->{rhnc}
+      ->call( 'systemgroup.create', $self->{name}, $self->{description}, );
+
+    if (defined $self->{system_ids}) {
+        $self->add_systems( $self->{system_ids} );
+        $self->{system_count} = scalar @{ $self->{system_ids} };
+    }
+    $self->{org_id}       = $self->{rhnc}->org_id;
 
     return $self;
 }
 
 =head2 destroy
 
+Destroy (delete) a system group from Satellite.
+
     $sg->destroy();
 
 =cut
+
 sub destroy {
     my ( $self, @args ) = @_;
 
     #   $self = ref($self) || $self;
-    my $res = $self->{rhnc} ->call( 'systemgroup.delete', $self->{name} );
+    my $res = $self->{rhnc}->call( 'systemgroup.delete', $self->{name} );
     return $res;
 }
 
-
 =head2 name
+
+Return system group's name.
 
    my $name = $sg->name();
 
@@ -136,8 +164,9 @@ sub name {
     return;
 }
 
-
 =head2 id
+
+Return system group id.
 
    my $id = $sg->id();
 
@@ -149,8 +178,9 @@ sub id {
     return $self->{id};
 }
 
-
 =head2 description
+
+Return system group description.
 
    my $description = $sg->description();
 
@@ -164,6 +194,8 @@ sub description {
 
 =head2 org_id
 
+Return system group organisation id.
+
    my $org_id = $sg->org_id();
 
 =cut
@@ -174,8 +206,9 @@ sub org_id {
     return $self->{org_id};
 }
 
-
 =head2 system_count
+
+Return number of systems in the system group.
 
    my $system_count = $sg->system_count();
 
@@ -187,53 +220,66 @@ sub system_count {
     return $self->{system_count};
 }
 
-=head2 add_servers
+=head2 add_systems
 
-    my $rc = $sg->add_servers( @profile_names, @profile_ids,
-    @RHNC::System );
+Add systems to the system group.
+
+    my $rc = $sg->add_systems( @profile_names, @profile_ids, @RHNC::System );
 
 =cut
-sub add_servers {
+
+sub add_systems {
     my ( $self, @args ) = @_;
     my @systems;
-    while (my $s = shift @args) {
-        if (ref $s eq 'ARRAY') {
+    while ( my $s = shift @args ) {
+        if ( ref $s eq 'ARRAY' ) {
             push @systems, @{$s};
         }
-        elsif (ref $s eq 'SCALAR') {
+        elsif ( ref $s eq 'SCALAR' ) {
             push @systems, $s;
         }
         else {
-            carp 'RHNC::SystemGroup::add_servers: should pass arrays or list of systems only, not ' . ref($s);
+            carp 'Should pass arrays or list of systems only, not ' . ref($s);
         }
     }
 
     my @system_id;
-    foreach my $s ( @systems ) {
-        if (RHNC::System::is_systemid( $s ) ) {
+    foreach my $s (@systems) {
+        if ( RHNC::System::is_systemid($s) ) {
             push @system_id, $s;
         }
         elsif ( ref $s eq 'RHNC::System' ) {
             push @system_id, $s->id();
         }
         else {
-            push @system_id, RHNC::System::id( $self->rhnc, $s);
+            push @system_id, RHNC::System->id( $self->{rhnc}, $s );
         }
     }
 
-    return;
+    my $res = 0;
+    if ( scalar @system_id ) {
+        $res = $self->{rhnc}->call(
+            'systemgroup.addOrRemoveSystems',
+            $self->{name},
+            \@system_id,
+            $RHNC::_xmltrue,    # add
+        );
+    }
+    return $res;
 }
 
 =head2 remove_servers
 
+TODO
+
     my $rc = $sg->remove_servers( @profile_names, @profile_ids );
 
 =cut
+
 sub remove_servers {
 
     carp 'not implemented yet !';
 }
-
 
 =head2 get
 
@@ -245,16 +291,16 @@ By id:
 
 By name:
 
-  $sg = RHNC::SystemGroup->get( $RHNC, $id );
+  $sg = RHNC::SystemGroup->get( $RHNC, $name );
 
 =cut
 
 sub get {
-    my ( $class, $rhnc, $sg_id_or_name) = @_;
+    my ( $class, $rhnc, $sg_id_or_name ) = @_;
 
-    carp "No rhnc client given " if ref( $rhnc ) ne 'RHNC::Session';
+    carp "No rhnc client given " if ref($rhnc) ne 'RHNC::Session';
 
-    my $res = $rhnc->call('systemgroup.getDetails', $sg_id_or_name );
+    my $res = $rhnc->call( 'systemgroup.getDetails', $sg_id_or_name );
     my @list;
 
     my $sg = RHNC::SystemGroup->new(
@@ -290,14 +336,14 @@ sub list {
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {    # OO context
         $rhnc = $self->{rhnc};
     }
-    else {                # package context
+    else {    # package context
         $rhnc = $parm;
     }
 
     my $res = $rhnc->call('systemgroup.listAllGroups');
     my @list;
 
-    foreach my $g ( @$res ) {
+    foreach my $g (@$res) {
         my $sg = __PACKAGE__->new(
             id           => $g->{id},
             name         => $g->{name},
@@ -318,12 +364,11 @@ Jérôme Fenal, C<< <jfenal at redhat.com> >>
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-rhn-session at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
+Please report any bugs or feature requests to C<bug-rhn-session at
+rt.cpan.org>, or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.
+I will be notified, and then you'll automatically be notified of
+progress on your bug as I make changes.
 
 =head1 SUPPORT
 
@@ -360,7 +405,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2009 Jérôme Fenal, all rights reserved.
+Copyright 2009,2010 Jérôme Fenal, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

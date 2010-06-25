@@ -20,13 +20,20 @@ BEGIN { $tests++ }
 is(
     $ak->description(),
     "Test activation key",
-    "description ok after new: " . $ak->description()
+    "description ok after create " . $ak->description()
 );
 my $key = $ak->name();
 
-$ak = RHNC::ActivationKey::get( $rhnc, $key );
+$ak = RHNC::ActivationKey->get( $rhnc, $key );
 BEGIN { $tests++ }
 isa_ok( $ak, 'RHNC::ActivationKey' );
+
+BEGIN { $tests++ }
+is(
+    $ak->description(),
+    "Test activation key",
+    "description ok after get " . $ak->description()
+);
 
 undef $ak;
 
@@ -63,6 +70,7 @@ ok( @list, 'Get list 3 : ' . scalar @list );
 
 my $k  = shift @list;
 my $kn = $k->name();
+diag("Testing key $kn");
 
 BEGIN { $tests++ }
 $ak = $ak->get($kn);

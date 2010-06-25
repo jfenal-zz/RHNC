@@ -24,7 +24,7 @@ use Cwd qw( abs_path ) ;
 use Test::More;    # last test to print
 my $script = 'rhnc-sg';
 
-eval "use Test::Script::Run";
+eval "use Test::Script::Run qw(:all)";
 plan skip_all => "Test::Script::Run required for testing $script" if $@;
 
 my $s;
@@ -43,5 +43,14 @@ ok( defined $s, "script to test found : $s");
 my ( $rc, $stdout, $stderr );
 
 BEGIN { $tests++; }
-run_ok( $s, [ qw( list ) ], "$script list" );
+run_ok( $s, [ 'list' ], "$script list");
 
+BEGIN { $tests++; }
+unlike(last_script_stdout(), qr{Total: \d+ system groups}ims, "$script list doesn't give Total");
+
+BEGIN { $tests++; }
+run_ok( $s, [ 'list', '-v' ], "$script list -v");
+#( $rc, $stdout, $stderr ) = run_script( $s, [ 'list', '-v' ]);
+
+BEGIN { $tests++; }
+like(last_script_stdout(), qr{Total: \d+ system groups}ims, "$script list -v gives Total");

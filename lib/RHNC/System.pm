@@ -74,8 +74,10 @@ sub is_systemid {
 #
 
 my %properties = (
+    rhnc              => [ 1, undef, undef, undef ],
     id                 => [ 0, undef, undef, undef ],
-    profile_name       => [ 1, undef, undef, undef ],
+    name               => [ 1, undef, undef, undef ],
+    profile_name       => [ 0, undef, undef, undef ],
     base_entitlement   => [ 1, undef, undef, undef ],
     addon_entitlements => [ 1, undef, undef, undef ],
     auto_update        => [ 0, undef, undef, undef ],
@@ -92,9 +94,15 @@ my %properties = (
     hostname           => [ 0, undef, undef, undef ],
     osa_status         => [ 0, undef, undef, undef ],
     lock_status        => [ 0, undef, undef, undef ],
+    last_checkin       => [ 0, undef, undef, undef ],
 );
 
 =head2 new
+
+Create a new RHNC::System class. 
+
+B<BEWARE>: One should not need to create a new one, besides B<get>ting
+it from Satellite directly.
 
 =cut
 
@@ -107,8 +115,14 @@ sub new {
 
     my %v = map { $_ => 0 } ( keys %properties );
 
-#    $self->_setdefaults();
+    #    $self->_setdefaults();
     my %p = validate( @args, \%v );
+
+    # Parameters standardization
+    if (defined $p{profile_name} && ! defined $p{name} ) {
+        $p{name} = $p{profile_name};
+        delete $p{profile_name};
+    }
 
     # populate object from either @args or
     # default
@@ -123,7 +137,9 @@ sub new {
 
 =head2 list
 
-Return a list of systems by id
+Return a hash of systems by id (keys being id, name, last_checkin).
+
+    $system_ref = RHNC::System->list;
 
 =cut
 
@@ -175,18 +191,41 @@ sub list {
 
 Return system's id.
 
+  $id = $s->id;
+
 =cut
 
 sub id {
     my ( $self, @args ) = @_;
+    my $rhnc;
 
-    return $self->{id};
+    if ( ref $self eq __PACKAGE__ ) {
+        print "Coucou 1\n";
+
+        return $self->{id};
+    }
+    elsif ( $self eq __PACKAGE__ ) {
+        $rhnc = shift @args;
+        my $system = shift @args;
+        $self = __PACKAGE__->get( $rhnc, $system );
+        return $self->{id};
+    }
+    elsif ( ref $self eq 'RHNC::Session' ) {
+        my $rhnc   = $self;
+        my $system = shift @args;
+        $self = __PACKAGE__->get( $rhnc, $system );
+        return $self->{id};
+    }
+    print "Coucou3\n";
+
+    return;
 }
-
 
 =head2 last_checkin
 
 Return system's last_checkin
+
+  $lc = $s->last_checkin;
 
 =cut
 
@@ -196,9 +235,50 @@ sub last_checkin {
     return $self->{last_checkin};
 }
 
-=head2 get
+=head2 search
 
 Get a system by profile name 
+
+=cut
+
+sub search {
+    my ( $self, @p ) = @_;
+    my ( $rhnc, $name );
+
+    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+
+        # OO context, eg $ch->list_systems
+        $rhnc = $self->{rhnc};
+    }
+    elsif ( ref $self eq 'RHNC::Session' ) {
+
+        # Called as RHNC::Channel::list_systems($rhnc)
+        $rhnc = $self;
+    }
+    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+
+        # Called as RHNC::Channel->list_systems($rhnc)
+        $rhnc = shift @p;
+    }
+    else {
+        croak "No RHNC client given here";
+    }
+    $name = shift @p;
+
+    my $res = $rhnc->call( 'system.searchByName', $name );
+
+    foreach my $s (@$res) {
+        if ($s->{name} eq $name) {
+            $self = RHNC::System->new( rhnc => $rhnc, %$s );
+            return $self;
+        }
+    }
+    return;
+}
+
+=head2 get
+
+Get a system by profile id 
 
 =cut
 
@@ -225,14 +305,19 @@ sub get {
         croak "No RHNC client given here";
     }
     $id_or_name = shift @p;
+    if ( $id_or_name !~ m{ \A \d+ \z }imxs ) {
+        # we do not have an Id, let's search by name
+        my $res = RHNC::System->search( $rhnc, $id_or_name );
+        $id_or_name = $res->{id};
+    }
+    my $res = $rhnc->call( 'system.getDetails', $id_or_name );
 
-    my $r = $rhnc->call( 'system.getDetails', $id_or_name );
-
-print Dumper $r;
-
-    $self = RHNC::System->new();
-    
-    
+    $self = RHNC::System->new( rhnc => $rhnc,  
+        name => $res->{name},
+        id => $res->{id},
+        (defined $res->{last_checkin} ?( last_checkin =>
+        $res->{last_checkin}->value() ) : () ),
+    );
 
     return $self;
 }
