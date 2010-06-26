@@ -1,8 +1,24 @@
+RHNC::SystemGroup->as_string
+RHNC::System->as_string
+RHNC::Kickstart->as_string
+RHNC::Kickstart->render
+
 rhnc-ak :
 - add channels to subscribe
 - add packages.arch to package list
 - toggle univ_default ?
 - change entitlements
+
+rhnc-sg
+- add systems from file
+- implement rm_systems
+- rm systems from file
+
+rhnc-channel
+- implement add packages
+- add packages from file
+- implement rm_packages
+- rm packages from file
 
 =head1 Quick TODO list.
 
