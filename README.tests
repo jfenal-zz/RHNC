@@ -1,0 +1,3 @@
+In order to run the test suite, the Satellite must have at least :
+- a few systems registered
+- one group, with systems inside (used in t/s21-sg.t)
