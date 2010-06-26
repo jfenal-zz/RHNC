@@ -41,8 +41,6 @@ plan tests => $tests;
 BEGIN { $tests++; }
 ok( defined $s, "script to test found : $s" );
 
-my ( $rc, $stdout, $stderr );
-
 BEGIN { $tests++; }
 run_ok( $s, [], "$script (no arg)" );
 
@@ -59,14 +57,13 @@ BEGIN { $tests++; }
 run_ok( $s, ['list'], "$script list" );
 
 BEGIN { $tests++; }
-$stdout = last_script_stdout();
 unlike(
-    $stdout,
+    last_script_stdout(),
     qr{Total: \d+ system groups}ims,
     "$script list doesn't give Total"
 );
 
-my @groups = split /\n/, $stdout;
+my @groups = split /\n/, last_script_stdout();
 my $biggroup = $groups[-1];
 
 BEGIN { $tests++; }
@@ -80,12 +77,65 @@ like(
 );
 
 BEGIN { $tests++; }
+run_ok( $s, [ 'list_systems', $biggroup ], "$script list_systems $biggroup" );
+my @systems = split /\n/, last_script_stdout();
+my $add_systems = join ',', @systems;
+
+BEGIN { $tests++; }
+run_ok( $s, [ 'get', $biggroup ], "$script get $biggroup" );
+
+BEGIN { $tests++; }
+like( last_script_stdout(), qr{ \A $biggroup : }msix, "$script get $biggroup dumps $biggroup" );
+
+
+
+BEGIN { $tests++; }
+run_not_ok( $s, [ 'create' ], "$script create");
+
+my $newgroup = 'xxxTestGroup'; # TODO : randomize name
+BEGIN { $tests++; }
 run_ok(
     $s,
-    [ 'create', 'xxxTestGroup', '-d', 'Test group' ],
-    "$script create xxxTestGroup (no systems)"
+    [ 'create', $newgroup, '-d', 'Test group' ],
+    "$script create $newgroup (no systems)"
 );
 
 BEGIN { $tests++; }
-run_ok( $s, [ 'destroy', 'xxxTestGroup' ], "$script destroy xxxTestGroup " );
+run_ok( $s, [ 'as', $newgroup, '-s', $add_systems ], "$script add_systems $newgroup -s $add_systems" );
+
+BEGIN { $tests++; }
+run_ok( $s, [ 'as', $newgroup, ], "$script add_systems $newgroup " );
+
+BEGIN { $tests++; }
+run_not_ok( $s, [ 'as', $newgroup, '-s'], "$script add_systems $newgroup -s" );
+
+BEGIN { $tests++; }
+run_ok( $s, [ 'ls', $newgroup ], "$script list_systems $newgroup" );
+my @added_systems = split /\n/, last_script_stdout();
+
+BEGIN { $tests++; }
+is( scalar @systems, scalar @added_systems, "same number of systems between $biggroup & $newgroup");
+
+BEGIN { $tests++; }
+run_ok( $s, [ 'destroy', $newgroup ], "$script destroy xxxTestGroup " );
+
+BEGIN { $tests++; }
+run_ok(
+    $s,
+    [ 'create', $newgroup, '-s', $add_systems ],
+    "$script create $newgroup -s $add_systems"
+);
+
+BEGIN { $tests++; }
+run_ok( $s, [ 'ls', $newgroup ], "$script list_systems $newgroup" );
+@added_systems = split /\n/, last_script_stdout();
+
+BEGIN { $tests++; }
+is( scalar @systems, scalar @added_systems, "same number of systems between $biggroup & $newgroup");
+
+BEGIN { $tests++; }
+run_ok( $s, [ 'destroy', $newgroup ], "$script destroy xxxTestGroup " );
+
+BEGIN { $tests++; }
+run_not_ok( $s, [ 'destroy', $newgroup ], "$script destroy xxxTestGroup now fails " );
 

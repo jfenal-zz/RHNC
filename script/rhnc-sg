@@ -51,7 +51,12 @@ sub add_systems {
     my @args = @_;
 
     my ( $name, $systemids, @system_ids );
-    my $result = GetOptionsFromArray( \@args, 'systemids|s=s' => \$systemids, );
+    my $result = GetOptionsFromArray( \@args, 'systemids|s=s' => \$systemids, )
+      or pod2usage(
+        -exitval => 3,
+        -message => 'Wrong parameters for add_systems',
+        -verbose => 1
+      );
 
     if ( !defined $systemids ) {
 
@@ -61,12 +66,13 @@ sub add_systems {
 
     @system_ids = split( m/ [,] /imxs, $systemids );
 
-    my $res;
+    my $rc = 0;
     while ( $name = shift @args ) {
         my $sg = RHNC::SystemGroup->get( $rhnc, $name );
-        $res += $sg->add_systems( \@system_ids ) ? 0 : 1;
+        my $res = $sg->add_systems( \@system_ids );
+        $rc += $res ? 0 : 1;
     }
-    return $res;
+    return $rc;
 }
 
 =head2 create
@@ -104,8 +110,6 @@ sub create {
         @system_ids = ();
     }
 
-    # FIXME : this cannot work as it is. Add argument parsing here
-    # using Getopt::Long
     my $rc = RHNC::SystemGroup->create(
         rhnc        => $rhnc,
         name        => $name,
@@ -197,6 +201,9 @@ sub list {
 
 List the systems inside a system group
 
+  rhnc-sg ls system_group_name [ system_group_name ... ]
+  rhnc-sg list_systems system_group_name [ system_group_name ... ]
+
 =cut
 
 sub list_systems {
@@ -205,8 +212,8 @@ sub list_systems {
 
     while ( $systemgroup = shift @args ) {
         my $sg = RHNC::SystemGroup->get( $rhnc, $systemgroup );
-        my $slist_ref = $sg->list_systems( $rhnc );
-        foreach my $s ( @$slist_ref  ) {
+        my $slist_ref = $sg->list_systems($rhnc);
+        foreach my $s (@$slist_ref) {
             print $s->name() . "\n";
         }
     }
