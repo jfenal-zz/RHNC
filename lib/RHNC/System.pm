@@ -74,7 +74,7 @@ sub is_systemid {
 #
 
 my %properties = (
-    rhnc              => [ 1, undef, undef, undef ],
+    rhnc               => [ 1, undef, undef, undef ],
     id                 => [ 0, undef, undef, undef ],
     name               => [ 1, undef, undef, undef ],
     profile_name       => [ 0, undef, undef, undef ],
@@ -119,7 +119,7 @@ sub new {
     my %p = validate( @args, \%v );
 
     # Parameters standardization
-    if (defined $p{profile_name} && ! defined $p{name} ) {
+    if ( defined $p{profile_name} && !defined $p{name} ) {
         $p{name} = $p{profile_name};
         delete $p{profile_name};
     }
@@ -221,6 +221,25 @@ sub id {
     return;
 }
 
+=head2 name
+
+Return system's profile name
+
+  $lc = $s->name;
+
+=cut
+
+sub name {
+    my ( $self, @args ) = @_;
+    
+    if (!defined $self->{name} && defined $self->{profile_name}) {
+        $self->{name} = $self->{profile_name};
+        delete $self->{profile_name};
+    }
+
+    return $self->{name};
+}
+
 =head2 last_checkin
 
 Return system's last_checkin
@@ -268,7 +287,7 @@ sub search {
     my $res = $rhnc->call( 'system.searchByName', $name );
 
     foreach my $s (@$res) {
-        if ($s->{name} eq $name) {
+        if ( $s->{name} eq $name ) {
             $self = RHNC::System->new( rhnc => $rhnc, %$s );
             return $self;
         }
@@ -306,17 +325,22 @@ sub get {
     }
     $id_or_name = shift @p;
     if ( $id_or_name !~ m{ \A \d+ \z }imxs ) {
+
         # we do not have an Id, let's search by name
         my $res = RHNC::System->search( $rhnc, $id_or_name );
         $id_or_name = $res->{id};
     }
     my $res = $rhnc->call( 'system.getDetails', $id_or_name );
 
-    $self = RHNC::System->new( rhnc => $rhnc,  
+    $self = RHNC::System->new(
+        rhnc => $rhnc,
         name => $res->{name},
-        id => $res->{id},
-        (defined $res->{last_checkin} ?( last_checkin =>
-        $res->{last_checkin}->value() ) : () ),
+        id   => $res->{id},
+        (
+            defined $res->{last_checkin}
+            ? ( last_checkin => $res->{last_checkin}->value() )
+            : ()
+        ),
     );
 
     return $self;

@@ -35,12 +35,15 @@ The following commands are available:
 =cut
 
 sub _usage {
-    pod2usage( -verbose => 2 );
+    pod2usage( -exit => 0, -verbose => 2 );
 }
 
 =head2 add_systems
 
-TODO
+Add systems to a system group.
+
+  rhnc-sg as -s system1,system2 system_group_name
+  rhnc-sg add_systems -s system1,system2 system_group_name
 
 =cut
 
@@ -48,12 +51,10 @@ sub add_systems {
     my @args = @_;
 
     my ( $name, $systemids, @system_ids );
-    my $result = GetOptionsFromArray(
-        \@args,
-        'systemids|s=s'   => \$systemids,
-    );
+    my $result = GetOptionsFromArray( \@args, 'systemids|s=s' => \$systemids, );
 
-    if ( ! defined $systemids ) {
+    if ( !defined $systemids ) {
+
         # No systems to add...
         return 0;
     }
@@ -61,8 +62,8 @@ sub add_systems {
     @system_ids = split( m/ [,] /imxs, $systemids );
 
     my $res;
-    while ($name = shift @args) {
-        my $sg = RHNC::SystemGroup->get($rhnc, $name);
+    while ( $name = shift @args ) {
+        my $sg = RHNC::SystemGroup->get( $rhnc, $name );
         $res += $sg->add_systems( \@system_ids ) ? 0 : 1;
     }
     return $res;
@@ -72,7 +73,7 @@ sub add_systems {
 
 Create a new system group.
 
-  rhnc-sg create -d description -s system_id1,system_id2 system_group_name
+  rhnc-sg create -d description -s system1,system2 system_group_name
 
 =cut
 
@@ -117,7 +118,9 @@ sub create {
 
 =head2 destroy
 
-Destroy (delete) a system group.
+Destroy (delete) a system group, or multiple ones.
+
+  rhnc-sg destroy system_group_name [system_group_name2 ...]
 
 =cut
 
@@ -149,13 +152,8 @@ sub get {
         my $systemgroup = RHNC::SystemGroup->get( $rhnc, $sg );
         foreach my $k ( sort ( keys %{$systemgroup} ) ) {
             next if $k eq 'rhnc';
-            if ( $k eq 'packages' ) {
-                print "  $k: " . $systemgroup->packages() . "\n";
-            }
-            else {
-                print "  $k : $systemgroup->{$k}\n"
-                  if defined $systemgroup->{$k};
-            }
+            print "  $k : $systemgroup->{$k}\n"
+              if defined $systemgroup->{$k};
         }
     }
 
@@ -177,7 +175,9 @@ sub list {
     my @systemgroup = RHNC::SystemGroup->list($rhnc);
 
     my $nr = 0;
-    foreach my $sg (@systemgroup) {
+    foreach
+      my $sg ( sort { $a->system_count() <=> $b->system_count() } @systemgroup )
+    {
         if ($verbose) {
             printf( "%-40s (%d-%d): %5d systems, %s\n",
                 $sg->name(), $sg->org_id(), $sg->id(), $sg->system_count(),
@@ -202,12 +202,12 @@ List the systems inside a system group
 sub list_systems {
     my @args = @_;
     my $systemgroup;
-    carp "not implemented yet";
 
     while ( $systemgroup = shift @args ) {
-        my %systems = RHNC::SystemGroup->list_systems( $rhnc, $systemgroup );
-        foreach my $system ( sort keys %systems ) {
-            print "$system: $systems{$system}\n";
+        my $sg = RHNC::SystemGroup->get( $rhnc, $systemgroup );
+        my $slist_ref = $sg->list_systems( $rhnc );
+        foreach my $s ( @$slist_ref  ) {
+            print $s->name() . "\n";
         }
     }
 

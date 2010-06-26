@@ -121,11 +121,11 @@ sub create {
       $self->{rhnc}
       ->call( 'systemgroup.create', $self->{name}, $self->{description}, );
 
-    if (defined $self->{system_ids}) {
+    if ( defined $self->{system_ids} ) {
         $self->add_systems( $self->{system_ids} );
         $self->{system_count} = scalar @{ $self->{system_ids} };
     }
-    $self->{org_id}       = $self->{rhnc}->org_id;
+    $self->{org_id} = $self->{rhnc}->org_id;
 
     return $self;
 }
@@ -220,6 +220,30 @@ sub system_count {
     return $self->{system_count};
 }
 
+=head2 list_systems
+
+Return list of systems in the system group.
+
+   my $list_ref = $sg->list_systems();
+
+=cut
+
+sub list_systems {
+    my ( $self, @args ) = @_;
+
+    my $srvlist_ref =
+      $self->{rhnc}->call( 'systemgroup.listSystems', $self->name() );
+    if ( !defined $self->{systemlist} ) {
+        my @slist;
+        foreach my $s (@$srvlist_ref) {
+            push @slist, RHNC::System->new($s);
+        }
+        $self->{systemlist} = \@slist;
+    }
+
+    return $self->{systemlist};
+}
+
 =head2 add_systems
 
 Add systems to the system group.
@@ -296,11 +320,30 @@ By name:
 =cut
 
 sub get {
-    my ( $class, $rhnc, $sg_id_or_name ) = @_;
+    my ( $self, @p ) = @_;
+    my ( $rhnc, $id_or_name );
 
-    carp "No rhnc client given " if ref($rhnc) ne 'RHNC::Session';
+    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
 
-    my $res = $rhnc->call( 'systemgroup.getDetails', $sg_id_or_name );
+        # OO context, eg $ch->get
+        $rhnc = $self->{rhnc};
+    }
+    elsif ( ref $self eq 'RHNC::Session' ) {
+
+        # Called as RHNC::SystemGroup::get($rhnc)
+        $rhnc = $self;
+    }
+    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+
+        # Called as RHNC::SystemGroup->get($rhnc)
+        $rhnc = shift @p;
+    }
+    else {
+        croak "No RHNC client given here";
+    }
+    $id_or_name = shift @p;
+
+    my $res = $rhnc->call( 'systemgroup.getDetails', $id_or_name );
     my @list;
 
     my $sg = RHNC::SystemGroup->new(
@@ -313,7 +356,6 @@ sub get {
     $rhnc->manage($sg);
 
     return $sg;
-
 }
 
 =head2 list
@@ -360,7 +402,7 @@ sub list {
 
 =head1 AUTHOR
 
-JÃ©rÃ´me Fenal, C<< <jfenal at redhat.com> >>
+Jérôme Fenal, C<< <jfenal at redhat.com> >>
 
 =head1 BUGS
 
@@ -405,7 +447,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2009,2010 JÃ©rÃ´me Fenal, all rights reserved.
+Copyright 2009,2010 Jérôme Fenal, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
