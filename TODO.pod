@@ -3,6 +3,21 @@ RHNC::System->as_string
 RHNC::Kickstart->as_string
 RHNC::Kickstart->render
 
+rhnc-user :
+- create rhnc-user
+- modify (setDetails)
+- add_user
+- del_user
+- list_user
+- disable_user
+- enable_user
+- add/remove default_system_group
+- add/remove assigned_system_group
+- add/remove role
+
+rhnc-org:
+- list_users
+
 rhnc-ak :
 - add channels to subscribe
 - add packages.arch to package list
