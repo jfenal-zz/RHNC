@@ -43,7 +43,7 @@ ok( defined $s, "script to test found : $s" );
 my ( $rc, $stdout, $stderr );
 
 BEGIN { $tests++; }
-run_ok( $s, [qw( )], "$script (no arg)" );
+run_ok( $s, [], "$script (no arg)" );
 
 BEGIN { $tests++; }
 ( $rc, $stdout, $stderr ) = run_script( $s, [qw( help )] );
@@ -102,6 +102,6 @@ BEGIN { $tests++; }
 run_ok( $s, [ 'destroy', $newak ], "$script destroy $newak" );
 
 BEGIN { $tests++; }
-( $rc, $stdout, $stderr )=
-run_script( $s, [ 'destroy', 'such-a-random-key-name' ]);
-ok($rc != 0, "$script destroy non-existant key" );
+( $rc, $stdout, $stderr ) =
+  run_script( $s, [ 'destroy', 'such-a-random-key-name' ] );
+ok( $rc != 0, "$script destroy non-existant key" );
