@@ -64,7 +64,6 @@ my %arch_canon = (
       sh sh3 sh4 sh4a xtensa)
 );
 
-
 =head2 list_arch_canon
 
   @list_arch = RHNC::Package::list_arch_canon;
@@ -100,7 +99,6 @@ sub list_arch_canon {
     return \@list;
 }
 
-
 =head2 split_package_name
 
   ( $name, $version, $release, $arch ) = split_package_name( 'kernel-doc-2.6.33.5-124.fc13.noarch' );
@@ -111,28 +109,28 @@ sub list_arch_canon {
 sub split_package_name {
     my ($p) = @_;
 
-    my $qrarch = '\.(' . join('|', keys %arch_canon) . ')$';
+    my $qrarch = '\.(' . join( '|', keys %arch_canon ) . ')$';
     $qrarch = qr($qrarch);
 
-    my ($name, $version, $release, $arch);
+    my ( $name, $version, $release, $arch );
 
     my @c;
     @c = split /\./, $p;
-    if (defined $arch_canon{$c[-1]} ) {
+    if ( defined $arch_canon{ $c[-1] } ) {
         $arch = pop @c;
     }
     $p = join '.', @c;
 
-    @c = split /-/, $p;
+    @c       = split /-/, $p;
     $release = pop @c;
     $version = pop @c;
 
     $name = join '-', @c;
 
-    return ($name, $version, $release, $arch);
+    return ( $name, $version, $release, $arch );
 }
 
-# 
+#
 # Methods
 #
 use constant {
@@ -143,16 +141,30 @@ use constant {
 };
 
 my %properties = (
-    id            => [ 0, undef, undef, undef ],
-    name          => [ 1, undef, undef, undef ],
-    version       => [ 1, undef, undef, undef ],
-    release       => [ 0, undef, undef, undef ],
-    epoch         => [ 0, undef, undef, undef ],
-    arch_label    => [ 0, undef, undef, undef ],
-    path          => [ 0, undef, undef, undef ],
-    provider      => [ 0, undef, undef, undef ],
-    last_modified => [ 0, undef, undef, undef ],
-    rhnc          => [ 0, undef, undef, undef ],
+    id                 => [ 0, undef, undef, undef ],
+    name               => [ 1, undef, undef, undef ],
+    version            => [ 1, undef, undef, undef ],
+    release            => [ 1, undef, undef, undef ],
+    epoch              => [ 0, undef, undef, undef ],
+    arch_label         => [ 1, undef, undef, undef ],
+    path               => [ 0, undef, undef, undef ],
+    provider           => [ 0, undef, undef, undef ],
+    last_modified      => [ 0, undef, undef, undef ],
+    file               => [ 0, undef, undef, undef ],
+    vendor             => [ 0, undef, undef, undef ],
+    last_modified_date => [ 0, undef, undef, undef ],
+    license            => [ 0, undef, undef, undef ],
+    providing_channels => [ 0, undef, undef, undef ],
+    size               => [ 0, undef, undef, undef ],
+    payload_size       => [ 0, undef, undef, undef ],
+    description        => [ 0, undef, undef, undef ],
+    path               => [ 0, undef, undef, undef ],
+    summary            => [ 0, undef, undef, undef ],
+    cookie             => [ 0, undef, undef, undef ],
+    md5sum             => [ 0, undef, undef, undef ],
+    build_date         => [ 0, undef, undef, undef ],
+    build_host         => [ 0, undef, undef, undef ],
+    rhnc               => [ 0, undef, undef, undef ],
 );
 
 =head2 new
@@ -218,19 +230,19 @@ sub get {
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
 
         # OO context, eg $ch->get
-        $rhnc = $self->{rhnc};
+        $rhnc       = $self->{rhnc};
         $id_or_name = $self->{id};
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
 
         # Called as RHNC::SystemGroup::get($rhnc)
-        $rhnc = $self;
+        $rhnc       = $self;
         $id_or_name = shift @p;
     }
     elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
 
         # Called as RHNC::SystemGroup->get($rhnc)
-        $rhnc = shift @p;
+        $rhnc       = shift @p;
         $id_or_name = shift @p;
     }
     else {
@@ -240,16 +252,13 @@ sub get {
     if ( !defined $id_or_name ) {
         croak "No package id or name given";
     }
-print STDERR "id_or_name : $id_or_name\n";
 
     if ( !is_packageid($id_or_name) ) {
-print STDERR "id_or_name is not an id : $id_or_name\n";
-        my $p = RHNC::Package->search( $rhnc, split_package_name( $id_or_name ) );
+        my $p = RHNC::Package->search( $rhnc, split_package_name($id_or_name) );
         $id_or_name = $p->id;
     }
 
-    my $res = $rhnc->call( 'package.getDetails', $id_or_name );
-    print Dumper $res;
+    my $res = $rhnc->call( 'packages.getDetails', $id_or_name );
 
     my $p = RHNC::Package->new(
         rhnc => $rhnc,
@@ -297,13 +306,13 @@ sub search {
     my $version = shift @p;
     my $release = shift @p;
     my $arch    = shift @p;
-    my $epoch   = q(); #shift @p;
+    my $epoch   = q();        #shift @p;
 
-    my $res = $rhnc->call( 'package.findByNvrea',
+    my $res = $rhnc->call( 'packages.findByNvrea',
         $name, $version, $release, $epoch, $arch );
 
-    if ( defined $res ) {
-        my $p = RHNC::Package->new( rhnc => $rhnc, %$res );
+    if ( defined $res && scalar( @$res ) == 1 ) {
+        my $p = RHNC::Package->get( $rhnc, $res->[0]{id} );
 
         return $p;
     }

@@ -62,3 +62,6 @@ like( last_script_stdout(), qr{ noarch }msix, "$script lac mentions noarch" );
 BEGIN { $tests++; }
 like( last_script_stdout(), qr{ i386 }msix, "$script lac mentions i386" );
 
+BEGIN { $tests++; }
+run_ok( $s, [ qw( get 1 ) ], "$script get 1");
+
