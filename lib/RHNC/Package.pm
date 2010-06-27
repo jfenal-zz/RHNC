@@ -120,7 +120,6 @@ sub split_package_name {
     @c = split /\./, $p;
     if (defined $arch_canon{$c[-1]} ) {
         $arch = pop @c;
-        print STDERR "we have an arch : $arch\n";
     }
     $p = join '.', @c;
 
