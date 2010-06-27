@@ -561,6 +561,14 @@ sub get {
     return $o;
 }
 
+=head2 list_users
+TODO
+
+=cut
+sub list_users {
+carp "not implemented yet";
+}
+
 =head1 AUTHOR
 
 Jérôme Fenal, C<< <jfenal at redhat.com> >>
