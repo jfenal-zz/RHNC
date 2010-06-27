@@ -3,6 +3,26 @@ RHNC::System->as_string
 RHNC::Kickstart->as_string
 RHNC::Kickstart->render
 
+rhnc-org:
+- list_users
+
+rhnc-ak :
+- add channels to subscribe
+- add packages.arch to package list
+- toggle univ_default ?
+- change entitlements
+
+rhnc-sg
+- add systems from file
+- rm systems from file
++ implement rm_systems : done
+
+rhnc-channel
+- implement add packages
+- add packages from file
+- implement rm_packages
+- rm packages from file
+
 rhnc-user :
 - create rhnc-user
 - modify (setDetails)
@@ -15,25 +35,6 @@ rhnc-user :
 - add/remove assigned_system_group
 - add/remove role
 
-rhnc-org:
-- list_users
-
-rhnc-ak :
-- add channels to subscribe
-- add packages.arch to package list
-- toggle univ_default ?
-- change entitlements
-
-rhnc-sg
-- add systems from file
-- implement rm_systems
-- rm systems from file
-
-rhnc-channel
-- implement add packages
-- add packages from file
-- implement rm_packages
-- rm packages from file
 
 =head1 Quick TODO list.
 
