@@ -12,14 +12,14 @@ use Carp;
 
 use Frontier::Client;
 use RHNC::Session;
+use RHNC::ActivationKey;
 use RHNC::Kickstart;
 use RHNC::KickstartTree;
 use RHNC::Org;
+use RHNC::Package;
 use RHNC::System;
 use RHNC::SystemGroup;
 use RHNC::Channel;
-use RHNC::ActivationKey;
-use Data::Dumper;
 
 our $_xmlfalse = Frontier::RPC2::Boolean->new(0);
 our $_xmltrue  = Frontier::RPC2::Boolean->new(1);
@@ -91,7 +91,7 @@ sub manage {
 
     if ( !defined $object->name() || $object->name() eq q{} ) {
         my @c = caller;
-        croak 'Object name not defined, call at ' . Dumper( \@c );
+        croak 'Object name not defined';
     }
 
     $self->{_managed}{ $object->name() } = \$object;
