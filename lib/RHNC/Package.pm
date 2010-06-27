@@ -3,10 +3,11 @@ package RHNC::Package;
 use warnings;
 use strict;
 use Params::Validate;
+use Data::Dumper;
 use Carp;
 
 use base qw( RHNC );
-use vars qw( $AUTOLOAD %properties %valid_prefix );
+use vars qw( %properties %arch_canon );
 
 =head1 NAME
 
@@ -27,10 +28,114 @@ our $VERSION = '0.01';
     my $foo = RHNC::Package->new();
     ...
 
-=head1 METHODS
+=head1 EXPORT
+
+None.
+L<is_packageid> is to be referenced by its full name.
+
+=head1 SUBROUTINES/METHODS
 
 =cut
 
+=head2 is_packageid
+
+Returns true if package id B<looks> valid, false otherwise.
+
+=cut
+
+sub is_packageid {
+    my ($s) = shift;
+    return 1 if $s =~ m{ \A \d+ \z }imxs;
+    return 0;
+}
+
+use constant rpmrc => '/usr/lib/rpm/rpmrc';
+
+my %arch_canon = (
+    map { $_ => 1 }
+      qw( noarch athlon geode pentium4 pentium3 i686 i586 i486 i386 x86_64
+      amd64 ia32e alpha alphaev5 alphaev56 alphapca56 alphaev6 alphaev67
+      sparc64 sun4u sparc64v sparc sun4 sun4m sun4c sun4d sparcv8 sparcv9 sparcv9v
+      mips ppc ppc8260 ppc8560 ppc32dy4 ppciseries ppcpseries m68k IP rs6000
+      ia64 mipsel armv3l armv4b armv4l armv5tel armv5tejl armv6l armv7l
+      m68kmint atarist atariste ataritt falcon atariclone milan hades
+      s390 i370 s390x
+      ppc64 ppc64pseries ppc64iseries
+      sh sh3 sh4 sh4a xtensa)
+);
+
+
+=head2 list_arch_canon
+
+  @list_arch = RHNC::Package::list_arch_canon;
+  @list_arch = RHNC::Package::list_arch_canon( 1 ); # update list from rpmrc
+
+Get the list of canonical arches, as they are need to split a package
+name.
+
+=cut
+
+sub list_arch_canon {
+    my ($update) = @_;
+    my @list;
+    if ( defined $update && $update && -f rpmrc ) {
+        open my $f, '<', rpmrc
+          or croak "Cannot open for read list of canonical arches" . rpmrc;
+
+        @list = ('noarch');
+        while ( my $l = <$f> ) {
+            chomp $l;
+            if ( $l =~ m{ \A arch_canon : \s* ([^\s:]+) \s* :  }imxs ) {
+                push @list, $1;
+            }
+        }
+        close $f or croak "Cannot close list of canonical arches" . rpmrc;
+
+        %arch_canon = map { $_ => 1 } @list;
+    }
+    else {
+        @list = keys %arch_canon;
+    }
+
+    return \@list;
+}
+
+
+=head2 split_package_name
+
+  ( $name, $version, $release, $arch ) = split_package_name( 'kernel-doc-2.6.33.5-124.fc13.noarch' );
+  ( $name, $version, $release ) = split_package_name( 'kernel-doc-2.6.33.5-124.fc13' );
+
+=cut
+
+sub split_package_name {
+    my ($p) = @_;
+
+    my $qrarch = '\.(' . join('|', keys %arch_canon) . ')$';
+    $qrarch = qr($qrarch);
+
+    my ($name, $version, $release, $arch);
+
+    my @c;
+    @c = split /\./, $p;
+    if (defined $arch_canon{$c[-1]} ) {
+        $arch = pop @c;
+        print STDERR "we have an arch : $arch\n";
+    }
+    $p = join '.', @c;
+
+    @c = split /-/, $p;
+    $release = pop @c;
+    $version = pop @c;
+
+    $name = join '-', @c;
+
+    return ($name, $version, $release, $arch);
+}
+
+# 
+# Methods
+#
 use constant {
     MANDATORY => 0,
     DEFAULT   => 1,
@@ -77,6 +182,31 @@ sub new {
     return $self;
 }
 
+=head2 id
+
+Return package id
+
+=cut
+
+sub id {
+    my ($self) = @_;
+
+    return $self->{id};
+}
+
+=head2 name
+
+Return package name
+
+=cut
+
+sub name {
+    my ($self) = @_;
+
+    return
+      "$self->{name}.$self->{version}.$self->{release}.$self->{arch_label}";
+}
+
 =head2 get
 
 =cut
@@ -84,28 +214,43 @@ sub new {
 sub get {
     my ( $self, @p ) = @_;
     my $rhnc;
+    my $id_or_name;
 
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
 
         # OO context, eg $ch->get
         $rhnc = $self->{rhnc};
+        $id_or_name = $self->{id};
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
 
         # Called as RHNC::SystemGroup::get($rhnc)
         $rhnc = $self;
+        $id_or_name = shift @p;
     }
     elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
 
         # Called as RHNC::SystemGroup->get($rhnc)
         $rhnc = shift @p;
+        $id_or_name = shift @p;
     }
     else {
         croak "No RHNC client given here";
     }
-    my $id = shift @p;
 
-    my $res = $rhnc->call( 'package.getDetails', $id );
+    if ( !defined $id_or_name ) {
+        croak "No package id or name given";
+    }
+print STDERR "id_or_name : $id_or_name\n";
+
+    if ( !is_packageid($id_or_name) ) {
+print STDERR "id_or_name is not an id : $id_or_name\n";
+        my $p = RHNC::Package->search( $rhnc, split_package_name( $id_or_name ) );
+        $id_or_name = $p->id;
+    }
+
+    my $res = $rhnc->call( 'package.getDetails', $id_or_name );
+    print Dumper $res;
 
     my $p = RHNC::Package->new(
         rhnc => $rhnc,
@@ -120,10 +265,10 @@ sub get {
 Search a package by NVREA.
 
     $p =
-      RHNC::Package::search( $rhnc, $name, $version, $release, $epoch, $arch );
+      RHNC::Package::search( $rhnc, $name, $version, $release, $arch );
     $p =
-      RHNC::Package->search( $rhnc, $name, $version, $release, $epoch, $arch );
-    $p = $opkg->search( $name, $version, $release, $epoch, $arch );
+      RHNC::Package->search( $rhnc, $name, $version, $release, $arch );
+    $p = $opkg->search( $name, $version, $release, $arch );
 
 =cut
 
@@ -152,8 +297,8 @@ sub search {
     my $name    = shift @p;
     my $version = shift @p;
     my $release = shift @p;
-    my $epoch   = shift @p;
     my $arch    = shift @p;
+    my $epoch   = q(); #shift @p;
 
     my $res = $rhnc->call( 'package.findByNvrea',
         $name, $version, $release, $epoch, $arch );
@@ -167,6 +312,17 @@ sub search {
         return;
     }
 
+}
+
+=head2 url
+
+Return the URL to download the package. This URL will expire after a
+certain time period. 
+
+=cut
+
+sub url {
+    carp "Not implemented";
 }
 
 =head1 AUTHOR

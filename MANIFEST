@@ -20,6 +20,7 @@ script/rhnc-channel
 script/rhn-channel-sync.pl
 script/rhnc-ks
 script/rhnc-org
+script/rhnc-pkg
 script/rhnc-sg
 script/rhnc-system
 t/00-load.t

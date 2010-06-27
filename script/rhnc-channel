@@ -120,18 +120,6 @@ sub destroy {
     return 0;
 }
 
-=head2 add_packages
-
-TODO
-
-=cut
-
-sub add_packages {
-    carp "not implemented yet";
-
-    return;
-}
-
 =head2 get|gd|get_details
 
 Print detailed information about the given channel(s).
@@ -318,7 +306,7 @@ sub list_packages {
         foreach my $pkg (@pkglist) {
             print $pkg->{name} . '-'
               . $pkg->{version} . '-'
-              . $pkg->{release} . '-'
+              . $pkg->{release} . '.'
               . $pkg->{arch_label};
             if ($verbose) {
                 print ": $pkg->{id}";
@@ -351,6 +339,50 @@ sub list_systems {
     }
 
     return 0;
+}
+
+=head2 add_packages
+
+TODO
+
+=cut
+
+sub add_packages {
+    my ( $self, @args ) = @_;
+    my @packages;
+    while ( my $p = shift @args ) {
+        if ( ref $p eq 'ARRAY' ) {
+            push @packages, @{$p};
+        }
+        elsif ( ref $p eq 'SCALAR' ) {
+            push @packages, $p;
+        }
+        else {
+            carp 'Should pass arrays or list of packages only, not ' . ref($p);
+        }
+    }
+
+    my @package_id;
+    foreach my $p (@packages) {
+        if ( RHNC::Package::is_packageid($p) ) {
+            push @package_id, $p;
+        }
+        elsif ( ref $p eq 'RHNC::Package' ) {
+            push @package_id, $p->id();
+        }
+        else {
+            push @package_id, RHNC::Package->get( $self->{rhnc}, $p )->id;
+        }
+    }
+
+    my $res = 0;
+    if ( scalar @package_id ) {
+        $res =
+          $self->{rhnc}
+          ->call( 'channel.software.addPackages', $self->{name}, \@package_id,
+          );
+    }
+    return $res;
 }
 
 =head2 rm_packages
@@ -444,6 +476,8 @@ my %func = (
     ls            => \&list_systems,
     list_systems  => \&list_systems,
     rp            => \&rm_packages,
+    rmpkg         => \&rm_packages,
+    rm_package    => \&rm_packages,
     rm_packages   => \&rm_packages,
 );
 

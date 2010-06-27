@@ -28,14 +28,14 @@ our $VERSION = '0.01';
 
 =head1 EXPORT
 
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
+None.
+L<is_systemid> is to be referenced by its full name.
 
-=head1 FUNCTIONS
+=head1 SUBROUTINES/METHODS
 
 =head2 is_systemid
 
-Returns true if system id B<looks> valid, false otherwise
+Returns true if system id B<looks> valid, false otherwise.
 
 =cut
 
@@ -45,7 +45,6 @@ sub is_systemid {
     return 0;
 }
 
-#
 # Valid properties for a RHNC::System
 #
 #    * int "id" - System id

@@ -39,6 +39,7 @@ The following commands are available:
 Destroy a system profile
 
 =cut
+
 sub destroy {
     my @args = @_;
 
@@ -97,9 +98,12 @@ sub list {
 
     my $nr = 0;
     foreach my $sys ( keys %{$slist} ) {
-        printf( "%10d %-40s %s\n", $slist->{$sys}{id}, $slist->{$sys}{name}, $slist->{$sys}{last_checkin}->value );
+        printf( "%10d %-40s %s\n",
+            $slist->{$sys}{id},
+            $slist->{$sys}{name},
+            $slist->{$sys}{last_checkin}->value );
     }
-    print "\nTotal: " . scalar(keys %$slist) . " systems\n";
+    print "\nTotal: " . scalar( keys %$slist ) . " systems\n";
 
     return 0;
 }
@@ -189,6 +193,7 @@ under the same terms as Perl itself.
 =cut
 
 package main;
+
 #
 # Main
 #
@@ -197,31 +202,30 @@ my @args = @ARGV;
 my $cmd  = shift @args;
 my $rc   = 0;
 
-if ( !defined $cmd ) {
-    print STDERR "No command given, exiting...\n";
-    exit 0;
-#    pod2usage( -verbose => 2, -message => "No command given, exiting...\n", -exitval => 0);
-}
-
 $rhnc = RHNC::Session->new();
 
 my %func = (
-    '^(?:c|Create)$'                                  => \&create,
-    '^(?:d|Destroy)$'                                 => \&destroy,
-    '^(?:gd|GetDetails|get_details)$'                 => \&get_details,
-    '^(?:l|li|lis|list)$'                             => \&list,
-    '^(?:ls|ListSystems|list_systems)$'               => \&list_systems,
-    '^(?:rp|RmSystems|rm_systems)$'                 => \&rm_systems,
-    '^(?:llp|ListLatestPackages|list_latest_packages)$' =>
-      \&list_latest_packages,
+    destroy              => \&destroy,
+    gd                   => \&get_details,
+    get                  => \&get_details,
+    get_details          => \&get_details,
+    l                    => \&list,
+    li                   => \&list,
+    list                 => \&list,
+    ls                   => \&list_systems,
+    list_systems         => \&list_systems,
+    rp                   => \&rm_systems,
+    rm_systems           => \&rm_systems,
+    llp                  => \&list_latest_packages,
+    list_latest_packages => \&list_latest_packages,
 );
 
-SWITCH: foreach my $c ($cmd) {
-    foreach my $re ( keys %func ) {
-        if ( $c =~ m/$re/imxs ) {
-            $rc = $func{$re}->(@args);
-            last SWITCH;
-        }
+foreach my $c ($cmd) {
+    if ( defined $c && defined $func{$c} ) {
+        $rc = $func{$c}->(@args);
+    }
+    else {
+        pod2usage( -exitval => 0, -message => "No or unknown command given" );
     }
 }
 

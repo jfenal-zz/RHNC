@@ -1,0 +1,235 @@
+#!/usr/bin/perl
+#
+# $Id$
+#
+
+use strict;
+use warnings;
+
+use lib qw( . .. lib ../lib );
+use RHNC;
+use Pod::Usage;
+use Carp;
+use Getopt::Long qw(GetOptionsFromArray);
+use Data::Dumper;
+
+use vars qw( $rhnc );
+
+=head1 NAME
+
+rhnc-pkg - Operate on Satellite managed packages
+
+=head1 USAGE
+
+  rhnc-pkg command [options or parameters]
+
+=head1 REQUIRED ARGUMENTS
+
+At least B<command> is required for this script to operate. No shell is
+currently offered, although this may come in the future.
+
+=head1 DESCRIPTION
+
+The following commands are available:
+
+=cut
+
+=head2 destroy
+
+Destroy (remove) a package from Satellite
+
+=cut
+
+sub destroy {
+    my @args = @_;
+
+    carp "not implemented yet";
+    foreach my $id_or_name (@args) {
+        my $p = RHNC::Package::get( $rhnc, $id_or_name );
+        if ( defined $p ) {
+            $p->destroy();
+        }
+    }
+
+    return 0;
+}
+
+=head2 gd|get_details
+
+Print detailed information about the given package
+
+=cut
+
+sub get_details {
+    my @args = @_;
+
+    my $pkg;
+    while ( $pkg = shift @args ) {
+        my $p = RHNC::Package::get( $rhnc, $pkg );
+
+        foreach my $k ( sort ( keys %{$p} ) ) {
+            next if $k eq 'rhnc';
+            print "  $k : $p->{$k}\n"
+              if defined $p->{$k};
+        }
+    }
+
+    return 0;
+}
+
+=head2 gu|get_url
+
+Print the URL to download the package. This URL will expire after a
+certain time period. 
+
+=cut
+
+sub get_url {
+    my @args = @_;
+
+    my $pkg;
+    while ( $pkg = shift @args ) {
+        my $p = RHNC::Package::get( $rhnc, $pkg );
+        if ( defined $p ) {
+            print $p->url;
+        }
+    }
+
+    return 0;
+}
+
+=head2 lac|list_arch_canon
+
+List the canonical arches allowed by this script
+
+  rhnc-pkg lac
+  rhnc-pkg list_arch_canon
+
+=cut
+
+sub list_arch_canon {
+    my @args   = @_;
+    my $update = 0;
+
+    my $result = GetOptionsFromArray( \@args, 'update|u' => \$update, )
+      or pod2usage(
+        -exitval => 3,
+        -message => 'Wrong parameters for list_arch_canon',
+        -verbose => 1
+      );
+
+    my $l = RHNC::Package::list_arch_canon($update);
+
+    foreach my $a (@$l) {
+        print "$a\n";
+    }
+
+    return 0;
+}
+
+=head2 lf|list_files
+
+List the files provided by a package.
+
+  rhnc-pkg lf package_name
+  rhnc-pkg lf package_id
+  rhnc-pkg list_files package_name
+  rhnc-pkg list_files package_id
+
+=cut
+
+sub list_files {
+    my @args = @_;
+    my $p;
+    carp "not implemented yet";
+
+    return 0;
+}
+
+=head1 OPTIONS
+
+See various commands for options available.
+
+=head1 DIAGNOSTICS
+
+See L<EXIT STATUS>.
+
+=head1 EXIT STATUS
+
+TODO. 
+This script will return 1 for success, 0 for failure. Not very
+consistent for now, likely to change.
+
+=head1 CONFIGURATION
+
+See L<RHNC>.
+
+=head1 DEPENDENCIES
+
+=over 4
+
+=item * L<RHNC>
+
+=item * L<Pod::Usage>
+
+=back
+
+=head1 INCOMPATIBILITIES
+
+See L<RHNC>.
+
+=head1 BUGS AND LIMITATIONS
+
+See L<RHNC>.
+
+=head1 AUTHOR
+
+Jérôme Fenal L<< <jfenal@redhat.com> >>.
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2009, 2010 Jérôme Fenal, all rights reserved.
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
+
+package main;
+
+#
+# Main
+#
+
+my @args = @ARGV;
+my $cmd  = shift @args;
+my $rc   = 0;
+
+#    pod2usage( -verbose => 2, -message => "No command given, exiting...\n", -exitval => 0);
+
+$rhnc = RHNC::Session->new();
+
+my %func = (
+    destroy         => \&destroy,
+    get             => \&get_details,
+    gd              => \&get_details,
+    get_details     => \&get_details,
+    gu              => \&get_url,
+    get_url         => \&get_url,
+    lac             => \&list_arch_canon,
+    list_arch_canon => \&list_arch_canon,
+    lf              => \&list_files,
+    list_files      => \&list_files,
+);
+
+foreach my $c ($cmd) {
+    if ( defined $c && defined $func{$c} ) {
+        $rc = $func{$c}->(@args);
+    }
+    else {
+        pod2usage( -exitval => 0, -message => "No or unknown command given" );
+    }
+}
+
+exit $rc;
+
