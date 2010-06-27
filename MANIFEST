@@ -30,6 +30,7 @@ t/21-systemgroup.t
 t/31-activationkey.t
 t/32-kickstart.t
 t/33-channel.t
+t/35-package.t
 t/boilerplate.t
 TODO.pod
 t/pod-coverage.t
@@ -38,4 +39,5 @@ t/s20-org.t
 t/s21-sg.t
 t/s31-activationkey.t
 t/s33-channel.t
+t/s35-package.t
 t/script-pod-coverage.t
