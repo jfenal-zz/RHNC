@@ -40,10 +40,10 @@ sub _usage {
 
 =head2 add_systems
 
-Add systems to a system group.
+Add systems to one or multiple system groups.
 
-  rhnc-sg as -s system1,system2 system_group_name
-  rhnc-sg add_systems -s system1,system2 system_group_name
+  rhnc-sg as -s system1,system2 system_group [ sg2 ... ]
+  rhnc-sg add_systems -s system1,system2 system_group [ sg2 ... ]
 
 =cut
 
@@ -131,10 +131,13 @@ Destroy (delete) a system group, or multiple ones.
 sub destroy {
     my @args = @_;
 
-    foreach my $kname (@args) {
-        my $sg = RHNC::SystemGroup->get( $rhnc, $kname );
+    foreach my $name (@args) {
+        my $sg = RHNC::SystemGroup->get( $rhnc, $name );
         if ( defined $sg ) {
-            $sg->destroy( $rhnc, $kname );
+            $sg->destroy( $rhnc, $name );
+        }
+        else {
+            print "No such system group $name\n";
         }
     }
 
@@ -221,18 +224,42 @@ sub list_systems {
     return 0;
 }
 
-=head2 rm_system
+=head2 rm_systems
 
-TODO
+Remove systems from one or multiple system groups.
+
+  rhnc-sg rs -s system1,system2 system_group1 [ sg2 ... ]
+  rhnc-sg rm_systems -s system1,system2 system_group1 [ sg2 ... ]
+  rhnc-sg remove_systems -s system1,system2 system_group1 [ sg2 ... ]
 
 =cut
 
-sub rm_system {
+sub rm_systems {
     my @args = @_;
 
-    carp "not implemented yet";
+    my ( $name, $systemids, @system_ids );
+    my $result = GetOptionsFromArray( \@args, 'systemids|s=s' => \$systemids, )
+      or pod2usage(
+        -exitval => 3,
+        -message => 'Wrong parameters for rm_systems',
+        -verbose => 1
+      );
 
-    return 0;
+    if ( !defined $systemids ) {
+
+        # No systems to remove...
+        return 0;
+    }
+
+    @system_ids = split( m/ [,] /imxs, $systemids );
+
+    my $rc = 0;
+    while ( $name = shift @args ) {
+        my $sg = RHNC::SystemGroup->get( $rhnc, $name );
+        my $res = $sg->remove_systems( \@system_ids );
+        $rc += $res ? 0 : 1;
+    }
+    return $rc;
 }
 
 =head1 OPTIONS
@@ -245,9 +272,7 @@ See L<EXIT STATUS>.
 
 =head1 EXIT STATUS
 
-TODO. 
-This script will return 1 for success, 0 for failure. Not very
-consistent for now, likely to change.
+This script returns 0 for success, non 0 for failure.
 
 =head1 CONFIGURATION
 
@@ -311,6 +336,8 @@ my %func = (
     rs           => \&rm_systems,
     rm_system    => \&rm_systems,
     rm_systems   => \&rm_systems,
+    remove_system    => \&rm_systems,
+    remove_systems   => \&rm_systems,
 );
 
 my @args = @ARGV;

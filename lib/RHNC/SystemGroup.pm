@@ -2,7 +2,6 @@ package RHNC::SystemGroup;
 
 use warnings;
 use strict;
-use Data::Dumper;
 use Params::Validate;
 use Carp;
 
@@ -26,15 +25,10 @@ our $VERSION = '0.01';
 
     use RHNC::SystemGroup;
 
-    my $foo = RHNC::SystemGroup->new();
+    my $sg = RHNC::SystemGroup->new();
     ...
 
-=head1 EXPORT
-
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
-
-=head1 FUNCTIONS
+=head1 METHODS
 
 =cut
 
@@ -292,18 +286,54 @@ sub add_systems {
     return $res;
 }
 
-=head2 remove_servers
+=head2 remove_systems
 
-TODO
+Remove systems from the system group.
 
-    my $rc = $sg->remove_servers( @profile_names, @profile_ids );
+    my $rc = $sg->remove_systems( @profile_names, @profile_ids, @RHNC::System );
 
 =cut
 
-sub remove_servers {
+sub remove_systems {
+    my ( $self, @args ) = @_;
+    my @systems;
+    while ( my $s = shift @args ) {
+        if ( ref $s eq 'ARRAY' ) {
+            push @systems, @{$s};
+        }
+        elsif ( ref $s eq 'SCALAR' ) {
+            push @systems, $s;
+        }
+        else {
+            carp 'Should pass arrays or list of systems only, not ' . ref($s);
+        }
+    }
 
-    carp 'not implemented yet !';
+    my @system_id;
+    foreach my $s (@systems) {
+        if ( RHNC::System::is_systemid($s) ) {
+            push @system_id, $s;
+        }
+        elsif ( ref $s eq 'RHNC::System' ) {
+            push @system_id, $s->id();
+        }
+        else {
+            push @system_id, RHNC::System->id( $self->{rhnc}, $s );
+        }
+    }
+
+    my $res = 0;
+    if ( scalar @system_id ) {
+        $res = $self->{rhnc}->call(
+            'systemgroup.addOrRemoveSystems',
+            $self->{name},
+            \@system_id,
+            $RHNC::_xmlfalse,    # remove
+        );
+    }
+    return $res;
 }
+
 
 =head2 get
 
@@ -344,18 +374,22 @@ sub get {
     $id_or_name = shift @p;
 
     my $res = $rhnc->call( 'systemgroup.getDetails', $id_or_name );
-    my @list;
 
-    my $sg = RHNC::SystemGroup->new(
-        id           => $res->{id},
-        name         => $res->{name},
-        description  => $res->{description},
-        org_id       => $res->{org_id},
-        system_count => $res->{system_count},
-    );
-    $rhnc->manage($sg);
+    if (defined $res) {
+        my $sg = RHNC::SystemGroup->new(
+            id           => $res->{id},
+            name         => $res->{name},
+            description  => $res->{description},
+            org_id       => $res->{org_id},
+            system_count => $res->{system_count},
+        );
+        if (defined $sg) {
+            $rhnc->manage($sg);
 
-    return $sg;
+            return $sg;
+        }
+    }
+    return;
 }
 
 =head2 list
