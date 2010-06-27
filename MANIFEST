@@ -31,8 +31,8 @@ t/boilerplate.t
 TODO.pod
 t/pod-coverage.t
 t/pod.t
-t/s01-channel.t
 t/s20-org.t
 t/s21-sg.t
 t/s31-activationkey.t
+t/s33-channel.t
 t/script-pod-coverage.t
