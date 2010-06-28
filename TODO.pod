@@ -23,6 +23,11 @@ rhnc-channel
 - implement rm_packages
 - rm packages from file
 
+rhnc-pkg
+- search package based on name only (partial/complete)
+- search package based on name + version (partial/complete)
+- search package based on name + version + release (partial/complete)
+
 rhnc-user :
 - create rhnc-user
 - modify (setDetails)
