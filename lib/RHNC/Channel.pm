@@ -321,6 +321,25 @@ sub list_systems {
     return %systems;
 }
 
+=head2 id
+
+Return channel id
+
+  $id = $ch->id;
+
+=cut
+
+sub id {
+    my ( $self, @p ) = @_;
+
+    if ( !defined $self->{id} ) {
+        confess 'id not defined';
+    }
+
+    return $self->{id};
+}
+
+
 =head2 name
 
 Return channel name
