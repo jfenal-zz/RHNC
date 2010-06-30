@@ -10,6 +10,8 @@ my $builder = Module::Build->new(
     requires          => {
         'Frontier::Client' => 0,
         'Params::Validate' => 0,
+        'Config::IniFiles' => 0,
+        'IO::Socket::SSL' => 0,
 
     },
     build_requires => { 'Test::More' => 0, },
