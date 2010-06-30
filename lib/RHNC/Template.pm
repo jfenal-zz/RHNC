@@ -1,9 +1,12 @@
+#
+# This package is just a template for future modules in the RHNC
+# namespace. It is not supposed to deliver a specific purpose in the
+# RHNC context
+#
 package RHNC::Template;
 
 use warnings;
 use strict;
-
-# $Id$
 
 =head1 NAME
 
@@ -12,8 +15,6 @@ RHNC::Template - The great new RHNC::Template!
 =head1 VERSION
 
 Version 0.01
-
-Revision $Revision$
 
 =cut
 
@@ -74,14 +75,15 @@ sub search {
 
 =head1 BUGS AND LIMITATIONS
 
-Please report any bugs or feature requests to C<bug-rhn-session at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
+Please report any bugs or feature requests to C<bug-rhn-session at
+rt.cpan.org>, or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=RHNC-Session>.  I
+will be notified, and then you'll automatically be notified of
+progress on your bug as I make changes.
 
 =head1 AUTHOR
 
-JÃ©rÃ´me Fenal, C<< <jfenal at redhat.com> >>
+Jérôme Fenal, C<< <jfenal at redhat.com> >>
 
 =head1 SUPPORT
 
@@ -118,7 +120,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2009 JÃ©rÃ´me Fenal, all rights reserved.
+Copyright 2009 Jérôme Fenal, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
