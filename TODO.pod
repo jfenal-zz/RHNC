@@ -3,6 +3,9 @@ RHNC::System->as_string
 RHNC::Kickstart->as_string
 RHNC::Kickstart->render
 
+For each object, add a copy_to($rhnc) to copy the object to _another_
+Satellite or organisation within the same Satellite.
+
 rhnc-org:
 - list_users
 
