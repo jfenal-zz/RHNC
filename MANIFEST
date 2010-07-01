@@ -11,6 +11,7 @@ lib/RHNC/Session.pm
 lib/RHNC/SystemGroup.pm
 lib/RHNC/System.pm
 lib/RHNC/System/CustomInfo.pm
+Makefile.PL
 MANIFEST
 META.yml
 README
