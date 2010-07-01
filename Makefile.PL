@@ -9,7 +9,10 @@ WriteMakefile
           'VERSION_FROM' => 'lib/RHNC.pm',
           'PREREQ_PM' => {
                            'Test::More' => 0,
+                           'Getopt::Long' => '2.37',
+                           'Config::IniFiles' => 0,
                            'Params::Validate' => 0,
+                           'IO::Socket::SSL' => 0,
                            'Frontier::Client' => 0
                          }
         )

@@ -10,7 +10,10 @@ resources:
 build_requires:
   Test::More: 0
 requires:
+  Config::IniFiles: 0
   Frontier::Client: 0
+  Getopt::Long: 2.37
+  IO::Socket::SSL: 0
   Params::Validate: 0
 recommends:
   Test::Pod: 0
@@ -45,6 +48,9 @@ provides:
     version: 0.01
   RHNC::System:
     file: lib/RHNC/System.pm
+    version: 0.01
+  RHNC::System::CustomInfo:
+    file: lib/RHNC/System/CustomInfo.pm
     version: 0.01
   RHNC::SystemGroup:
     file: lib/RHNC/SystemGroup.pm

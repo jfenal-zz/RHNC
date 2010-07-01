@@ -1,0 +1,10 @@
+Note for RHEL5 users :
+
+- I'm using the latest version of Getopt::Long (2.38), not available
+  for RHEL, but in Fedora 13 I use to develop. A simple "cpanp i
+  Getopt::Long" will install the latest version
+- for developers, I also use quite a few Test modules, one being
+  Test::Script::Run not yet packaged for Fedora (waiting for my first
+  Fedora contribution to be sponsored, BZ#608470) nor for EPEL.
+- All those prerequisites are documented in Build.PL
+

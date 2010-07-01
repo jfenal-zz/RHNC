@@ -1,3 +1,6 @@
+Find the right Getopt::Long version introducing String parsing.
+
+
 RHNC::SystemGroup->as_string
 RHNC::System->as_string
 RHNC::Kickstart->as_string
@@ -130,14 +133,6 @@ rhnc-user :
 
 
  De:    Dave Sullivan <dsulliva@redhat.com>
- À:     Mailing Red Hat - Consult <consult-list@redhat.com>
- Cc:    bholden@redhat.com
- Sujet:     [Consult-list] rhnApiCode
- Date:  14/04/2010 21:38:15
- Client de messagerie:  Mozilla/5.0 (X11; U; Linux x86_64; en-US;
- rv:1.9.1.8) Gecko/20100301 Fedora/3.0.3-1.fc11 Lightning/1.0b2pre
- Thunderbird/3.0.3
-
 
  FYI,
 
@@ -164,7 +159,3 @@ rhnc-user :
 http://github.com/aparsons/spacecmd
 http://people.redhat.com/aparsons/
 
-
-
-# Commandes dans les scripts :
-# - help | rien => pod2usage

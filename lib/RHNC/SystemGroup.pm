@@ -434,6 +434,20 @@ sub list {
     return @list;
 }
 
+=head2 as_string
+
+Returns a printable string to describe the system group.
+
+  print $sg->as_string;
+
+=cut
+
+sub as_string {
+
+
+}
+
+
 =head1 AUTHOR
 
 Jérôme Fenal, C<< <jfenal at redhat.com> >>

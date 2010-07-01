@@ -8,6 +8,7 @@ my $builder = Module::Build->new(
     dist_author       => 'Jérôme Fenal <jfenal@redhat.com>',
     dist_version_from => 'lib/RHNC.pm',
     requires          => {
+        'Getopt::Long' => 2.37,
         'Frontier::Client' => 0,
         'Params::Validate' => 0,
         'Config::IniFiles' => 0,
@@ -23,7 +24,7 @@ my $builder = Module::Build->new(
     },
     add_to_cleanup     => ['RHNC-*'],
     create_makefile_pl => 'traditional',
-    sign               => 1,
+#    sign               => 1,
 );
 
 $builder->create_build_script();
