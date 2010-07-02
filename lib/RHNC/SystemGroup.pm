@@ -51,6 +51,20 @@ my %properties = (
     system_ids => [ 0, [], undef, undef ],
 );
 
+
+=head2 is_system_group_id
+
+Returns true if system group id B<looks> valid, false otherwise.
+
+=cut
+
+sub is_system_group_id {
+    my ($s) = shift;
+    return 1 if $s =~ m{ \A \d+ \z }imxs;
+    return 0;
+}
+
+
 =head2 new
 
 Create a new system group.
