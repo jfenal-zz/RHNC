@@ -190,15 +190,17 @@ Return activation key name (key).
 =cut
 
 sub name {
-    my ( $self, @p ) = @_;
+    my ( $self, @args ) = @_;
+    my $prev = q();
 
-    if ( !defined $self->{key} ) {
-        delete $self->{rhnc};
-
-        croak "Key name not defined";
+    if ( defined $self->{key} ) {
+        $prev = $self->{key};
     }
-
-    return $self->{key};
+    if (@args) {
+        $self->{key} = shift @args;
+        $self->set_details();
+    }
+    return $prev;
 }
 
 =head2 description
@@ -210,11 +212,18 @@ Return activation key's description.
 =cut
 
 sub description {
-    my ( $self, @p ) = @_;
+    my ( $self, @args ) = @_;
+    my $prev = q();
 
-    if ( !defined $self->{description} ) {
-        croak 'description not defined';
+    if ( defined $self->{description} ) {
+        $prev = $self->{description};
     }
+    if (@args) {
+        $self->{description} = shift @args;
+        $self->set_details();
+    }
+    return $prev;
+    my ( $self, @p ) = @_;
 
     return $self->{description};
 }
@@ -228,12 +237,27 @@ Return true if activation key is universal default, false otherwise.
 =cut
 
 sub universal_default {
-    my ( $self, @p ) = @_;
+    my ( $self, @args ) = @_;
+    my $prev = q();
 
     if ( defined $self->{universal_default} ) {
-        return $self->{universal_default}->value();
+        $prev = $self->{universal_default}->value();
     }
-    return;
+    if (@args) {
+        $self->{universal_default} = shift @args;
+        # Normalize now
+        if ( !ref( $self->{universal_default} ) ) {
+            if ( $self->{universal_default} ) {
+                $self->{universal_default} = $RHNC::_xmltrue;
+            }
+            else {
+                $self->{universal_default} = $RHNC::_xmlfalse;
+            }
+        }
+
+        $self->set_details();
+    }
+    return $prev;
 }
 
 =head2 base_channel
@@ -451,7 +475,7 @@ sub usage_limit {
 
 Return or set packages.
 
-  $universal_default = $ak->packages;
+  $pkg_array_ref = $ak->packages;
 
 =cut
 
