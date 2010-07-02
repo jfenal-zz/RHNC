@@ -23,8 +23,9 @@ use Cwd qw( abs_path );
 
 use Test::More;    # last test to print
 my $script = 'rhnc-ak';
+my @args;
 
-eval "use Test::Script::Run";
+eval "use Test::Script::Run qw( :all )";
 plan skip_all => "Test::Script::Run required for testing $script" if $@;
 
 my $s;
@@ -37,71 +38,75 @@ $s = abs_path $s;
 my $tests;
 plan tests => $tests;
 
-BEGIN { $tests++; }
+BEGIN { $tests++; }    # 1
 ok( defined $s, "script to test found : $s" );
 
 my ( $rc, $stdout, $stderr );
 
-BEGIN { $tests++; }
+BEGIN { $tests++; }    # 2
 run_ok( $s, [], "$script (no arg)" );
 
-BEGIN { $tests++; }
+BEGIN { $tests++; }    # 3
 ( $rc, $stdout, $stderr ) = run_script( $s, [qw( help )] );
 is( $rc, 1, "$script help exits with 1" );
 
-BEGIN { $tests++; }
+BEGIN { $tests++; }    # 4
 run_ok( $s, [qw( list )], "$script list" );
 
-BEGIN { $tests++; }
+BEGIN { $tests++; }    # 5
 run_ok( $s, [qw( list -r)], "$script list -r" );
 
-BEGIN { $tests++; }
+BEGIN { $tests++; }    # 6
 run_ok( $s, [qw( list -v)], "$script list -v" );
 
-BEGIN { $tests++; }
+BEGIN { $tests++; }    # 7
 run_ok( $s, [qw( wrong command)], "$script wrong command" );
 
 my $newak;
 
-BEGIN { $tests++; }
+BEGIN { $tests++; }    # 8
 ( $rc, $stdout, $stderr ) =
-  run_script( $s, [qw( create -e v,m,p -d new-test-key -l 20 )], );
+  run_script( $s, [qw( create -v -e v,m,p -d new-test-key -l 20 )], );
 chomp $stdout;
 $newak = $1 if $stdout =~ m/ : \s* (.*) \z/imxs;
-ok( $rc, "$script create (no name)" );
-BEGIN { $tests++; }
+ok( $rc, "$script create -v -e v,m,p -d new-test-key -l 20 (no name)" );
+
+BEGIN { $tests++; }    # 9
 ok( $newak, "we have a name : <$newak>" );
 
-BEGIN { $tests++; }
+BEGIN { $tests++; }    # 10
 run_ok( $s, [ 'get', $newak ], "$script get $newak" );
 
-BEGIN { $tests++; }
+BEGIN { $tests++; }    # 11
 run_ok( $s, [ 'destroy', $newak ], "$script destroy $newak" );
 
-BEGIN { $tests++; }
-( $rc, $stdout, $stderr ) = run_script(
-    $s,
-    [
-        qw( create -n test-key -e v,m,p -u -d ),
-        'new test key2',
-        qw( -l 20 -b rhel-i386-server-5)
-    ],
-);
-chomp $stdout;
+BEGIN { $tests++; }    # 12
+@args = ( qw( create test-key -v -u -d ), 'new test key2',
+  qw( -l 20 -b rhel-i386-server-5),
+  qw( -c rhel-i386-server-cluster-storage-5,rhel-i386-server-cluster-5),
+  qw( -p ricci,iscsi-initiator-utils,luci ), qw( -g Clusters,RHEL5 ) );
+run_ok( $s, \@args, "$script " . join( q( ), @args ) );
 undef $newak;
+$stdout = last_script_stdout();
+chomp $stdout;
 $newak = $1 if $stdout =~ m/ : \s* (.*) \z/imxs;
-ok( $rc, "$script create -n test-key" );
 
-BEGIN { $tests++; }
+# should follow create
+BEGIN { $tests++; }    # 13
 ok( $newak, "we have a name : <$newak>" );
 
-BEGIN { $tests++; }
-run_ok( $s, [ 'get', $newak ], "$script get $newak" );
+BEGIN { $tests++; }    # 14
+@args = qw( set -n tintin -e , -d changed_description -l 10 -b , -c n ); 
+run_ok( $s, \@args, "$script " . join( q( ), @args ) );
 
-BEGIN { $tests++; }
-run_ok( $s, [ 'destroy', $newak ], "$script destroy $newak" );
+BEGIN { $tests++; }    # 15
+@args = ( 'get', $newak );
+run_ok( $s, \@args, "$script " . join( q( ), @args ) );
 
-BEGIN { $tests++; }
-( $rc, $stdout, $stderr ) =
-  run_script( $s, [ 'destroy', 'such-a-random-key-name' ] );
-ok( $rc != 0, "$script destroy non-existant key" );
+BEGIN { $tests++; }    # 16
+@args = ( 'destroy', $newak );
+run_ok( $s, \@args, "$script " . join( q( ), @args ) );
+
+BEGIN { $tests++; }    # 16
+@args = qw( destroy non-existant-key-name );
+run_not_ok( $s, \@args, "$script " . join( q( ), @args ) );

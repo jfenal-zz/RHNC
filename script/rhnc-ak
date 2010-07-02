@@ -7,7 +7,6 @@ use RHNC::Session;
 use Carp;
 use Getopt::Long qw(GetOptionsFromArray);
 use Pod::Usage;
-use Data::Dumper;
 
 use vars qw( $rhnc %entitlement );
 
@@ -49,50 +48,95 @@ sub _usage {
 
 Create an activation key.
 
-  rhnc-ak create \
+  rhnc-ak create [ key_name ] \
     -e provisioning,monitoring,virt,virt_platform \
      -d description,
-    [ -k key_name ],
-    [ -b base_channel ],
-    [ -l usage_limit ],
-    [ -u ],              # define as universal_default
+    | -v ]                  \ # verbose
+    [ -b base_channel ]     \ # label
+    [ -l usage_limit ]      \
+    [ -u ]                  \ # universal default
+    [ -p packages ],        \ # comma separated list
+    [ -c child_channels ],  \ # comma separated list
+    [ -g system_groups ],   \ # comma separated list
+    activationkey_name
 
 =cut
 
 sub create {
     my @args = @_;
 
-    my ( $entitlements, $name, $base_channel, $usage_limit, $description,
-        $universal_default );
+    my (
+        $entitlements, $name,              $base_channel, $usage_limit,
+        $description,  $universal_default, $groups,       $child_channels,
+        $packages,     $verbose
+    );
 
     my $result = GetOptionsFromArray(
         \@args,
+
+        #        'n|name=s' => \$name,
         'e|entitlement|entitlements=s' => \$entitlements,
-        'n|name=s'                     => \$name,
         'd|description=s'              => \$description,
         'b|base_channel=s'             => \$base_channel,
         'l|usage_limit=i'              => \$usage_limit,
         'u|universal_default'          => \$universal_default,
-    );
+        'g|groups=s'                   => \$groups,
+        'c|child_channels=s'           => \$child_channels,
+        'p|packages=s'                 => \$packages,
+        'v|verbose+'                   => \$verbose,
+      )
+      or pod2usage(
+        -exitval  => 3,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/create'],
+      );
 
-    my @e = map { $entitlement{$_} } split( m/ [,] /imxs, $entitlements );
+    my @e = ();
+    if ( defined $entitlements ) {
+        @e = map { $entitlement{$_} } split( m{ [,] }imxs, $entitlements );
+    }
 
-    my $key = RHNC::ActivationKey->create(
+    $name = shift @args;
+
+    if ( defined $base_channel ) {
+        $base_channel = ( split( m/ [,] /imxs, $base_channel ) )[0];
+    }
+    else {
+        $base_channel = q();
+    }
+    my $ak = RHNC::ActivationKey->create(
         rhnc => $rhnc,
         ( defined $name ? ( key => $name ) : () ),
-        description => $description,
-        ( defined $base_channel ? ( base_channel_label => $base_channel ) : () ),
-        usage_limit => $usage_limit,
+        description        => $description,
+        base_channel_label => $base_channel,
+        usage_limit        => $usage_limit,
         (
             defined $universal_default
             ? ( universal_default => $universal_default )
             : ()
         ),
-        entitlements => [@e],
+
+        entitlements => \@e,
     );
+    croak "Key not created" if !defined $ak;
+
+    # get it again, as modifying some parameters may have side
+    # effects, such as virtualization_host will subscribe to
+    # certain channels or add packages, same for provisioning_entitled
+    $ak = RHNC::ActivationKey->get( $rhnc, $ak->name );
+
+    $ak->child_channels( add => [ split /,/, $child_channels ] )
+      if defined $child_channels;
+    $ak->packages( add => [ split /,/, $packages ] ) if defined $packages;
+    $ak->system_groups( add => [ split /,/, $groups ] ) if defined $groups;
 
     # RHNC::ActivationKey->create croaks if create did not work
-    print "Created activation key : " . $key->name() . "\n";
+    if ($verbose) {
+        print "Created activation key : " . $ak->name() . "\n";
+        if ( $verbose > 1 ) {
+            print $ak->as_string;
+        }
+    }
 
     return 0;
 }
@@ -109,11 +153,21 @@ Destroy an activation key.
 sub destroy {
     my @args = @_;
     my $rc;
+    my $verbose;
+    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, )
+      or pod2usage(
+        -exitval  => 3,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/destroy'],
+      );
 
     foreach my $kname (@args) {
         my $ak = RHNC::ActivationKey->get( $rhnc, $kname );
         if ( defined $ak ) {
             $rc = $ak->destroy( $rhnc, $kname );
+            if ($verbose) {
+                print "Destroyed activation key $kname\n";
+            }
         }
     }
     return $rc ? 0 : 1;
@@ -138,7 +192,12 @@ sub list {
         \@args,
         'verbose|v'          => \$verbose,
         'reactivationkeys|r' => \$reactivationkey,
-    );
+      )
+      or pod2usage(
+        -exitval  => 3,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/list'],
+      );
 
     my @akl = RHNC::ActivationKey->list($rhnc);
 
@@ -152,7 +211,6 @@ sub list {
           if ( $desc =~ /Kickstart re-activation|-activation du kickstart/ );
         next AK if $isre && !$reactivationkey;
         printf( "%-34s : %s\n", $ak->name(), $ak->description() );
-        print Dumper $ak if $verbose;
     }
     print "\n" . scalar(@akl) . " activation or reactivation keys\n";
 
@@ -172,13 +230,231 @@ sub get {
     my @args = @_;
     my ($verbose);
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
+    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, )
+      or pod2usage(
+        -exitval  => 3,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/set'],
+      );
 
     foreach my $k (@args) {
         my $ak = RHNC::ActivationKey->get( $rhnc, $k );
         print $ak->as_string;
     }
     return 0;
+}
+
+=head2 set
+
+Set/modify details of an activation key.
+
+  rhnc-ak set               \
+    | -v ]                  \ # verbose
+    [ -n newname ]          \ # rename
+    [ -d description ]      \ 
+    [ -b base_channel ]     \ # label
+    [ -l usage_limit ]      \
+    [ -u ]                  \ # universal default
+    [ -e provisioning,monitoring,virt,virt_platform ] \
+    [ -p packages ],        \ # comma separated list
+    [ -c child_channels ],  \ # comma separated list
+    [ -g system_groups ],   \ # comma separated list
+    activationkey_name [ activationkey_name ... ]
+
+Or any one of those options.
+
+=cut
+
+sub set {
+    my @args = @_;
+    my $rc;
+    my (
+        $entitlements, $newname,           $base_channel, $usage_limit,
+        $description,  $universal_default, $groups,       $child_channels,
+        $packages,     $verbose
+    );
+
+    my $result = GetOptionsFromArray(
+        \@args,
+        'n|name=s'            => \$newname,
+        'e|entitlements:s'    => \$entitlements,
+        'd|description=s'     => \$description,
+        'b|base_channel=s'    => \$base_channel,
+        'l|usage_limit:i'     => \$usage_limit,
+        'u|universal_default' => \$universal_default,
+        'g|groups=s'          => \$groups,
+        'c|child_channels=s'  => \$child_channels,
+        'p|packages=s'        => \$packages,
+        'v|verbose+'          => \$verbose,
+      )
+      or pod2usage(
+        -exitval  => 3,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/set'],
+      );
+    if ( defined $base_channel ) {
+
+        # to allow specification of -b , to empty it
+        $base_channel = ( split( m/ [,] /imxs, $base_channel ) )[0];
+    }
+
+    $rc = 0;
+    foreach my $kname (@args) {
+        my $ak = RHNC::ActivationKey->get( $rhnc, $kname );
+
+        $rc += $ak->name($newname)            ? 0 : 1 if defined $newname;
+        $rc += $ak->description($description) ? 0 : 1 if defined $description;
+        $rc += $ak->base_channel($base_channel) ? 0 : 1
+          if defined $base_channel;
+        $rc += $ak->usage_limit($usage_limit) ? 0 : 1 if defined $usage_limit;
+        $rc += $ak->universal_default($universal_default) ? 0 : 1
+          if defined $universal_default;
+        $rc +=
+          $ak->entitlements(
+            [ map { $entitlement{$_} } split( m/ [,] /imxs, $entitlements ) ] )
+          ? 0
+          : 1
+          if defined $entitlements;
+        $rc +=
+          $ak->child_channels( set => [ split /,/, $child_channels ] ) ? 0 : 1
+          if defined $child_channels;
+        $rc += $ak->packages( set => [ split /,/, $packages ] ) ? 0 : 1
+          if defined $packages;
+        $rc += $ak->system_groups( set => [ split /,/, $groups ] ) ? 0 : 1
+          if defined $groups;
+
+        # get it again, as modifying some parameters may have side
+        # effects, such as virtualization_host will subscribe to
+        # certain channels or add packages, same for provisioning_entitled
+        $ak = RHNC::ActivationKey->get( $rhnc, $ak->name );
+        if ($verbose) {
+            if ( $verbose > 1 ) {
+                print $ak->as_string;
+            }
+        }
+
+    }
+    return $rc;
+}
+
+=head2 add
+
+Add incremental details of an activation key.
+
+  rhnc-ak add               \
+    | -v ]                  \ # verbose
+    [ -p packages ],        \ # comma separated list
+    [ -c child_channels ],  \ # comma separated list
+    [ -g system_groups ],   \ # comma separated list
+    activationkey_name [ activationkey_name ... ]
+
+Or any one of those options.
+
+=cut
+
+sub add {
+    my @args = @_;
+    my $rc;
+    my ( $groups, $child_channels, $packages, $verbose );
+
+    my $result = GetOptionsFromArray(
+        \@args,
+        'g|groups=s'         => \$groups,
+        'c|child_channels=s' => \$child_channels,
+        'p|packages=s'       => \$packages,
+        'v|verbose+'         => \$verbose,
+      )
+      or pod2usage(
+        -exitval  => 3,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/add'],
+      );
+
+    $rc = 0;
+    foreach my $kname (@args) {
+        my $ak = RHNC::ActivationKey->get( $rhnc, $kname );
+
+        $rc +=
+          $ak->child_channels( add => [ split /,/, $child_channels ] ) ? 0 : 1
+          if defined $child_channels;
+        $rc += $ak->packages( add => [ split /,/, $packages ] ) ? 0 : 1
+          if defined $packages;
+        $rc += $ak->system_groups( add => [ split /,/, $groups ] ) ? 0 : 1
+          if defined $groups;
+
+        # get it again, as modifying some parameters may have side
+        # effects, such as virtualization_host will subscribe to
+        # certain channels or add packages, same for provisioning_entitled
+        $ak = RHNC::ActivationKey->get( $rhnc, $ak->name );
+        if ($verbose) {
+            if ( $verbose > 1 ) {
+                print $ak->as_string;
+            }
+        }
+
+    }
+    return $rc;
+}
+
+=head2 remove
+
+Remove incremental details of an activation key.
+
+  rhnc-ak remove            \
+    | -v ]                  \ # verbose
+    [ -p packages ],        \ # comma separated list
+    [ -c child_channels ],  \ # comma separated list
+    [ -g system_groups ],   \ # comma separated list
+    activationkey_name [ activationkey_name ... ]
+
+Or any one of those options.
+
+=cut
+
+sub remove {
+    my @args = @_;
+    my $rc;
+    my ( $groups, $child_channels, $packages, $verbose );
+
+    my $result = GetOptionsFromArray(
+        \@args,
+        'g|groups=s'         => \$groups,
+        'c|child_channels=s' => \$child_channels,
+        'p|packages=s'       => \$packages,
+        'v|verbose+'         => \$verbose,
+      )
+      or pod2usage(
+        -exitval  => 3,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/remove'],
+      );
+
+    $rc = 0;
+    foreach my $kname (@args) {
+        my $ak = RHNC::ActivationKey->get( $rhnc, $kname );
+
+        $rc +=
+          $ak->child_channels( remove => [ split /,/, $child_channels ] )
+          ? 0
+          : 1
+          if defined $child_channels;
+        $rc += $ak->packages( remove => [ split /,/, $packages ] ) ? 0 : 1
+          if defined $packages;
+        $rc += $ak->system_groups( remove => [ split /,/, $groups ] ) ? 0 : 1
+          if defined $groups;
+
+        # get it again, as modifying some parameters may have side
+        # effects, such as virtualization_host will subscribe to
+        # certain channels or add packages, same for provisioning_entitled
+        $ak = RHNC::ActivationKey->get( $rhnc, $ak->name );
+        if ($verbose) {
+            if ( $verbose > 1 ) {
+                print $ak->as_string;
+            }
+        }
+
+    }
+    return $rc;
 }
 
 =head1 OPTIONS
@@ -245,6 +521,9 @@ my %func = (
     h       => \&_usage,
     help    => \&_usage,
     get     => \&get,
+    set     => \&set,
+    add     => \&add,
+    remove  => \&remove,
 );
 
 my @args = @ARGV;

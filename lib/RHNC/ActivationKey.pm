@@ -6,7 +6,6 @@ use warnings;
 use strict;
 use Params::Validate;
 use Carp;
-use Data::Dumper;
 
 use base qw( RHNC );
 
@@ -144,7 +143,6 @@ Create and return a new activation key.
 
 =cut
 
-
 sub new {
     my ( $class, @args ) = @_;
     $class = ref($class) || $class;
@@ -197,7 +195,6 @@ sub name {
     if ( !defined $self->{key} ) {
         delete $self->{rhnc};
 
-        print STDERR Dumper $self;
         croak "Key name not defined";
     }
 
@@ -239,21 +236,26 @@ sub universal_default {
     return;
 }
 
-=head2 base_channel_label
+=head2 base_channel
 
 Return activation key's base channel.
 
-  $label = $ak->base_channel_label;
+  $label = $ak->base_channel;
 
 =cut
 
-sub base_channel_label {
-    my ($self) = @_;
+sub base_channel {
+    my ( $self, @args ) = @_;
+    my $prev = q();
 
     if ( defined $self->{base_channel_label} ) {
-        return $self->{base_channel_label};
+        $prev = $self->{base_channel_label};
     }
-    return;
+    if (@args) {
+        $self->{base_channel_label} = shift @args;
+        $self->set_details();
+    }
+    return $prev;
 }
 
 =head2 entitlements
@@ -265,12 +267,34 @@ Return array ref on entitlements for the activation key.
 =cut
 
 sub entitlements {
-    my ($self) = @_;
+    my ( $self, @args ) = @_;
+    my $prev = \[];
 
     if ( defined $self->{entitlements} ) {
-        return $self->{entitlements};
+        $prev = $self->{entitlements};
     }
-    return [];
+
+    if (@args) {
+        my $c = shift @args;
+        if ( $c eq 'add' ) {
+            $self->{rhnc}->call( 'activationkey.addEntitlements', shift @args );
+        }
+        elsif ( $c eq 'remove' ) {
+            $self->{rhnc}
+              ->call( 'activationkey.removeEntitlements', shift @args );
+        }
+        elsif ( $c eq 'set' ) {
+            $self->entitlements( 'remove' => $self->{entitlements} );
+            $self->entitlements( 'add' => shift @args ) if @args;
+        }
+        elsif ( ref $c eq 'ARRAY' ) {
+
+            # same as set
+            $self->entitlements( 'remove' => $self->{entitlements} );
+            $self->entitlements( 'add' => $c ) if @$c;
+        }
+    }
+    return $prev;
 }
 
 =head2 server_group_ids
@@ -290,43 +314,117 @@ sub server_group_ids {
     return \[];
 }
 
-=head2 server_groups
+=head2 system_groups
 
-Return array ref on server groups for the activation key.
+Return array ref on system groups for the activation key.
 
-  $server_group = $ak->server_groups;
+  $system_groups_ref = $ak->system_groups;
 
 =cut
 
-sub server_groups {
-    my ($self) = @_;
+sub system_groups {
+    my ( $self, @args ) = @_;
     my @groups;
+    my $prev;
+
     my $aksg = $self->{server_group_ids};
     if ( defined $aksg ) {
         foreach my $sgid (@$aksg) {
-            my $sg = RHNC::SystemGroup->get($self->rhnc, $sgid);
+            my $sg = RHNC::SystemGroup->get( $self->{rhnc}, $sgid );
             push @groups, $sg->name();
         }
-        return \@groups;
+        $prev = \@groups;
     }
-    return \[];
+
+    if (@args) {
+        my $c      = shift @args;
+        my $sg_ref = shift @args;
+
+        if ( $c eq 'add' && ref $sg_ref eq 'ARRAY' ) {
+            my @sgids;
+            foreach my $sg (@$sg_ref) {
+                if ( RHNC::SystemGroup::is_system_group_id $sg ) {
+                    push @sgids, $sg;
+                }
+                else {
+                    my $sgo = RHNC::SystemGroup->get( $self->{rhnc}, $sg );
+                    push @sgids, $sgo->id if defined $sgo;
+                }
+            }
+            $self->{rhnc}
+              ->call( 'activationkey.addServerGroups', $self->{key}, \@sgids );
+        }
+        elsif ( $c eq 'remove' && ref $sg_ref eq 'ARRAY' ) {
+            my @sgids;
+            foreach my $sg (@$sg_ref) {
+                if ( RHNC::SystemGroup::is_system_group_id($sg) ) {
+                    push @sgids, $sg;
+                }
+                else {
+                    my $sgo = RHNC::SystemGroup->get( $self->{rhnc}, $sg );
+                    push @sgids, $sgo->id if defined $sgo;
+                }
+            }
+
+            $self->{rhnc}->call( 'activationkey.removeServerGroups',
+                $self->{key}, \@sgids );
+        }
+        elsif ( $c eq 'set' && ref $sg_ref eq 'ARRAY' ) {
+            $self->system_groups( 'remove' => $self->{server_group_ids} );
+            $self->system_groups( 'add'    => $sg_ref );
+        }
+        elsif ( ref $c eq 'ARRAY' ) {
+            $self->system_groups( 'remove' => $self->{server_group_ids} );
+            $self->system_groups( 'add' => $c ) if @$c;
+        }
+    }
+
+    return $prev;
 }
 
-=head2 child_channel_labels
+=head2 child_channels
 
-Return array ref on group ids for the activation key.
+Return array ref on group ids for the activation key, modify if 
 
-  $child_channel_labels = $ak->child_channel_labels;
+  $child_channels = $ak->child_channel;
+
+  $child_channels = $ak->child_channels( add => [qw( label1 label2 )] );
+  $child_channels = $ak->child_channels( remove => [qw( label1 label2 )] );
+  $child_channels = $ak->child_channels( set => [qw( label1 label2 )] ); 
+  $child_channels = $ak->child_channels( [qw( label1 label2)] ); # same as set
 
 =cut
 
-sub child_channel_labels {
-    my ($self) = @_;
+sub child_channels {
+    my ( $self, @args ) = @_;
+    my $prev = \[];
+    my $chan_ref;
 
     if ( defined $self->{child_channel_labels} ) {
-        return $self->{child_channel_labels};
+        $prev = $self->{child_channel_labels};
     }
-    return \[];
+    if (@args) {
+        my $c = shift @args;
+        $chan_ref = shift @args;
+
+        if ( $c eq 'add' && ref $chan_ref eq 'ARRAY' ) {
+            $self->{rhnc}->call( 'activationkey.addChildChannels',
+                $self->{key}, $chan_ref );
+        }
+        elsif ( $c eq 'remove' && ref $chan_ref eq 'ARRAY' ) {
+            $self->{rhnc}->call( 'activationkey.removeChildChannels',
+                $self->{key}, $chan_ref );
+        }
+        elsif ( $c eq 'set' && ref $chan_ref eq 'ARRAY' ) {
+            $self->child_channels( 'remove' => $self->{child_channel_labels} );
+            $self->child_channels( 'add'    => $chan_ref );
+        }
+        elsif ( ref $c eq 'ARRAY' ) {
+            $self->child_channels( 'remove' => $self->{child_channel_labels} );
+            $self->child_channels( 'add' => $c ) if @$c;
+        }
+    }
+    return $prev;
 }
 
 =head2 usage_limit
@@ -336,27 +434,68 @@ sub child_channel_labels {
 =cut
 
 sub usage_limit {
-    my ($self) = @_;
+    my ( $self, @args ) = @_;
+    my $prev = 0;
 
     if ( defined $self->{usage_limit} ) {
-        return $self->{usage_limit};
+        $prev = $self->{usage_limit};
     }
-    return 0;
+    if (@args) {
+        $self->{usage_limit} = shift @args ? $RHNC::_xmltrue : $RHNC::_xmlfalse;
+        $self->set_details;
+    }
+    return $prev;
 }
 
 =head2 packages
 
-  $universal_default = $ak->entitlements;
+Return or set packages.
+
+  $universal_default = $ak->packages;
 
 =cut
 
 sub packages {
-    my ($self) = @_;
+    my ( $self, @args ) = @_;
+    my $prev = \[];
 
     if ( defined $self->{package_names} ) {
-        return $self->{package_names};
+        $prev = $self->{package_names};
     }
-    return \[];
+    if ( @args == 2 ) {
+        my $c           = shift @args;
+        my $pkglist_ref = shift @args;
+
+        my @pkglist;
+        foreach my $p (@$pkglist_ref) {
+            my ( $n, $v, $r, $a ) = RHNC::Package::split_package_name($p);
+            push @pkglist,
+              {
+                name => RHNC::Package::join_package_name(
+                    { name => $n, version => $v, release => $r }
+                ),
+                ( defined $a ? ( arch => $a ) : () )
+              };
+        }
+
+        if ( $c eq 'add' && ref $pkglist_ref eq 'ARRAY' ) {
+            $self->{rhnc}
+              ->call( 'activationkey.addPackages', $self->{key}, \@pkglist );
+        }
+        elsif ( $c eq 'remove' && ref $pkglist_ref eq 'ARRAY' ) {
+            $self->{rhnc}
+              ->call( 'activationkey.removePackages', $self->{key}, \@pkglist );
+        }
+        elsif ( $c eq 'set' && ref $pkglist_ref eq 'ARRAY' ) {
+            $self->packages( 'remove' => $self->{package_names} );
+            $self->packages( 'add'    => $pkglist_ref );
+        }
+        elsif ( ref $c eq 'ARRAY' ) {
+            $self->packages( 'remove' => $self->{package_names} );
+            $self->packages( 'add' => $c ) if @$c;
+        }
+    }
+    return $prev;
 }
 
 =head2 create
@@ -459,7 +598,6 @@ sub list {
 
     my $res = $rhnc->call('activationkey.listActivationKeys');
 
-    #    print STDERR Dumper($res);
     my @l;
     foreach my $o (@$res) {
         push @l, RHNC::ActivationKey->new($o);
@@ -500,12 +638,34 @@ sub get {
 
     my $res = $rhnc->call( 'activationkey.getDetails', $k );
 
-    if (defined $res) {
+    if ( defined $res ) {
         my $ak = __PACKAGE__->new( %{$res} );
         $rhnc->manage($ak);
         return $ak;
     }
     return;
+}
+
+=head2 set_details
+
+Update details of an activation key (description, base_channel,
+usage_limit, universal_default).
+
+=cut
+
+sub set_details {
+    my ($self) = @_;
+
+    $self->{rhnc}->call(
+        'setDetails',
+        {
+            description        => $self->{description},
+            base_channel_label => $self->{base_channel_label},
+            usage_limit        => $self->{usage_limit},
+            universal_default  => $self->{universal_default},
+        }
+    );
+
 }
 
 =head2 as_string
@@ -523,17 +683,16 @@ sub as_string {
 
     $output = "key: " . $self->name();
     $output .= "\n  description: " . $self->description();
-    $output .= "\n  base_channel_label: " . $self->base_channel_label();
+    $output .= "\n  base_channel: " . $self->base_channel();
     $output .= "\n  entitlements: " . join( ',', @{ $self->entitlements() } );
     $output .= "\n  universal_default: " . $self->universal_default();
     $output .= "\n  package_names: " . join( ',', @{ $self->packages() } );
     $output .= "\n  usage_limit: " . $self->usage_limit();
     $output .=
       "\n  server_group_ids: " . join( ',', @{ $self->server_group_ids() } );
+    $output .= "\n  system_groups: " . join( ',', @{ $self->system_groups() } );
     $output .=
-      "\n  server_groups: " . join( ',', @{ $self->server_groups() } );
-    $output .= "\n  child_channel_labels: "
-      . join( ',', @{ $self->child_channel_labels() } );
+      "\n  child_channels: " . join( ',', @{ $self->child_channels() } );
     $output .= "\n";
 
     return $output;

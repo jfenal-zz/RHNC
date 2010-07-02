@@ -122,12 +122,41 @@ sub split_package_name {
     $p = join '.', @c;
 
     @c       = split /-/, $p;
-    $release = pop @c;
-    $version = pop @c;
+    if ( $c[-1] =~ m{ \A \d .* }imxs && $c[-2] =~ m{ \A \d .* }imxs )
+    {
+        $release = pop @c;
+        $version = pop @c;
+    }
 
     $name = join '-', @c;
 
     return ( $name, $version, $release, $arch );
+}
+
+=head2 join_package_name
+
+  $pname = join_package_name($name);
+  $pname = join_package_name( $name, $version, $release );
+  $pname = join_package_name( $name, $version, $release, $arch );
+
+=cut
+
+sub join_package_name {
+    my ($h) = @_;
+    my $pname;
+    
+    croak "No package name to join in a package full name" if not
+    defined $h->{name};
+    $pname = $h->{name};
+
+    if ( defined $h->{version} && defined $h->{release} ) {
+        $pname .= "-$h->{version}-$h->{release}";
+    }
+    if (defined $h->{arch} && defined $arch_canon{$h->{arch}} ) {
+        $pname .= ".$h->{arch}";
+    }
+
+    return $pname;
 }
 
 #
