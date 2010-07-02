@@ -1,22 +1,53 @@
-Find the right Getopt::Long version introducing String parsing.
-
+Find the right Getopt::Long version introducing String parsing --> the last one, 2.36 :(
 
 RHNC::SystemGroup->as_string
 RHNC::System->as_string
 RHNC::Kickstart->as_string
 RHNC::Kickstart->render
 
+----------
+
 For each object, add a copy_to($rhnc) to copy the object to _another_
 Satellite or organisation within the same Satellite.
 
-rhnc-org:
-- list_users
+----------
+
+Big change to schedule, once experimented : 
+- keep RHNC::Session
+- add RHNC::Object as father of all other objects
+- RHNC will maintain a hash to all available Sessions ('rhn' or
+  'default' being the default one)
+- RHNC::Object will have a few  methods:
+  - rhnc() return the rhnc  object (default or referenced by its name).
+  - as_json
+  - from_json ??
+
+perl-JSON & perl-JSON-XS are in EPEL & Fedora.
+
+----------
+
+Coverage to bring at 99% if not 100% :
+
+- RHNC::Session
+- RHNC::ActivationKey
+- RHNC::Kickstart
+- RHNC::KickstartTree
+- RHNC::Org
+- RHNC::Package
+- RHNC::System
+- RHNC::SystemGroup
+- RHNC::Channel
+
+----------
+
+TODO list for the rest :
+
 
 rhnc-ak :
-- add channels to subscribe
-- add packages.arch to package list
-- toggle univ_default ?
-- change entitlements
+- toggle/set univ_default  --> -u => -u 0|1
+
+rhnc-org:
+- list_users
 
 rhnc-sg
 - add systems from file
