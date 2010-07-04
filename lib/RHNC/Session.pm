@@ -78,6 +78,25 @@ sub _readconfig {
     return $self;
 }
 
+=head2 is_session
+
+Return a true value if parameter is a session, false otherwise.
+
+  $is_session = RHNC::Session::is_session( $p );
+
+=cut
+
+sub is_session {
+    my ($p) = @_;
+
+    if (ref $p eq 'RHNC::Session') {
+        return 1;
+    }
+    return 0;
+
+}
+
+
 =head2 new
 
  # Clone session

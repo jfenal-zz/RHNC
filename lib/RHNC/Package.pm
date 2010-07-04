@@ -122,7 +122,11 @@ sub split_package_name {
     $p = join '.', @c;
 
     @c = split /-/, $p;
-    if ( $c[-1] =~ m{ \A \d .* }imxs && $c[-2] =~ m{ \A \d .* }imxs ) {
+    if (   defined $c[-1]
+        && defined $c[-2]
+        && $c[-1] =~ m{ \A \d .* }imxs
+        && $c[-2] =~ m{ \A \d .* }imxs )
+    {
         $release = pop @c;
         $version = pop @c;
     }
@@ -233,17 +237,65 @@ sub id {
     return $self->{id};
 }
 
+=head2 nvra
+
+Return package full name (NVRA).
+
+=cut
+
+sub nvra {
+    my ($self) = @_;
+
+    return
+      "$self->{name}.$self->{version}.$self->{release}.$self->{arch_label}";
+}
+
 =head2 name
 
-Return package name
+Return package name.
 
 =cut
 
 sub name {
     my ($self) = @_;
 
-    return
-      "$self->{name}.$self->{version}.$self->{release}.$self->{arch_label}";
+    return $self->{name};
+}
+
+=head2 version
+
+Return package version.
+
+=cut
+
+sub version {
+    my ($self) = @_;
+
+    return $self->{version};
+}
+
+=head2 release
+
+Return package release.
+
+=cut
+
+sub release {
+    my ($self) = @_;
+
+    return $self->{release};
+}
+
+=head2 arch
+
+Return package arch
+
+=cut
+
+sub arch {
+    my ($self) = @_;
+
+    return $self->{arch_label};
 }
 
 =head2 get

@@ -73,7 +73,7 @@ use constant {
 };
 
 my %properties = (
-    rhnc => [ 0, undef, undef, undef ],
+    rhnc => [ 0, undef, 0, undef ],
     key  => [
         0,
         sub {
@@ -81,12 +81,12 @@ my %properties = (
             my $l = scalar @t;
             return join( '', map { $t[ rand $l ] } 1 .. 32 );
         },
-        undef,
+        0,
         undef
     ],
-    description        => [ 1, undef, undef, undef ],
-    base_channel_label => [ 0, q(),   undef, undef ],
-    usage_limit        => [ 0, 0,     undef, undef ],
+    description        => [ 1, undef, 0, undef ],
+    base_channel_label => [ 0, q(),   0, undef ],
+    usage_limit        => [ 0, 0,     0, undef ],
     entitlements       => [
         1,
         [],
@@ -98,11 +98,11 @@ my %properties = (
         },
         undef
     ],
-    universal_default => [ 1, $RHNC::_xmlfalse, undef, undef ],
-    server_group_ids     => [ 0, [], undef, undef ],
-    child_channel_labels => [ 0, [], undef, undef ],
-    packages             => [ 0, [], undef, undef ],
-    package_names        => [ 0, [], undef, undef ],
+    universal_default => [ 1, $RHNC::_xmlfalse, 0, undef ],
+    server_group_ids     => [ 0, [], 0, undef ],
+    child_channel_labels => [ 0, [], 0, undef ],
+    packages             => [ 0, [], 0, undef ],
+    package_names        => [ 0, [], 0, undef ],
 );
 
 sub _setdefaults {
@@ -114,6 +114,26 @@ sub _setdefaults {
         }
         else {
             $self->{$_} = $properties{$_}[DEFAULT];
+        }
+    }
+    return $self;
+}
+
+sub _validate_properties {
+    my ( $self, @args ) = @_;
+
+    foreach ( keys %properties ) {
+        if ( $properties{$_}[MANDATORY] && !defined( $self->{$_} ) ) {
+            use Data::Dumper;
+            print Dumper $self;
+            croak "Mandatory parameter $_ not present in object " . $self->name;
+        }
+
+        if ( ref $properties{$_}[VALIDATE] eq 'CODE' ) {
+            if ( $properties{$_}[VALIDATE]( $self->{$_} ) ) {
+                croak "Property $_ does not pass validation for object"
+                  . $self->name;
+            }
         }
     }
     return $self;
@@ -144,10 +164,14 @@ Create and return a new activation key.
 
 sub new {
     my ( $class, @args ) = @_;
+
     $class = ref($class) || $class;
+    if ( $class ne __PACKAGE__ ) {
+        unshift @args, $class;
+    }
 
     my $self = {};
-    bless $self, $class;
+    bless $self, __PACKAGE__;
 
     # populate object from defaults
     $self->_setdefaults();
@@ -164,7 +188,7 @@ sub new {
         }
     }
 
-    if ( !ref( $self->{universal_default} ) ) {
+    if ( ref( $self->{universal_default} ) ne 'Frontier::RPC2::Boolean' ) {
         if ( $self->{universal_default} ) {
             $self->{universal_default} = $RHNC::_xmltrue;
         }
@@ -172,6 +196,9 @@ sub new {
             $self->{universal_default} = $RHNC::_xmlfalse;
         }
     }
+
+    # validate object content
+    $self->_validate_properties;
 
     if ( defined $self->{rhnc} ) {
         $self->{rhnc}->manage($self);
@@ -182,10 +209,9 @@ sub new {
 
 =head2 name
 
-Return or set activation key name (key).
+Return activation key name (key).
 
     $name = $ak->name;
-    $name = $ak->name( $newname );
 
 =cut
 
@@ -196,10 +222,10 @@ sub name {
     if ( defined $self->{key} ) {
         $prev = $self->{key};
     }
-    if (@args) {
-        $self->{key} = shift @args;
-        $self->set_details();
-    }
+
+    #    if (@args) {
+    #        $self->{key} = shift @args;
+    #    }
     return $prev;
 }
 
@@ -221,6 +247,9 @@ sub description {
     }
     if (@args) {
         $self->{description} = shift @args;
+        $self->{rhnc}->call( 'activationkey.setDetails', $self->{key},
+            { description => $self->{description}, } );
+
         $self->set_details();
     }
     return $prev;
@@ -247,7 +276,7 @@ sub universal_default {
         $self->{universal_default} = shift @args;
 
         # Normalize now
-        if ( !ref( $self->{universal_default} ) ) {
+        if ( ref( $self->{universal_default} ) ne 'Frontier::RPC2::Boolean' ) {
             if ( $self->{universal_default} ) {
                 $self->{universal_default} = $RHNC::_xmltrue;
             }
@@ -255,8 +284,9 @@ sub universal_default {
                 $self->{universal_default} = $RHNC::_xmlfalse;
             }
         }
+        $self->{rhnc}->call( 'activationkey.setDetails', $self->{key},
+            { universal_default => $self->{universal_default}, } );
 
-        $self->set_details();
     }
     return $prev;
 }
@@ -279,7 +309,9 @@ sub base_channel {
     }
     if (@args) {
         $self->{base_channel_label} = shift @args;
-        $self->set_details();
+        $self->{rhnc}->call( 'activationkey.setDetails', $self->{key},
+            { base_channel_label => $self->{base_channel_label}, } );
+
     }
     return $prev;
 }
@@ -396,33 +428,36 @@ sub system_groups {
         my $sg_ref = shift @args;
 
         if ( $c eq 'add' && ref $sg_ref eq 'ARRAY' ) {
-            my @sgids;
+            my $sgids = [];
             foreach my $sg (@$sg_ref) {
                 if ( RHNC::SystemGroup::is_system_group_id $sg ) {
-                    push @sgids, $sg;
+                    push @$sgids, $sg;
                 }
                 else {
                     my $sgo = RHNC::SystemGroup->get( $self->{rhnc}, $sg );
-                    push @sgids, $sgo->id if defined $sgo;
+                    push @$sgids, $sgo->id if defined $sgo;
                 }
             }
             $self->{rhnc}
-              ->call( 'activationkey.addServerGroups', $self->{key}, \@sgids );
+              ->call( 'activationkey.addServerGroups', $self->{key}, $sgids );
+            $self->{server_group_ids} = $sgids;
         }
         elsif ( $c eq 'remove' && ref $sg_ref eq 'ARRAY' ) {
-            my @sgids;
+            my $sgids = [];
             foreach my $sg (@$sg_ref) {
                 if ( RHNC::SystemGroup::is_system_group_id($sg) ) {
-                    push @sgids, $sg;
+                    push @$sgids, $sg;
                 }
                 else {
                     my $sgo = RHNC::SystemGroup->get( $self->{rhnc}, $sg );
-                    push @sgids, $sgo->id if defined $sgo;
+                    push @$sgids, $sgo->id if defined $sgo;
                 }
             }
 
-            $self->{rhnc}->call( 'activationkey.removeServerGroups',
-                $self->{key}, \@sgids );
+            $self->{rhnc}
+              ->call( 'activationkey.removeServerGroups', $self->{key},
+                $sgids );
+            $self->{server_group_ids} = $sgids;
         }
         elsif ( $c eq 'set' && ref $sg_ref eq 'ARRAY' ) {
             $self->system_groups( 'remove' => $self->{server_group_ids} );
@@ -503,8 +538,10 @@ sub usage_limit {
         $prev = $self->{usage_limit};
     }
     if (@args) {
-        $self->{usage_limit} = shift @args ? $RHNC::_xmltrue : $RHNC::_xmlfalse;
-        $self->set_details;
+        $self->{usage_limit} = shift @args;
+        $self->{rhnc}->call( 'activationkey.setDetails', $self->{key},
+            { usage_limit => $self->{usage_limit}, } );
+
     }
     return $prev;
 }
@@ -530,12 +567,13 @@ sub packages {
     if ( defined $self->{package_names} ) {
         $prev = $self->{package_names};
     }
-    if ( @args == 2 ) {
+    if (@args) {
         my $c           = shift @args;
         my $pkglist_ref = shift @args;
 
         my @pkglist;
         foreach my $p (@$pkglist_ref) {
+
             my ( $n, $v, $r, $a ) = RHNC::Package::split_package_name($p);
             push @pkglist,
               {
@@ -586,31 +624,21 @@ Create a new activation key.
 
 =cut
 
-sub _missing_parameter {
-    my $parm = shift;
-
-    croak "Missing parameter $parm";
-}
-
 sub create {
-    my ( $self, @args ) = @_;
+    my ( $class, @args ) = @_;
 
-    if ( !ref $self ) {
-        $self = __PACKAGE__->new(@args);
+    $class = ref($class) || $class;
+    if ( $class ne __PACKAGE__ ) {
+        unshift @args, $class;
+        $class = __PACKAGE__;
     }
 
-    if ( defined $self->{rhnc} ) {
-        $self->{rhnc}->manage($self);
-    }
-
-    foreach my $p (qw( )) {
-        if ( !defined $self->{$p} ) {
-            _missing_parameter($p);
-        }
-    }
+    my $self = RHNC::ActivationKey->new(@args);
 
     croak 'No RHNC client to persist to, exiting'
       if !defined $self->{rhnc};
+
+    $self->{rhnc}->manage($self);
 
     my $res = $self->{rhnc}->call(
         'activationkey.create', $self->{key},
@@ -638,7 +666,7 @@ sub destroy {
 
     undef $self;
 
-    return 1;
+    return $res;
 }
 
 =head2 list
@@ -694,29 +722,22 @@ C<RHNC::ActivationKey> object.
 =cut
 
 sub get {
-    my ( $self, @p ) = @_;
+    my ( $class, @args ) = @_;
     my $rhnc;
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+    if ( ref $class eq __PACKAGE__ && defined $class->{rhnc} ) {
 
-        # OO context, eg $ak-list
-        $rhnc = $self->{rhnc};
+        # OO context, eg $ak->get
+        $rhnc = $class->{rhnc};
     }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::ActivationKey::List($rhnc)
-        $rhnc = $self;
+    elsif ( RHNC::Session::is_session($class) ) {
+        $rhnc = $class;
     }
-    elsif ( $self eq __PACKAGE__ ) {
-
-        # Called as RHNC::ActivationKey->List($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
+    elsif ( !RHNC::Session::is_session( $rhnc = shift(@args) ) ) {
         croak "No RHNC client given";
     }
 
-    my $k = shift @p
+    my $k = shift @args
       or croak "No activation key specified in get";
 
     my $res = $rhnc->call( 'activationkey.getDetails', $k );
@@ -727,28 +748,6 @@ sub get {
         return $ak;
     }
     return;
-}
-
-=head2 set_details
-
-Update details of an activation key (description, base_channel,
-usage_limit, universal_default).
-
-=cut
-
-sub set_details {
-    my ($self) = @_;
-
-    $self->{rhnc}->call(
-        'setDetails',
-        {
-            description        => $self->{description},
-            base_channel_label => $self->{base_channel_label},
-            usage_limit        => $self->{usage_limit},
-            universal_default  => $self->{universal_default},
-        }
-    );
-
 }
 
 =head2 as_string

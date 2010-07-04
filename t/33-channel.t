@@ -31,15 +31,17 @@ ok( $channel->latest_packages() > 0,
     'Latest packages has more than one packages' );
 
 BEGIN { $tests++; }
-ok( $channel->list_errata() > 0,
+ok( keys( %{ $channel->list_errata()} )  > 0,
     'More than one errata for ' . $channel->label() );
 
 BEGIN { $tests++; }
-my @arches = $channel->list_arches();
-ok( @arches > 0, 'More than one arch in list : ' . join( ', ', @arches ) );
+my $arches = $channel->list_arches();
+ok( keys(%$arches) > 0, 'More than one arch in list : ' . join( ', ', keys %$arches ) );
 
 BEGIN { $tests++; }
-ok( $channel->list_systems() >= 0, '0 or more systems subscribed' );
+my $syslist = $channel->list_systems();
+ok(keys %{ $syslist } >= 0, '0 or more systems subscribed' );
+#isa_ok( $syslist->{(keys %$syslist)[0]}, 'RHNC::System', "first #system is a RHNC::System" ); #TODO
 
 BEGIN { $tests++; }
 my $new_chan = RHNC::Channel->create(
@@ -48,7 +50,7 @@ my $new_chan = RHNC::Channel->create(
     name         => 'site-my-test-channel',
     summary      => 'site-my-test-channel',
     arch_name    => 'channel-ia32',
-    parent_label => 'rhel-x86_64-server-5'
+    parent_label => $tchan_name,
 );
 is( ref $new_chan, 'RHNC::Channel', 'New channel created' );
 

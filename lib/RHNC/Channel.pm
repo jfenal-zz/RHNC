@@ -84,15 +84,6 @@ my %properties = (
     end_of_life          => [ 0, undef, undef, undef ],
 );
 
-my %channel_type_for = (
-    all      => 'listAllChannels',
-    mine     => 'listMyChannels',
-    popular  => 'listRedHatChannels',
-    retired  => 'listRetiredChannels',
-    shared   => 'listSharedChannels',
-    software => 'listSoftwareChannels',
-);
-
 sub _setdefaults {
     my ( $self, @args ) = @_;
 
@@ -146,11 +137,11 @@ sub new {
 
 =head2 list_arches
 
-Returns the list of available arches, as a HASH ref ( C<label => name> ).
+Returns the list of _all_ available arches, as a HASH ref ( C<label => name> ).
 
-  my @arches_list = RHNC::Channel::list_arches($rhnc);
-  my @arches_list = RHNC::Channel->list_arches($rhnc);
-  my @arches_list = $channel->list_arches();
+  my $arches_list = RHNC::Channel::list_arches($rhnc);
+  my $arches_list = RHNC::Channel->list_arches($rhnc);
+  my $arches_list = $channel->list_arches();
 
 =cut
 
@@ -265,12 +256,20 @@ sub latest_packages {
     my $rhnc;
     my $id_or_name;
 
+    my $list;
     if ( !defined $self->{latest_packages} && defined $self->{rhnc} ) {
-        $self->{latest_packages} =
+        $list =
           $self->{rhnc}
           ->call( 'channel.software.listLatestPackages', $self->label() );
     }
 
+    my $plist = [];
+
+    foreach my $p (@$list) {
+        push @$plist, RHNC::Package->new( rhnc => $rhnc, %$p );
+    }
+
+    $self->{latest_packages} = $plist;
     return $self->{latest_packages};
 }
 
@@ -578,7 +577,7 @@ sub list {
         }
     }
 
-    my $l;
+    my $l = [];
     foreach my $output ( keys %hres1 ) {
         my $c = __PACKAGE__->new( $hres1{$output} );
         $rhnc->manage($c);
