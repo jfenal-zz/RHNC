@@ -39,8 +39,6 @@ use constant {
     TRANSFORM => 3,
 };
 
-my %valid_prefix = map { $_ => 1 } qw( Dr. Hr. Miss
-  Mr. Mrs. Sr. );
 my %properties = (
     id           => [ 0, undef, undef, undef ],
     name         => [ 1, undef, undef, undef ],
@@ -51,6 +49,39 @@ my %properties = (
     system_ids => [ 0, [], undef, undef ],
 );
 
+sub _setdefaults {
+    my ( $self, @args ) = @_;
+
+    foreach ( keys %properties ) {
+        if ( ref $properties{$_}[DEFAULT] eq 'CODE' ) {
+            $self->{$_} = $properties{$_}[DEFAULT]();
+        }
+        else {
+            $self->{$_} = $properties{$_}[DEFAULT];
+        }
+    }
+    return $self;
+}
+
+sub _validate_properties {
+    my ( $self, @args ) = @_;
+
+    foreach ( keys %properties ) {
+        if ( $properties{$_}[MANDATORY] && !defined( $self->{$_} ) ) {
+            use Data::Dumper;
+            print Dumper $self;
+            croak "Mandatory parameter $_ not present in object " . $self->name;
+        }
+
+        if ( ref $properties{$_}[VALIDATE] eq 'CODE' ) {
+            if ( $properties{$_}[VALIDATE]( $self->{$_} ) ) {
+                croak "Property $_ does not pass validation for object"
+                  . $self->name;
+            }
+        }
+    }
+    return $self;
+}
 
 =head2 is_system_group_id
 
@@ -63,7 +94,6 @@ sub is_system_group_id {
     return 1 if $s =~ m{ \A \d+ \z }imxs;
     return 0;
 }
-
 
 =head2 new
 
@@ -80,10 +110,17 @@ No persistance is done on Satellite, see L<create>.
 
 sub new {
     my ( $class, @args ) = @_;
-    $class = ref($class) || $class;
+    $class = ref $class ? ref $class : $class;
 
+    if ( $class ne __PACKAGE__ ) {
+        unshift @args, $class;
+
+    }
     my $self = {};
     bless $self, $class;
+
+    # populate object from defaults
+    $self->_setdefaults();
 
     my %v = map { $_ => 0 } ( keys %properties );
 
@@ -92,6 +129,9 @@ sub new {
     for my $i ( keys %properties ) {
         $self->{$i} = $p{$i};
     }
+
+    # validate object content
+    $self->_validate_properties;
 
     if ( defined $self->{rhnc} ) {
         $self->{rhnc}->manage($self);
@@ -348,7 +388,6 @@ sub remove_systems {
     return $res;
 }
 
-
 =head2 get
 
 Get from Satellite a specific system group. Returns a RHNC::SystemGroup object.
@@ -389,7 +428,7 @@ sub get {
 
     my $res = $rhnc->call( 'systemgroup.getDetails', $id_or_name );
 
-    if (defined $res) {
+    if ( defined $res ) {
         my $sg = RHNC::SystemGroup->new(
             id           => $res->{id},
             name         => $res->{name},
@@ -397,7 +436,7 @@ sub get {
             org_id       => $res->{org_id},
             system_count => $res->{system_count},
         );
-        if (defined $sg) {
+        if ( defined $sg ) {
             $rhnc->manage($sg);
 
             return $sg;
@@ -430,7 +469,7 @@ sub list {
         $rhnc = $parm;
     }
 
-    my $res = $rhnc->call('systemgroup.listAllGroups');
+    my $res  = $rhnc->call('systemgroup.listAllGroups');
     my $list = [];
 
     foreach my $g (@$res) {
@@ -469,7 +508,6 @@ sub as_string {
     }
 
 }
-
 
 =head1 AUTHOR
 
