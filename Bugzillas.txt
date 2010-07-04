@@ -36,3 +36,15 @@ struct ( string key, string value ).
 However, in Satellite 5.3, it returns the struct directly, not using
 the (useless, I agree) array.
 
+TO OPEN :
+No API call provides the ability to rename an activation key, whereas
+possible in the UI.
+
+TO OPEN :
+activationkey.setDetails cannot set back an empty base_channel_label to have
+"RHN Satellite default" functionnality
+End in error :
+Error encountered calling activationkey.setDetails : Fault returned
+from XML RPC Server, fault code -211: redstone.xmlrpc.XmlRpcFault:
+Invalid channel
+
