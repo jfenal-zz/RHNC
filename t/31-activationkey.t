@@ -298,5 +298,122 @@ $ak = $ak->get($key);
 BEGIN { $tests++; }
 ok( !$ak->universal_default, "universal_default 0" );
 
+# description
+diag("testing description");
+$ak->description("New description");
+$ak = $ak->get($key);
+BEGIN { $tests++; }
+is( $ak->description, "New description", "description" );
+$ak->description("Test activation key");
+$ak = $ak->get($key);
+BEGIN { $tests++; }
+is( $ak->description, "Test activation key", "description"  );
+
+# base_channel
+diag("testing base_channel");
+$ak->base_channel( "rhel-i386-server-5" );
+$ak = $ak->get($key);
+BEGIN { $tests++; }
+is( $ak->base_channel, "rhel-i386-server-5", "base_channel" );
+
+# TODO : does not work with Satellite 5.3
+#$ak->base_channel( "none" );
+#$ak = $ak->get($key);
+#BEGIN { $tests++; }
+#is( $ak->base_channel, "", "base_channel"  );
+
+# 3. Create 2 new system groups
+my $g1 = RHNC::SystemGroup->create(
+    rhnc        => $rhnc,
+    name        => "testgroup1",
+    description => "testgroup1"
+);
+BEGIN { $tests++; }
+$g1 = RHNC::SystemGroup->get($rhnc, "testgroup1");
+isa_ok($g1, 'RHNC::SystemGroup', 'Created g1');
+my $g2 = RHNC::SystemGroup->create(
+    rhnc        => $rhnc,
+    name        => "testgroup2",
+    description => "testgroup2"
+);
+$g2 = RHNC::SystemGroup->get($rhnc, "testgroup2");
+BEGIN { $tests++; }
+isa_ok($g2, 'RHNC::SystemGroup', 'Created g2');
+
+BEGIN { $tests++; }
+is( scalar(@{$ak->server_group_ids}), 0, "No system group ids in ak".$ak->name);
+BEGIN { $tests++; }
+is( scalar(@{$ak->system_groups}), 0, "No system group in ak".$ak->name);
+
+$ak->system_groups( [ $g1->name, $g2->id, 'crap' ]);
+$ak=$ak->get($ak->name);
+BEGIN { $tests++; }
+is( scalar(@{$ak->server_group_ids}), 2, "Now 2 system group ids in ak".$ak->name);
+BEGIN { $tests++; }
+my $sg_ref;
+is( scalar(@{$sg_ref = $ak->system_groups} ), 2, "Now system group in ak".$ak->name);
+diag("system groups added : " . join ", ", @$sg_ref);
+my %h = map { $_ => 1 } @$sg_ref;
+BEGIN { $tests++; }
+ok( defined $h{testgroup1}, "testgroup1 is here");
+BEGIN { $tests++; }
+ok( defined $h{testgroup2}, "testgroup2 is here");
+
+# remove 1 group
+$ak->system_groups( remove => [ $g1->name, 'crap' ]);
+$ak=$ak->get($ak->name);
+BEGIN { $tests++; }
+is( scalar(@{$ak->server_group_ids}), 1, "Now 1 system group ids in ak".$ak->name);
+BEGIN { $tests++; }
+is( scalar(@{$sg_ref = $ak->system_groups} ), 1, "Now system group in ak".$ak->name);
+diag("system groups in ak : " . join ", ", @$sg_ref);
+%h = map { $_ => 1 } @$sg_ref;
+BEGIN { $tests++; }
+ok( ! defined $h{testgroup1}, "testgroup1 is not here");
+BEGIN { $tests++; }
+ok( defined $h{testgroup2}, "testgroup2 is here");
+
+
+# re add 1st group
+$ak->system_groups( add => [ $g1->name, 'crap' ]);
+$ak=$ak->get($ak->name);
+BEGIN { $tests++; }
+is( scalar(@{$ak->server_group_ids}), 2, "Now 2 system group ids in ak".$ak->name);
+BEGIN { $tests++; }
+is( scalar(@{$sg_ref = $ak->system_groups} ), 2, "Now 2 system group in ak".$ak->name);
+diag("system groups added : " . join ", ", @$sg_ref);
+%h = map { $_ => 1 } @$sg_ref;
+BEGIN { $tests++; }
+ok( defined $h{testgroup1}, "testgroup1 is here");
+BEGIN { $tests++; }
+ok( defined $h{testgroup2}, "testgroup2 is here");
+
+# set 1st group
+$ak->system_groups( set => [ $g1->name, 'crap' ]);
+$ak=$ak->get($ak->name);
+BEGIN { $tests++; }
+is( scalar(@{$ak->server_group_ids}), 1, "Now 1 system group ids in ak".$ak->name);
+BEGIN { $tests++; }
+is( scalar(@{$sg_ref = $ak->system_groups} ), 1, "Now 1 system group in ak".$ak->name);
+diag("system groups added : " . join ", ", @$sg_ref);
+%h = map { $_ => 1 } @$sg_ref;
+BEGIN { $tests++; }
+ok( defined $h{testgroup1}, "testgroup1 is here");
+BEGIN { $tests++; }
+ok( ! defined $h{testgroup2}, "testgroup2 is not here");
+
+# delete test groups
+BEGIN { $tests++; }
+ok($g1->destroy, "delete g1");
+BEGIN { $tests++; }
+ok($g2->destroy, "delete g2");
+
+$ak=$ak->get($ak->name);
+BEGIN { $tests++; }
+is( scalar(@{$ak->server_group_ids}), 0, "Now 0 system group ids in ak".$ak->name);
+BEGIN { $tests++; }
+is( scalar(@{$sg_ref = $ak->system_groups} ), 0, "Now 0 system group in ak".$ak->name);
+
 BEGIN { $tests++; }
 ok( $ak->destroy, "destroy ok" );
+

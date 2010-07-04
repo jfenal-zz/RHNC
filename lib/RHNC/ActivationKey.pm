@@ -124,8 +124,6 @@ sub _validate_properties {
 
     foreach ( keys %properties ) {
         if ( $properties{$_}[MANDATORY] && !defined( $self->{$_} ) ) {
-            use Data::Dumper;
-            print Dumper $self;
             croak "Mandatory parameter $_ not present in object " . $self->name;
         }
 
@@ -165,7 +163,9 @@ Create and return a new activation key.
 sub new {
     my ( $class, @args ) = @_;
 
-    $class = ref($class) || $class;
+    #$class = ref($class) || $class;
+    $class =  ref $class ? ref $class : $class;
+
     if ( $class ne __PACKAGE__ ) {
         unshift @args, $class;
     }
@@ -217,12 +217,9 @@ Return activation key name (key).
 
 sub name {
     my ( $self, @args ) = @_;
-    my $prev = q();
+    my $prev = $self->{key};
 
-    if ( defined $self->{key} ) {
-        $prev = $self->{key};
-    }
-
+    # TODO : haven't seen anything in the API to rename an activation key
     #    if (@args) {
     #        $self->{key} = shift @args;
     #    }
@@ -240,17 +237,11 @@ Return or set activation key's description.
 
 sub description {
     my ( $self, @args ) = @_;
-    my $prev = q();
-
-    if ( defined $self->{description} ) {
-        $prev = $self->{description};
-    }
+    my $prev = $self->{description};
     if (@args) {
         $self->{description} = shift @args;
         $self->{rhnc}->call( 'activationkey.setDetails', $self->{key},
             { description => $self->{description}, } );
-
-        $self->set_details();
     }
     return $prev;
 }
@@ -269,20 +260,16 @@ sub universal_default {
     my ( $self, @args ) = @_;
     my $prev = q();
 
-    if ( defined $self->{universal_default} ) {
-        $prev = $self->{universal_default}->value();
-    }
+    $prev = $self->{universal_default}->value();
     if (@args) {
         $self->{universal_default} = shift @args;
 
         # Normalize now
-        if ( ref( $self->{universal_default} ) ne 'Frontier::RPC2::Boolean' ) {
-            if ( $self->{universal_default} ) {
-                $self->{universal_default} = $RHNC::_xmltrue;
-            }
-            else {
-                $self->{universal_default} = $RHNC::_xmlfalse;
-            }
+        if ( $self->{universal_default} ) {
+            $self->{universal_default} = $RHNC::_xmltrue;
+        }
+        else {
+            $self->{universal_default} = $RHNC::_xmlfalse;
         }
         $self->{rhnc}->call( 'activationkey.setDetails', $self->{key},
             { universal_default => $self->{universal_default}, } );
@@ -302,11 +289,7 @@ Return or set activation key's base channel.
 
 sub base_channel {
     my ( $self, @args ) = @_;
-    my $prev = q();
-
-    if ( defined $self->{base_channel_label} ) {
-        $prev = $self->{base_channel_label};
-    }
+    my $prev = $self->{base_channel_label};
     if (@args) {
         $self->{base_channel_label} = shift @args;
         $self->{rhnc}->call( 'activationkey.setDetails', $self->{key},
@@ -411,16 +394,17 @@ System groups may be specified either by name, or by id.
 
 sub system_groups {
     my ( $self, @args ) = @_;
-    my @groups;
-    my $prev;
+    my $prev = [];
 
     my $aksg = $self->{server_group_ids};
     if ( defined $aksg ) {
+        my $groups = [];
+
         foreach my $sgid (@$aksg) {
             my $sg = RHNC::SystemGroup->get( $self->{rhnc}, $sgid );
-            push @groups, $sg->name();
+            push @$groups, $sg->name();
         }
-        $prev = \@groups;
+        $prev = $groups;
     }
 
     if (@args) {
@@ -430,7 +414,7 @@ sub system_groups {
         if ( $c eq 'add' && ref $sg_ref eq 'ARRAY' ) {
             my $sgids = [];
             foreach my $sg (@$sg_ref) {
-                if ( RHNC::SystemGroup::is_system_group_id $sg ) {
+                if ( RHNC::SystemGroup::is_system_group_id( $sg ) ) {
                     push @$sgids, $sg;
                 }
                 else {
