@@ -50,20 +50,20 @@ ok( $ak->destroy(), 'activation key destroyed' );
 
 my @list;
 
-@list = $ak->list();
+@list = @{ $ak->list() };
 BEGIN { $tests++ }
 ok( @list, 'Get list : ' . scalar @list );
 
 #foreach (@list)  { print STDERR $_->name() . "\n"; }
 
-@list = RHNC::ActivationKey::list($rhnc);
+@list = @{  RHNC::ActivationKey::list($rhnc) };
 BEGIN { $tests++ }
 ok( @list, 'Get list 2 : ' . scalar @list );
 
 #foreach (@list)  { print STDERR $_->name() . "\n"; }
 
 BEGIN { $tests++ }
-@list = RHNC::ActivationKey->list($rhnc);
+@list = @{ RHNC::ActivationKey->list($rhnc) };
 ok( @list, 'Get list 3 : ' . scalar @list );
 
 #foreach (@list)  { print STDERR $_->name() . "\n"; }

@@ -20,7 +20,7 @@ my $rhnc = RHNC::Session->new();
 BEGIN { $tests++ }
 ok( RHNC::Kickstart::destroy( $rhnc, 'new-ks' ), 'kickstart new-ks destroyed if existing...');
 
-my $ks = RHNC::Kickstart->new(
+my $ks = RHNC::Kickstart->create(
     rhnc       => $rhnc,
     label      => 'new-ks',
     name       => 'new-ks',

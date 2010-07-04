@@ -25,7 +25,7 @@ use Cwd qw( abs_path );
 use Test::More;    # last test to print
 my $script = 'rhnc-channel';
 
-eval "use Test::Script::Run";
+eval "use Test::Script::Run qw( :all )";
 plan skip_all => "Test::Script::Run required for testing $script" if $@;
 
 my $s;
@@ -44,7 +44,7 @@ ok( defined $s, "script to test found : $s" );
 my ( $return_code, $stdout, $stderr );
 
 BEGIN { $tests++; }
-run_ok( $s, [qw( )], "$script (no arg)" );
+run_not_ok( $s, [qw( )], "$script (no arg)" );
 
 BEGIN { $tests++; }
 ( $return_code, $stdout, $stderr ) = run_script( $s, [qw( list )] );

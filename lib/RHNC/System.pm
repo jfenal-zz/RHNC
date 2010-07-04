@@ -175,15 +175,15 @@ sub list {
         $list = $rhnc->call('system.listSystems');
     }
 
-    my %by_id;
+    my $by_id = {};
     foreach my $s (@$list) {
         my $id = $s->{id};
-        $by_id{$id}{id}           = $id;
-        $by_id{$id}{name}         = $s->{name};
-        $by_id{$id}{last_checkin} = $s->{last_checkin};
+        $by_id->{$id}{id}           = $id;
+        $by_id->{$id}{name}         = $s->{name};
+        $by_id->{$id}{last_checkin} = $s->{last_checkin};
     }
 
-    return \%by_id;
+    return $by_id;
 }
 
 =head2 id
@@ -199,8 +199,6 @@ sub id {
     my $rhnc;
 
     if ( ref $self eq __PACKAGE__ ) {
-        print "Coucou 1\n";
-
         return $self->{id};
     }
     elsif ( $self eq __PACKAGE__ ) {
@@ -215,8 +213,6 @@ sub id {
         $self = __PACKAGE__->get( $rhnc, $system );
         return $self->{id};
     }
-    print "Coucou3\n";
-
     return;
 }
 
@@ -233,7 +229,6 @@ sub name {
     
     if (!defined $self->{name} && defined $self->{profile_name}) {
         $self->{name} = $self->{profile_name};
-        delete $self->{profile_name};
     }
 
     return $self->{name};

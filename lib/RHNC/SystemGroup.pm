@@ -431,7 +431,7 @@ sub list {
     }
 
     my $res = $rhnc->call('systemgroup.listAllGroups');
-    my @list;
+    my $list = [];
 
     foreach my $g (@$res) {
         my $sg = __PACKAGE__->new(
@@ -442,10 +442,10 @@ sub list {
             system_count => $g->{system_count},
         );
         $rhnc->manage($sg);
-        push @list, $sg;
+        push @$list, $sg;
     }
 
-    return @list;
+    return $list;
 }
 
 =head2 as_string
@@ -457,7 +457,16 @@ Returns a printable string to describe the system group.
 =cut
 
 sub as_string {
+    my ($self) = @_;
 
+    foreach my $k ( sort ( keys %{$self} ) ) {
+        next if $k eq 'rhnc';
+        if ( defined $self->{$k} ) {
+            print "  $k : $self->{$k}\n";
+
+        }
+
+    }
 
 }
 

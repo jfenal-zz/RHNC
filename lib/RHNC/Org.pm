@@ -511,7 +511,7 @@ sub list {
 
     my $res = $rhnc->call('org.listOrgs');
 
-    my @orgs;
+    my $orgs = [];
     foreach my $h ( @{$res} ) {
 
         my $o = __PACKAGE__->new(
@@ -520,10 +520,10 @@ sub list {
         );
         $rhnc->manage($o);
 
-        push @orgs, $o;
+        push @$orgs, $o;
     }
 
-    return \@orgs;
+    return $orgs;
 }
 
 =head2 get
@@ -565,8 +565,9 @@ sub get {
 TODO
 
 =cut
+
 sub list_users {
-carp "not implemented yet";
+    carp "not implemented yet";
 }
 
 =head1 AUTHOR

@@ -26,6 +26,10 @@ perl-JSON & perl-JSON-XS are in EPEL & Fedora.
 
 ----------
 
+Canonicalise entitlements handling, as they are hardcoded in AK & KS.
+
+----------
+
 Coverage to bring at 99% if not 100% :
 
 - RHNC::Session

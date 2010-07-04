@@ -144,12 +144,12 @@ sub list {
 
     my $list = $rhnc->call('system.customeinfo.listAllKeys');
 
-    my @keys;
+    my $keys;
     foreach my $s (@$list) {
-        push @keys, __PACKAGE__->new( $rhnc, %$s );
+        push @$keys, __PACKAGE__->new( $rhnc, %$s );
     }
 
-    return \@keys;
+    return $keys;
 }
 
 =head2 id
@@ -165,7 +165,6 @@ sub id {
     my $rhnc;
 
     if ( ref $self eq __PACKAGE__ ) {
-        print "Coucou 1\n";
 
         return $self->{id};
     }
@@ -181,7 +180,6 @@ sub id {
         $self = __PACKAGE__->get( $rhnc, $system );
         return $self->{id};
     }
-    print "Coucou3\n";
 
     return;
 }
@@ -224,9 +222,11 @@ sub name {
 
 =head2 get
 
-Get a custom info key label
+Get a custom info key label details.
 
-TODO
+  $ci = RHNC::System::CustomInfo::get( $RHNC, $name );
+  $ci = RHNC::System::CustomInfo->get( $RHNC, $name );
+  $ci = $oci->get( $name );
 
 =cut
 

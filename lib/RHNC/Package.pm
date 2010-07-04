@@ -76,27 +76,27 @@ name.
 
 sub list_arch_canon {
     my ($update) = @_;
-    my @list;
+    my $list = [];
     if ( defined $update && $update && -f rpmrc ) {
         open my $f, '<', rpmrc
           or croak "Cannot open for read list of canonical arches" . rpmrc;
 
-        @list = ('noarch');
+        @$list = ('noarch');
         while ( my $l = <$f> ) {
             chomp $l;
             if ( $l =~ m{ \A arch_canon : \s* ([^\s:]+) \s* :  }imxs ) {
-                push @list, $1;
+                push @$list, $1;
             }
         }
         close $f or croak "Cannot close list of canonical arches" . rpmrc;
 
-        %arch_canon = map { $_ => 1 } @list;
+        %arch_canon = map { $_ => 1 } @$list;
     }
     else {
-        @list = keys %arch_canon;
+        @$list = keys %arch_canon;
     }
 
-    return \@list;
+    return $list;
 }
 
 =head2 split_package_name
@@ -121,9 +121,8 @@ sub split_package_name {
     }
     $p = join '.', @c;
 
-    @c       = split /-/, $p;
-    if ( $c[-1] =~ m{ \A \d .* }imxs && $c[-2] =~ m{ \A \d .* }imxs )
-    {
+    @c = split /-/, $p;
+    if ( $c[-1] =~ m{ \A \d .* }imxs && $c[-2] =~ m{ \A \d .* }imxs ) {
         $release = pop @c;
         $version = pop @c;
     }
@@ -144,15 +143,15 @@ sub split_package_name {
 sub join_package_name {
     my ($h) = @_;
     my $pname;
-    
-    croak "No package name to join in a package full name" if not
-    defined $h->{name};
+
+    croak "No package name to join in a package full name"
+      if not defined $h->{name};
     $pname = $h->{name};
 
     if ( defined $h->{version} && defined $h->{release} ) {
         $pname .= "-$h->{version}-$h->{release}";
     }
-    if (defined $h->{arch} && defined $arch_canon{$h->{arch}} ) {
+    if ( defined $h->{arch} && defined $arch_canon{ $h->{arch} } ) {
         $pname .= ".$h->{arch}";
     }
 
@@ -340,7 +339,7 @@ sub search {
     my $res = $rhnc->call( 'packages.findByNvrea',
         $name, $version, $release, $epoch, $arch );
 
-    if ( defined $res && scalar( @$res ) == 1 ) {
+    if ( defined $res && scalar(@$res) == 1 ) {
         my $p = RHNC::Package->get( $rhnc, $res->[0]{id} );
 
         return $p;

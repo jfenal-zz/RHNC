@@ -179,7 +179,7 @@ sub list {
 
     my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
 
-    my @systemgroup = RHNC::SystemGroup->list($rhnc);
+    my @systemgroup = @{ RHNC::SystemGroup->list($rhnc) };
 
     my $nr = 0;
     foreach

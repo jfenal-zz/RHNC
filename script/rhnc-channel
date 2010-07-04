@@ -184,12 +184,12 @@ sub list {
         'all|a'      => \$all,
     );
 
-    my @channel = RHNC::Channel->list($rhnc);
+    my @channel_list = @{ RHNC::Channel->list($rhnc) };
 
     my $nr = 0;
 
     # sort { $a->{label} cmp $b->{label} }
-    foreach my $chan (@channel) {
+    foreach my $chan (@channel_list) {
         my $systems = $chan->systems();
         my $parent  = $chan->parent_label();
         my $format;
@@ -229,7 +229,7 @@ sub list {
     }
 
     if ($verbose) {
-        print "\nTotal: " . scalar(@channel) . " Channels\n";
+        print "\nTotal: " . scalar(@channel_list) . " Channels\n";
     }
     return 0;
 }
@@ -264,10 +264,10 @@ sub list_errata {
     my $channel;
 
     while ( $channel = shift @args ) {
-        my %errata = RHNC::Channel->list_errata( $rhnc, $channel );
-        foreach my $erratum ( sort keys %errata ) {
+        my $errata = RHNC::Channel->list_errata( $rhnc, $channel );
+        foreach my $erratum ( sort keys %$errata ) {
             print
-"$erratum ($errata{$erratum}{issue_date}): $errata{$erratum}{synopsis}\n";
+"$erratum ($errata->{$erratum}{issue_date}): $errata->{$erratum}{synopsis}\n";
         }
     }
 
@@ -296,13 +296,14 @@ sub list_packages {
         'all|a'     => \$all,
       )
       or pod2usage(
-        -exitval => 3,
+        -exitval => 254,
         -message => 'Wrong parameters for list_packages',
-        -verbose => 1
+        -verbose => 99,
+        -sections => 'DESCRIPTION/list_packages',
       );
 
     while ( $label_or_id = shift @args ) {
-        my $chan = RHNC::Channel::get( $rhnc, $label_or_id );
+        my $chan = RHNC::Channel->get( $rhnc, $label_or_id );
         my @pkglist;
         if ($all) {
             @pkglist = @{ $chan->list_packages() };
@@ -344,9 +345,9 @@ sub list_systems {
     my $channel;
 
     while ( $channel = shift @args ) {
-        my %systems = RHNC::Channel->list_systems( $rhnc, $channel );
-        foreach my $system ( sort keys %systems ) {
-            print "$system: $systems{$system}\n";
+        my $system_ref = RHNC::Channel->list_systems( $rhnc, $channel );
+        foreach my $system ( sort keys %$system_ref ) {
+            print "$system: $system_ref->{$system}\n";
         }
     }
 
@@ -421,9 +422,7 @@ See L<EXIT STATUS>.
 
 =head1 EXIT STATUS
 
-TODO. 
-This script will return 1 for success, 0 for failure. Not very
-consistent for now, likely to change.
+This script will return 0 for success, non 0 for failure.
 
 =head1 CONFIGURATION
 
@@ -449,7 +448,7 @@ See L<RHNC>.
 
 =head1 AUTHOR
 
-Jérôme Fenal L<< <jfenal@redhat.com> >>.
+Jérôme Fenal L<< <jfenal@free.fr> >>.
 
 =head1 LICENSE AND COPYRIGHT
 
@@ -503,5 +502,5 @@ if ( defined $cmd && defined $func{$cmd} ) {
     exit $rc;
 }
 
-pod2usage( -exitval => 0, -message => "No or unknown command given" );
+pod2usage( -exitval => 254, verbose=> 99, -message => "No or unknown command given" );
 

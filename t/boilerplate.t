@@ -1,8 +1,8 @@
-#!perl -T
+#!perl
 
 use strict;
 use warnings;
-use Test::More tests => 10;
+use Test::More tests => 13;
 
 sub not_in_file_ok {
     my ( $filename, %regex ) = @_;
@@ -38,7 +38,8 @@ sub module_boilerplate_ok {
 }
 
 TODO: {
-    local $TODO = "Need to replace the boilerplate text";
+
+    #    local $TODO = "Need to replace the boilerplate text";
 
     not_in_file_ok(
         README => "The README is used..." => qr/The README is used/,
@@ -50,10 +51,13 @@ TODO: {
 
     module_boilerplate_ok('lib/RHNC.pm');
     module_boilerplate_ok('lib/RHNC/Session.pm');
+    module_boilerplate_ok('lib/RHNC/ActivationKey.pm');
     module_boilerplate_ok('lib/RHNC/Org.pm');
     module_boilerplate_ok('lib/RHNC/Package.pm');
     module_boilerplate_ok('lib/RHNC/Channel.pm');
+    module_boilerplate_ok('lib/RHNC/System/CustomInfo.pm');
     module_boilerplate_ok('lib/RHNC/Kickstart.pm');
+    module_boilerplate_ok('lib/RHNC/KickstartTree.pm');
     module_boilerplate_ok('lib/RHNC/System.pm');
     module_boilerplate_ok('lib/RHNC/SystemGroup.pm');
 

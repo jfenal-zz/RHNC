@@ -26,14 +26,13 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
     use RHNC::Channel;
 
-    my $foo = RHNC::Channel->new();
+    my $foo = RHNC::Channel->new( ... );
+    my $foo = RHNC::Channel->create( ... );
     ...
+
+See methods details below.
 
 =head1 DESCRIPTION
 
@@ -180,8 +179,8 @@ sub list_arches {
 
     my $res = $rhnc->call("channel.software.listArches");
 
-    my %arches = map { $_->{label} => $_->{name} } @{$res};
-    $arch_ref = \%arches;
+    my $arch_ref = {};
+    %$arch_ref = map { $_->{label} => $_->{name} } @{$res};
     return $arch_ref;
 }
 
@@ -227,8 +226,9 @@ sub list_errata {
 
     my $res = $rhnc->call( 'channel.software.listErrata', $id_or_name );
 
-    my %errata = map { $_->{advisory} => $_ } @{$res};
-    return %errata;
+    my $errata = {};
+    %$errata = map { $_->{advisory} => $_ } @{$res};
+    return $errata;
 }
 
 =head2 list_packages
@@ -317,8 +317,9 @@ sub list_systems {
     my $res =
       $rhnc->call( 'channel.software.listSubscribedSystems', $id_or_name );
 
-    my %systems = map { $_->{id} => $_->{name} } @{$res};
-    return %systems;
+    my $systems = {};
+    %$systems = map { $_->{id} => $_->{name} } @{$res};
+    return $systems;
 }
 
 =head2 id
@@ -338,7 +339,6 @@ sub id {
 
     return $self->{id};
 }
-
 
 =head2 name
 
@@ -532,11 +532,11 @@ sub destroy {
 
 =head2 list
 
-List channels. Returns list of objects of type C<RHNC::Channel>.
+List channels. Returns array ref of objects of type C<RHNC::Channel>.
 
-  my @channel_list = RHNC::Channel::list($rhnc);
-  my @channel_list = RHNC::Channel->list($rhnc);
-  my @channel_list = $channel->list();
+  my $channel_list = RHNC::Channel::list($rhnc);
+  my $channel_list = RHNC::Channel->list($rhnc);
+  my $channel_list = $channel->list();
 
 =cut
 
@@ -578,14 +578,14 @@ sub list {
         }
     }
 
-    my @l;
+    my $l;
     foreach my $output ( keys %hres1 ) {
         my $c = __PACKAGE__->new( $hres1{$output} );
         $rhnc->manage($c);
-        push @l, $c;
+        push @$l, $c;
     }
 
-    return @l;
+    return $l;
 }
 
 =head2 get
