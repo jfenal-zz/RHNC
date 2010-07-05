@@ -183,13 +183,8 @@ sub get {
 
     my $sg;
     while ( $sg = shift @args ) {
-        print "$sg:\n";
         my $systemgroup = RHNC::SystemGroup->get( $rhnc, $sg );
-        foreach my $k ( sort ( keys %{$systemgroup} ) ) {
-            next if $k eq 'rhnc';
-            print "  $k : $systemgroup->{$k}\n"
-              if defined $systemgroup->{$k};
-        }
+        print $systemgroup->as_string;
     }
 
     return 0;

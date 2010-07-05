@@ -497,16 +497,17 @@ Returns a printable string to describe the system group.
 
 sub as_string {
     my ($self) = @_;
+    my $str;
 
+    $str = $self->name . ":\n";
     foreach my $k ( sort ( keys %{$self} ) ) {
         next if $k eq 'rhnc';
         if ( defined $self->{$k} ) {
-            print "  $k : $self->{$k}\n";
-
+            $str .= "  $k: $self->{$k}\n";
         }
-
     }
 
+    return $str;
 }
 
 =head1 AUTHOR
