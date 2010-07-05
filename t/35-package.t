@@ -195,6 +195,7 @@ ok( $@, "croak if no name in join_package_name" );
 # 1. get a channel with packages
 my @channels = @{ RHNC::Channel->list($rhnc) };
 my $plist;
+
 PKG:
 foreach my $c (@channels) {
     if ( @{ $plist = $c->latest_packages() } ) {
@@ -210,6 +211,58 @@ foreach my $c (@channels) {
 my $p1 = $plist->[0];
 my $p2 = $plist->[1];
 my $p3 = $plist->[2];
+diag("Using ". $p1->nvra);
+diag("Using ". $p2->nvra);
+diag("Using ". $p3->nvra);
+
+BEGIN { $tests += 6; }
+ok( defined $p1->id,      "p1 id defined" );
+ok( defined $p1->nvra,    "p1 nvra defined" );
+ok( defined $p1->name,    "p1 name defined" );
+ok( defined $p1->version, "p1 version defined" );
+ok( defined $p1->release, "p1 release defined" );
+ok( defined $p1->arch,    "p1 arch defined" );
+
+my $p4 = RHNC::Package->get( $rhnc, $p1->id );
+BEGIN { $tests += 5; }
+is( $p1->name,    $p4->name,    "ident name" );
+is( $p1->version, $p4->version, "ident version" );
+is( $p1->release, $p4->release, "ident release" );
+is( $p1->arch,    $p4->arch,    "ident arch" );
+is( $p1->nvra,    $p4->nvra,    "ident nvra" );
+
+my $p5 = RHNC::Package::get( $rhnc, $p2->id );
+BEGIN { $tests += 5; }
+is( $p2->name,    $p5->name,    "ident name" );
+is( $p2->version, $p5->version, "ident version" );
+is( $p2->release, $p5->release, "ident release" );
+is( $p2->arch,    $p5->arch,    "ident arch" );
+is( $p2->nvra,    $p5->nvra,    "ident nvra" );
+
+my $p6 = $p2->get( $p3->id );
+BEGIN { $tests += 5; }
+is( $p3->name,    $p6->name,    "ident name" );
+is( $p3->version, $p6->version, "ident version" );
+is( $p3->release, $p6->release, "ident release" );
+is( $p3->arch,    $p6->arch,    "ident arch" );
+is( $p3->nvra,    $p6->nvra,    "ident nvra" );
+
+shift @channels; # FIXME let's hope we have more than one channel
+PKG2:
+foreach my $c (@channels) {
+    if ( @{ $plist = $c->list_packages() } ) {
+        diag( 'Using channel : ' . $c->name );
+        last PKG2;
+    }
+}
+
+# 2. get 3 packages
+$p1 = $plist->[0];
+$p2 = $plist->[1];
+$p3 = $plist->[2];
+diag("Using ". $p1->nvra);
+diag("Using ". $p2->nvra);
+diag("Using ". $p3->nvra);
 
 BEGIN { $tests += 6; }
 ok( defined $p1->id,      "p1 id defined" );

@@ -100,6 +100,19 @@ sub _missing_parameter {
     confess "Missing parameter $parm";
 }
 
+
+=head2 is_channel_id
+
+Returns true if channel id B<looks> valid, false otherwise.
+
+=cut
+
+sub is_channel_id {
+    my ($s) = shift;
+    return 1 if $s =~ m{ \A \d+ \z }imxs;
+    return 0;
+}
+
 =head2 new
 
 Create a new RHNC::Channel object from its description.
@@ -198,10 +211,7 @@ sub list_errata {
 
         # OO context, eg $ch->list_errata
         $rhnc       = $self->{rhnc};
-        $id_or_name = shift @p;
-        if ( !defined $id_or_name ) {
-            $id_or_name = $self->label();
-        }
+        $id_or_name = $self->label();
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
 
@@ -209,7 +219,7 @@ sub list_errata {
         $rhnc       = $self;
         $id_or_name = shift @p;
     }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+    elsif (defined $self && $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
 
         # Called as RHNC::Channel->list_errata($rhnc)
         $rhnc       = shift @p;
@@ -217,6 +227,10 @@ sub list_errata {
     }
     else {
         confess "No RHNC client given here";
+    }
+
+    if ( is_channel_id( $id_or_name) ) {
+        $id_or_name = __PACKAGE__->get( $rhnc, $id_or_name)->label;
     }
 
     my $res = $rhnc->call( 'channel.software.listErrata', $id_or_name );
@@ -235,15 +249,25 @@ Return the list of packages in the channel.
 =cut
 
 sub list_packages {
-    my ($self) = @_;
+    my ($self, $update) = @_;
+    my $rhnc;
+    my $id_or_name;
+    my $plist = [];
 
-    if ( !defined $self->{list_packages} && defined $self->{rhnc} ) {
-        $self->{list_packages} =
+    my $list;
+    if ( (defined $update || !defined $self->{list_packages}) && defined $self->{rhnc} ) {
+        $rhnc = $self->{rhnc};
+        $list =
           $self->{rhnc}
           ->call( 'channel.software.listAllPackages', $self->label() );
-        $self->{packages} = scalar( @{ $self->{list_packages} } );
-    }
 
+        foreach my $p (@$list) {
+            my $p = RHNC::Package->new( (defined $rhnc ? (rhnc => $rhnc) :()) , (%$p) );
+            push @$plist, $p;
+        }
+
+        $self->{list_packages} = $plist;
+    }
     return $self->{list_packages};
 }
 
@@ -297,10 +321,7 @@ sub list_systems {
 
         # OO context, eg $ch->list_systems
         $rhnc       = $self->{rhnc};
-        $id_or_name = shift @p;
-        if ( !defined $id_or_name ) {
-            $id_or_name = $self->label();
-        }
+        $id_or_name = $self->label();
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
 
@@ -316,6 +337,10 @@ sub list_systems {
     }
     else {
         confess "No RHNC client given here";
+    }
+
+    if ( is_channel_id( $id_or_name) ) {
+        $id_or_name = __PACKAGE__->get( $rhnc, $id_or_name)->label;
     }
 
     my $res =
