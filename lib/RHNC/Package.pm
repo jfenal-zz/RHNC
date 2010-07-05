@@ -299,6 +299,12 @@ sub arch {
 
 =head2 get
 
+Return a C<RHNC::Package> object from a package id or a package name
+(NVRA).
+
+  $p = RHNC::Package->get( 'kernel-doc-2.6.18-5.i386' );
+  $p = RHNC::Package->get( 12345 );
+
 =cut
 
 sub get {
