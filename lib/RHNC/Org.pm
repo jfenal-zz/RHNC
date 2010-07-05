@@ -561,6 +561,31 @@ sub get {
     return $o;
 }
 
+=head2 as_string
+
+Return a printable string of the content of the C<RHNC::Org> object.
+
+  print $o->as_string;
+
+=cut
+
+sub as_string {
+    my ($self) = @_;
+    my $str;
+
+    $str = $self->name() . "\n";
+    foreach my $i (sort keys %$self) {
+        next if $i eq 'rhnc';
+        my $c = $self->{$i};
+        if (defined $c) {
+            $str .= "  $i: $c\n";
+        }
+    }
+
+    return $str;
+}
+
+
 =head2 list_users
 TODO
 

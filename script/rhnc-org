@@ -177,13 +177,7 @@ sub get {
     delete $org->{rhnc};
 
     # Should in RHNC::Org::as_string...
-    foreach my $i (
-        qw( name id kickstart_profiles systems configuration_channels
-        active_users activation_keys system_groups )
-      )
-    {
-        print "$i: " . $org->$i() . "\n";
-    }
+    print $org->as_string;
 
     return 0;
 }
