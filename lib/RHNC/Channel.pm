@@ -7,6 +7,7 @@ use warnings;
 use Params::Validate;
 use Carp;
 use Data::Dumper;
+use base qw(RHNC);
 
 use vars qw( %properties %valid_prefix );
 use Exporter;
@@ -120,7 +121,7 @@ sub new {
     my $self = {};
     bless $self, $class;
 
-    my %v = map { $_ => 0 } ( keys %properties );
+    my %v = map { $_ => 0 } keys %properties;
 
     $self->_setdefaults();
     my %p = validate( @args, \%v );
@@ -130,6 +131,9 @@ sub new {
         if ( defined $p{$i} ) {
             $self->{$i} = $p{$i};
         }
+    }
+    if (defined $self->{rhnc}) {
+        $self->{rhnc}->manage($self);
     }
 
     return $self;
@@ -252,24 +256,25 @@ Returns the list of latest_packages for the channels specified.
 =cut
 
 sub latest_packages {
-    my ($self) = @_;
+    my ($self, $update) = @_;
     my $rhnc;
     my $id_or_name;
+    my $plist = [];
 
     my $list;
-    if ( !defined $self->{latest_packages} && defined $self->{rhnc} ) {
+    if ( (defined $update || !defined $self->{latest_packages}) && defined $self->{rhnc} ) {
+        $rhnc = $self->{rhnc};
         $list =
           $self->{rhnc}
           ->call( 'channel.software.listLatestPackages', $self->label() );
+
+        foreach my $p (@$list) {
+            my $p = RHNC::Package->new( (defined $rhnc ? (rhnc => $rhnc) :()) , (%$p) );
+            push @$plist, $p;
+        }
+
+        $self->{latest_packages} = $plist;
     }
-
-    my $plist = [];
-
-    foreach my $p (@$list) {
-        push @$plist, RHNC::Package->new( rhnc => $rhnc, %$p );
-    }
-
-    $self->{latest_packages} = $plist;
     return $self->{latest_packages};
 }
 

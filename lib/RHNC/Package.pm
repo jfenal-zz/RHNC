@@ -3,10 +3,9 @@ package RHNC::Package;
 use warnings;
 use strict;
 use Params::Validate;
-use Data::Dumper;
 use Carp;
-
 use base qw( RHNC );
+
 use vars qw( %properties %arch_canon );
 
 =head1 NAME
@@ -303,27 +302,24 @@ sub arch {
 =cut
 
 sub get {
-    my ( $self, @p ) = @_;
+    my ( $self, @args ) = @_;
     my $rhnc;
     my $id_or_name;
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
+    if ( ref $self eq 'RHNC::Package' && defined $self->{rhnc} ) {
         # OO context, eg $ch->get
         $rhnc       = $self->{rhnc};
-        $id_or_name = $self->{id};
+        $id_or_name = shift @args;
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::SystemGroup::get($rhnc)
+        # Called as RHNC::Package::get($rhnc)
         $rhnc       = $self;
-        $id_or_name = shift @p;
+        $id_or_name = shift @args;
     }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-
-        # Called as RHNC::SystemGroup->get($rhnc)
-        $rhnc       = shift @p;
-        $id_or_name = shift @p;
+    elsif ( $self eq __PACKAGE__ && ref( $args[0] ) eq 'RHNC::Session' ) {
+        # Called as RHNC::Package->get($rhnc)
+        $rhnc       = shift @args;
+        $id_or_name = shift @args;
     }
     else {
         croak "No RHNC client given here";
