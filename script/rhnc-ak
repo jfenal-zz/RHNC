@@ -86,7 +86,7 @@ sub create {
         'v|verbose+'                   => \$verbose,
       )
       or pod2usage(
-        -exitval  => 3,
+        -exitval  => 254,
         -verbose  => 99,
         -sections => ['DESCRIPTION/create'],
       );
@@ -154,9 +154,9 @@ sub destroy {
     my @args = @_;
     my $rc;
     my $verbose;
-    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, )
+    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
       or pod2usage(
-        -exitval  => 3,
+        -exitval  => 254,
         -verbose  => 99,
         -sections => ['DESCRIPTION/destroy'],
       );
@@ -173,11 +173,12 @@ sub destroy {
     return $rc ? 0 : 1;
 }
 
-=head2 list|l
+=head2 list
 
 List activation keys.
 
   rhnc-ak list
+  rhnc-ak l
   rhnc-ak list -v  : be verbose
   rhnc-ak list -r  : list reactivation keys (sort of, may work or not,
                      based on activation key name in English and French)
@@ -190,16 +191,16 @@ sub list {
 
     my $result = GetOptionsFromArray(
         \@args,
-        'verbose|v'          => \$verbose,
+        'verbose|v+'         => \$verbose,
         'reactivationkeys|r' => \$reactivationkey,
       )
       or pod2usage(
-        -exitval  => 3,
+        -exitval  => 254,
         -verbose  => 99,
         -sections => ['DESCRIPTION/list'],
       );
 
-    my @akl =@{ RHNC::ActivationKey->list($rhnc) };
+    my @akl = @{ RHNC::ActivationKey->list($rhnc) };
 
     my $nr = 0;
   AK:
@@ -223,6 +224,10 @@ Get information about activation key
 
   rhnc-ak get activationkey-name
   rhnc-ak get id
+  rhnc-ak get_details activationkey-name
+  rhnc-ak get_details id
+  rhnc-ak gd activationkey-name
+  rhnc-ak gd id
 
 =cut
 
@@ -230,11 +235,11 @@ sub get {
     my @args = @_;
     my ($verbose);
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, )
+    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
       or pod2usage(
-        -exitval  => 3,
+        -exitval  => 254,
         -verbose  => 99,
-        -sections => ['DESCRIPTION/set'],
+        -sections => ['DESCRIPTION/get'],
       );
 
     foreach my $k (@args) {
@@ -288,7 +293,7 @@ sub set {
         'v|verbose+'          => \$verbose,
       )
       or pod2usage(
-        -exitval  => 3,
+        -exitval  => 254,
         -verbose  => 99,
         -sections => ['DESCRIPTION/set'],
       );
@@ -365,7 +370,7 @@ sub add {
         'v|verbose+'         => \$verbose,
       )
       or pod2usage(
-        -exitval  => 3,
+        -exitval  => 254,
         -verbose  => 99,
         -sections => ['DESCRIPTION/add'],
       );
@@ -424,7 +429,7 @@ sub remove {
         'v|verbose+'         => \$verbose,
       )
       or pod2usage(
-        -exitval  => 3,
+        -exitval  => 254,
         -verbose  => 99,
         -sections => ['DESCRIPTION/remove'],
       );
@@ -513,33 +518,33 @@ under the same terms as Perl itself.
 $rhnc = RHNC::Session->new();
 
 my %func = (
-    c       => \&create,
-    create  => \&create,
-    l       => \&list,
-    list    => \&list,
-    destroy => \&destroy,
-    h       => \&_usage,
-    help    => \&_usage,
-    get     => \&get,
-    set     => \&set,
-    add     => \&add,
-    remove  => \&remove,
+    c           => \&create,
+    create      => \&create,
+    l           => \&list,
+    list        => \&list,
+    destroy     => \&destroy,
+    h           => \&_usage,
+    help        => \&_usage,
+    get_details => \&get,
+    gd          => \&get,
+    get         => \&get,
+    set         => \&set,
+    add         => \&add,
+    remove      => \&remove,
 );
 
 my @args = @ARGV;
 my $cmd  = shift @args;
-my $rc;
-
-SWITCH: foreach my $c ($cmd) {
-    if ( defined $c && defined $func{$c} ) {
-        $rc = $func{$c}->(@args);
-    }
-    else {
-        pod2usage(
-            -exitval => 0,
-            -message => "No or unknown command given"
-        );
-    }
+my $rc   = 249;
+if ( defined $cmd && defined $func{$cmd} ) {
+    $rhnc = RHNC::Session->new();
+    $rc   = $func{$cmd}->(@args);
+    exit $rc;
 }
 
-exit $rc;
+pod2usage(
+    -exitval => 254,
+    verbose  => 99,
+    -message => "No or unknown command given"
+);
+

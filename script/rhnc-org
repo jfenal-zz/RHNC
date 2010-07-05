@@ -46,6 +46,7 @@ Create a new organisation in Satellite.
 sub create {
     my @args = @_;
     my ( $orgname, $login, $password, $prefix, $firstname, $lastname, $email );
+    my $verbose;
 
     my $result = GetOptionsFromArray(
         \@args,
@@ -55,11 +56,12 @@ sub create {
         'f|firstname=s'  => \$firstname,
         'n|lastname=s'   => \$lastname,
         'e|email|mail=s' => \$email,
+        'v|verbose'      => \$verbose,
       )
       or pod2usage(
-        -exitval => 3,
-        -message => 'Wrong parameters for create',
-        -verbose => 1
+        -exitval  => 254,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/create'],
       );
 
     # Get remaining args (org name)
@@ -87,36 +89,41 @@ sub create {
 
 Destroy an organisation, by name or id.
 
-  rhnc-org destroy orgname
-  rhnc-org destroy orgid
+  rhnc-org destroy [-v] orgname
+  rhnc-org destroy [-v] orgid
 
 =cut
 
 sub destroy {
     my @args = @_;
+    my $verbose;
+
+    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+      or pod2usage(
+        -exitval  => 254,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/destroy'],
+      );
 
     foreach my $org_id_or_name (@args) {
         my $org = RHNC::Org->get( $rhnc, $org_id_or_name );
-        $org->destroy( $rhnc );
-#        if ( defined $org ) {
-#            ... destroy
-#        }
-#        else {
-#            print "Non existing org : $org_id_or_name\n";
-#            return 1;
-#        }
+        my $name = $org->name();
+        $org->destroy($rhnc);
+        if ($verbose) {
+            print "Deleted $name\n";
+        }
     }
 
     return 0;
 }
 
-=head2 l|list
+=head2 list
 
 List organisations
 
   rhnc-org l
   rhnc-org list
-  rhnc-org list -v  # not yet implemented
+  rhnc-org list -v
 
 =cut
 
@@ -124,7 +131,12 @@ sub list {
     my @args = @_;
     my ( $verbose, $reactivationkey );
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
+    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+      or pod2usage(
+        -exitval  => 254,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/list'],
+      );
 
     my $orgl = RHNC::Org->list($rhnc);
 
@@ -132,9 +144,9 @@ sub list {
     foreach my $org (@$orgl) {
         my $desc = $org->name;
         printf( "%-36s \n", $org->name );
-        print Dumper $org if $verbose;
+        print $org->as_string if $verbose;
     }
-    print "\n" . scalar(@$orgl) . " organisation(s)\n";
+    print "\n" . scalar(@$orgl) . " organisation(s)\n" if $verbose;
 
     return 0;
 }
@@ -150,12 +162,21 @@ Get information about organisation, by name or id.
 
 sub get {
     my @args = @_;
+    my $verbose;
+
+    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+      or pod2usage(
+        -exitval  => 254,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/get'],
+      );
 
     my $orgname = shift @args;
 
     my $org = RHNC::Org->get( $rhnc, $orgname );
     delete $org->{rhnc};
 
+    # Should in RHNC::Org::as_string...
     foreach my $i (
         qw( name id kickstart_profiles systems configuration_channels
         active_users activation_keys system_groups )
@@ -238,5 +259,5 @@ if ( defined $cmd && defined $func{$cmd} ) {
     exit $rc;
 }
 
-pod2usage( -exitval => 0, -message => "No or unknown command given" );
+pod2usage( -exitval => 254, -verbose => 99, -message => "No or unknown command given" );
 

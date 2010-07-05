@@ -98,7 +98,7 @@ sub get_url {
     return 0;
 }
 
-=head2 lac|list_arch_canon
+=head2 list_arch_canon
 
 List the canonical arches allowed by this script
 
@@ -110,12 +110,13 @@ List the canonical arches allowed by this script
 sub list_arch_canon {
     my @args   = @_;
     my $update = 0;
+    my $verbose = 0;
 
-    my $result = GetOptionsFromArray( \@args, 'update|u' => \$update, )
+    my $result = GetOptionsFromArray( \@args, 'update|u' => \$update, 'verbose|v+' => \$verbose,)
       or pod2usage(
-        -exitval => 3,
-        -message => 'Wrong parameters for list_arch_canon',
-        -verbose => 1
+        -exitval => 254,
+        -verbose => 1,
+        -sections => [ 'DESCRIPTION/list_arch_canon' ],
       );
 
     my $l = RHNC::Package::list_arch_canon($update);
@@ -201,12 +202,6 @@ package main;
 # Main
 #
 
-my @args = @ARGV;
-my $cmd  = shift @args;
-my $rc   = 0;
-
-#    pod2usage( -verbose => 2, -message => "No command given, exiting...\n", -exitval => 0);
-
 $rhnc = RHNC::Session->new();
 
 my %func = (
@@ -222,14 +217,19 @@ my %func = (
     list_files      => \&list_files,
 );
 
-foreach my $c ($cmd) {
-    if ( defined $c && defined $func{$c} ) {
-        $rc = $func{$c}->(@args);
-    }
-    else {
-        pod2usage( -exitval => 0, -message => "No or unknown command given" );
-    }
+my @args = @ARGV;
+my $cmd  = shift @args;
+my $rc;
+
+if ( defined $cmd && defined $func{$cmd} ) {
+    $rhnc = RHNC::Session->new();
+    $rc   = $func{$cmd}->(@args);
+    exit $rc;
 }
 
-exit $rc;
+pod2usage(
+    -exitval => 254,
+    verbose  => 99,
+    -message => "No or unknown command given"
+);
 

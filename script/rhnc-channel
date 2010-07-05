@@ -53,9 +53,9 @@ sub create {
         'p|parent=s'  => \$parent,
       )
       or pod2usage(
-        -exitval => 3,
-        -message => 'Wrong parameters for create',
-        -verbose => 1
+        -exitval  => 254,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/create'],
       );
     $label = shift @args;
     if ( !defined $label ) {
@@ -176,13 +176,18 @@ system subscribed.
 
 sub list {
     my @args = @_;
-    my ( $verbose, $all ) = (0, 0);
+    my ( $verbose, $all ) = ( 0, 0 );
 
     my $result = GetOptionsFromArray(
         \@args,
         'verbose|v+' => \$verbose,
         'all|a'      => \$all,
-    );
+      )
+      or pod2usage(
+        -exitval  => 254,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/list'],
+      );
 
     my @channel_list = @{ RHNC::Channel->list($rhnc) };
 
@@ -292,13 +297,12 @@ sub list_packages {
 
     my $result = GetOptionsFromArray(
         \@args,
-        'verbose|v' => \$verbose,
+        'verbose|v+' => \$verbose,
         'all|a'     => \$all,
       )
       or pod2usage(
-        -exitval => 254,
-        -message => 'Wrong parameters for list_packages',
-        -verbose => 99,
+        -exitval  => 254,
+        -verbose  => 99,
         -sections => 'DESCRIPTION/list_packages',
       );
 
@@ -502,5 +506,9 @@ if ( defined $cmd && defined $func{$cmd} ) {
     exit $rc;
 }
 
-pod2usage( -exitval => 254, verbose=> 99, -message => "No or unknown command given" );
+pod2usage(
+    -exitval => 254,
+    verbose  => 99,
+    -message => "No or unknown command given"
+);
 

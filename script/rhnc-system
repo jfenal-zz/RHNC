@@ -42,28 +42,48 @@ Destroy a system profile
 
 sub destroy {
     my @args = @_;
+    my $verbose;
+
+    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+      or pod2usage(
+        -exitval  => 254,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/destroy'],
+      );
 
     carp "not implemented yet";
     foreach my $kname (@args) {
         my $sys = RHNC::System->get( $rhnc, $kname );
         if ( defined $sys ) {
-            $sys->delete( $rhnc, $kname );
+            $sys->destroy( $rhnc, $kname );
         }
     }
 
     return 0;
 }
 
-=head2 gd|get_details
+=head2 get_details
 
 Print detailed information about the given system
+
+  rhnc-system get [-v]profilename
+  rhnc-system get_details [-v] profilename
+  rhnc-system gd [-v] profilename
 
 =cut
 
 sub get_details {
     my @args = @_;
-
     my $sys;
+    my $verbose;
+
+    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+      or pod2usage(
+        -exitval  => 254,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/get_details'],
+      );
+
     while ( $sys = shift @args ) {
         print "$sys:\n";
         my $system = RHNC::System::get( $rhnc, $sys );
@@ -82,9 +102,12 @@ sub get_details {
     return 0;
 }
 
-=head2 l|list
+=head2 list
 
 List system groups
+
+  rhnc-system l [-v]
+  rhnc-system list [-v]
 
 =cut
 
@@ -92,7 +115,12 @@ sub list {
     my @args = @_;
     my ($verbose);
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v' => \$verbose, );
+    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+      or pod2usage(
+        -exitval  => 254,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/list'],
+      );
 
     my $slist = RHNC::System->list($rhnc);
 
@@ -103,28 +131,8 @@ sub list {
             $slist->{$sys}{name},
             $slist->{$sys}{last_checkin}->value );
     }
-    print "\nTotal: " . scalar( keys %$slist ) . " systems\n";
-
-    return 0;
-}
-
-=head2 ls|list_systems
-
-List the systems inside a system group
-
-=cut
-
-sub list_systems {
-    my @args = @_;
-    my $system;
-    carp "not implemented yet";
-
-    while ( $system = shift @args ) {
-        my %systems = RHNC::System->list_systems( $rhnc, $system );
-        foreach my $system ( sort keys %systems ) {
-            print "$system: $systems{$system}\n";
-        }
-    }
+    print "\nTotal: " . scalar( keys %$slist ) . " systems\n"
+      if $verbose;
 
     return 0;
 }
@@ -198,10 +206,6 @@ package main;
 # Main
 #
 
-my @args = @ARGV;
-my $cmd  = shift @args;
-my $rc   = 0;
-
 $rhnc = RHNC::Session->new();
 
 my %func = (
@@ -220,14 +224,19 @@ my %func = (
     list_latest_packages => \&list_latest_packages,
 );
 
-foreach my $c ($cmd) {
-    if ( defined $c && defined $func{$c} ) {
-        $rc = $func{$c}->(@args);
-    }
-    else {
-        pod2usage( -exitval => 0, -message => "No or unknown command given" );
-    }
+my @args = @ARGV;
+my $cmd  = shift @args;
+my $rc;
+
+if ( defined $cmd && defined $func{$cmd} ) {
+    $rhnc = RHNC::Session->new();
+    $rc   = $func{$cmd}->(@args);
+    exit $rc;
 }
 
-exit $rc;
+pod2usage(
+    -exitval => 254,
+    verbose  => 99,
+    -message => "No or unknown command given"
+);
 
