@@ -44,7 +44,7 @@ ok( defined $s, "script to test found : $s" );
 my ( $return_code, $stdout, $stderr );
 
 BEGIN { $tests++; }
-run_ok( $s, [qw( )], "$script (no arg)" );
+run_not_ok( $s, [qw( )], "$script (no arg)" );
 
 BEGIN { $tests++; }
 run_ok( $s, [ qw( lac ) ], "$script lac");

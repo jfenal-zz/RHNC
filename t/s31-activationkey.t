@@ -44,7 +44,7 @@ ok( defined $s, "script to test found : $s" );
 my ( $rc, $stdout, $stderr );
 
 BEGIN { $tests++; }    # 2
-run_ok( $s, [], "$script (no arg)" );
+run_not_ok( $s, [], "$script (no arg)" );
 
 BEGIN { $tests++; }    # 3
 ( $rc, $stdout, $stderr ) = run_script( $s, [qw( help )] );
@@ -60,7 +60,7 @@ BEGIN { $tests++; }    # 6
 run_ok( $s, [qw( list -v)], "$script list -v" );
 
 BEGIN { $tests++; }    # 7
-run_ok( $s, [qw( wrong command)], "$script wrong command" );
+run_not_ok( $s, [qw( wrong command)], "$script wrong command" );
 
 my $newak;
 

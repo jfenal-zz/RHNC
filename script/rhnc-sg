@@ -367,7 +367,6 @@ package main;
 $rhnc = RHNC::Session->new();
 
 my %func = (
-    help           => \&_usage,
     c              => \&create,
     create         => \&create,
     d              => \&destroy,

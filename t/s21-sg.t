@@ -53,16 +53,13 @@ BEGIN { $tests++; }
 ok( defined $s, "script to test found : $s" );
 
 BEGIN { $tests++; }
-run_ok( $s, [], "$script (no arg)" );
+run_not_ok( $s, [], "$script (no arg)" );
 
 BEGIN { $tests++; }
-run_ok( $s, [qw(wrong command)], "$script (wrong command)" );
+run_not_ok( $s, [qw(wrong command)], "$script (wrong command)" );
 
 BEGIN { $tests++; }
-run_ok( $s, [qw( help )], "$script help" );
-
-BEGIN { $tests++; }
-like( last_script_stdout(), qr{ USAGE }msix, "$script help gives man page" );
+run_not_ok( $s, [qw( help )], "$script help" );
 
 BEGIN { $tests++; }
 run_ok( $s, ['list'], "$script list" );

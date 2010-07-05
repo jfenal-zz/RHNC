@@ -144,7 +144,7 @@ sub list {
     foreach my $org (@$orgl) {
         my $desc = $org->name;
         printf( "%-36s \n", $org->name );
-        print $org->as_string if $verbose;
+#        print $org->as_string if $verbose;
     }
     print "\n" . scalar(@$orgl) . " organisation(s)\n" if $verbose;
 
