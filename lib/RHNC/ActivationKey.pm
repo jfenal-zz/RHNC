@@ -164,7 +164,7 @@ sub new {
     my ( $class, @args ) = @_;
 
     #$class = ref($class) || $class;
-    $class =  ref $class ? ref $class : $class;
+    $class = ref $class ? ref $class : $class;
 
     if ( $class ne __PACKAGE__ ) {
         unshift @args, $class;
@@ -264,13 +264,8 @@ sub universal_default {
     if (@args) {
         $self->{universal_default} = shift @args;
 
-        # Normalize now
-        if ( $self->{universal_default} ) {
-            $self->{universal_default} = $RHNC::_xmltrue;
-        }
-        else {
-            $self->{universal_default} = $RHNC::_xmlfalse;
-        }
+        $self->{universal_default} = RHNC::_bool( $self->{universal_default} );
+
         $self->{rhnc}->call( 'activationkey.setDetails', $self->{key},
             { universal_default => $self->{universal_default}, } );
 
@@ -414,7 +409,7 @@ sub system_groups {
         if ( $c eq 'add' && ref $sg_ref eq 'ARRAY' ) {
             my $sgids = [];
             foreach my $sg (@$sg_ref) {
-                if ( RHNC::SystemGroup::is_system_group_id( $sg ) ) {
+                if ( RHNC::SystemGroup::is_system_group_id($sg) ) {
                     push @$sgids, $sg;
                 }
                 else {

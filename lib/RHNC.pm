@@ -53,6 +53,12 @@ our $VERSION = '0.01';
 
 =cut
 
+sub _bool {
+    my ($arg) = @_;
+
+    return $arg ? $_xmltrue : $_xmlfalse;
+}
+
 =head2 new
 
 =cut
