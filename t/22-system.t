@@ -22,4 +22,3 @@ BEGIN { $tests++ }
 my $sys = RHNC::System::get($rhnc, $system_id );
 isa_ok($sys, 'RHNC::System', "object created is indeed a RHNC::System");
 
-print Dumper \$sys;

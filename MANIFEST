@@ -37,6 +37,7 @@ t/pod-coverage.t
 t/pod.t
 t/s20-org.t
 t/s21-sg.t
+t/s22-system.t
 t/s31-activationkey.t
 t/s33-channel.t
 t/s35-package.t
