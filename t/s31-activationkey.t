@@ -81,7 +81,7 @@ BEGIN { $tests++; }    # 11
 run_ok( $s, [ 'destroy', $newak ], "$script destroy $newak" );
 
 BEGIN { $tests++; }    # 12
-@args = ( qw( create test-key -v -u -d ), 'new test key2',
+@args = ( qw( create test-key -v -u 1 -d ), 'new test key2',
   qw( -l 20 -b rhel-i386-server-5),
   qw( -c rhel-i386-server-cluster-storage-5,rhel-i386-server-cluster-5),
   qw( -p ricci,iscsi-initiator-utils,luci ), qw( -g Clusters,RHEL5 ) );
@@ -96,7 +96,7 @@ BEGIN { $tests++; }    # 13
 ok( $newak, "we have a name : <$newak>" );
 
 BEGIN { $tests++; }    # 14
-@args = qw( set -n tintin -e , -d changed_description -l 10 -b , -c n ); 
+@args = qw( set -n tintin -e , -d changed_description -l 10 -b , -c n -u 0); 
 run_ok( $s, \@args, "$script " . join( q( ), @args ) );
 
 BEGIN { $tests++; }    # 15

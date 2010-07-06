@@ -54,7 +54,7 @@ Create an activation key.
     | -v ]                  \ # verbose
     [ -b base_channel ]     \ # label
     [ -l usage_limit ]      \
-    [ -u ]                  \ # universal default
+    [ -u 0|1 ]              \ # universal default
     [ -p packages ],        \ # comma separated list
     [ -c child_channels ],  \ # comma separated list
     [ -g system_groups ],   \ # comma separated list
@@ -71,6 +71,9 @@ sub create {
         $packages,     $verbose
     );
 
+    $name              = q();
+    $universal_default = 0;
+
     my $result = GetOptionsFromArray(
         \@args,
 
@@ -79,7 +82,7 @@ sub create {
         'd|description=s'              => \$description,
         'b|base_channel=s'             => \$base_channel,
         'l|usage_limit=i'              => \$usage_limit,
-        'u|universal_default'          => \$universal_default,
+        'u|universal_default=i'        => \$universal_default,
         'g|groups=s'                   => \$groups,
         'c|child_channels=s'           => \$child_channels,
         'p|packages=s'                 => \$packages,
@@ -106,17 +109,12 @@ sub create {
     }
     my $ak = RHNC::ActivationKey->create(
         rhnc => $rhnc,
-        ( defined $name ? ( key => $name ) : () ),
+        ( $name ne q() ? ( key => $name ) : () ),
         description        => $description,
         base_channel_label => $base_channel,
         usage_limit        => $usage_limit,
-        (
-            defined $universal_default
-            ? ( universal_default => $universal_default )
-            : ()
-        ),
-
-        entitlements => \@e,
+        universal_default  => $universal_default,
+        entitlements       => \@e,
     );
     croak "Key not created" if !defined $ak;
 
@@ -259,7 +257,7 @@ Set/modify details of an activation key.
     [ -d description ]      \ 
     [ -b base_channel ]     \ # label
     [ -l usage_limit ]      \
-    [ -u ]                  \ # universal default
+    [ -u 0|1 ]              \ # universal default
     [ -e provisioning,monitoring,virt,virt_platform ] \
     [ -p packages ],        \ # comma separated list
     [ -c child_channels ],  \ # comma separated list
@@ -281,16 +279,16 @@ sub set {
 
     my $result = GetOptionsFromArray(
         \@args,
-        'n|name=s'            => \$newname,
-        'e|entitlements:s'    => \$entitlements,
-        'd|description=s'     => \$description,
-        'b|base_channel=s'    => \$base_channel,
-        'l|usage_limit:i'     => \$usage_limit,
-        'u|universal_default' => \$universal_default,
-        'g|groups=s'          => \$groups,
-        'c|child_channels=s'  => \$child_channels,
-        'p|packages=s'        => \$packages,
-        'v|verbose+'          => \$verbose,
+        'n|name=s'              => \$newname,
+        'e|entitlements:s'      => \$entitlements,
+        'd|description=s'       => \$description,
+        'b|base_channel=s'      => \$base_channel,
+        'l|usage_limit:i'       => \$usage_limit,
+        'u|universal_default=i' => \$universal_default,
+        'g|groups=s'            => \$groups,
+        'c|child_channels=s'    => \$child_channels,
+        'p|packages=s'          => \$packages,
+        'v|verbose+'            => \$verbose,
       )
       or pod2usage(
         -exitval  => 254,
@@ -544,7 +542,7 @@ if ( defined $cmd && defined $func{$cmd} ) {
 
 pod2usage(
     -exitval => 254,
-    verbose  => 99,
+    -verbose => 99,
     -message => "No or unknown command given"
 );
 
