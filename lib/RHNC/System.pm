@@ -226,8 +226,8 @@ Return system's profile name
 
 sub name {
     my ( $self, @args ) = @_;
-    
-    if (!defined $self->{name} && defined $self->{profile_name}) {
+
+    if ( !defined $self->{name} && defined $self->{profile_name} ) {
         $self->{name} = $self->{profile_name};
     }
 
@@ -246,6 +246,350 @@ sub last_checkin {
     my ( $self, @args ) = @_;
 
     return $self->{last_checkin};
+}
+
+=head2 profile_name      
+
+Get or set a system profile name.
+
+  $pname   = $sys->profile_name();
+  $oldname = $sys->profile_name('newname.example.com');
+
+=cut
+
+sub profile_name {
+    my ($self, @args) = @_;
+    my $prev = $self->{profile_name};
+
+    if (@args) {
+        $self->{profile_name} = shift @args;
+        $self->{rhnc}
+          ->call( 'system.setProfileName', $self->{id}, $self->{profile_name} );
+    }
+
+    return $prev;
+}
+
+=head2 base_entitlement  
+
+Get or set the system's base_entitlement.
+Will update this status directly in Satellite.
+
+  $ent = $sys->base_entitlement;
+  $sys->base_entitlement( 'enterprise_entitled' );
+  $sys->base_entitlement( 'sw_mgr_entitled' );
+
+=cut
+
+sub base_entitlement {
+    my ($self, @args) = @_;
+    my $prev = $self->{base_entitlement};
+
+    if (@args) {
+        $self->{base_entitlement} = shift @args;
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { base_entitlement => $self->{base_entitlement} } );
+    }
+
+    return $prev;
+}
+
+=head2 addon_entitlements
+
+
+=cut
+
+sub addon_entitlements {
+        croak "Not implemented yet";
+}
+
+=head2 auto_update       
+
+Get or set system's auto_update status.
+Will update this status directly in Satellite.
+
+  $status = $sys->auto_update;
+  $sys->auto_update( 1 );   # enable
+  $sys->auto_update( 0 );   # disable
+
+=cut
+sub auto_update {
+    my ($self, @args) = @_;
+    my $prev = $self->{auto_update}->value();
+
+    if (@args) {
+        $self->{auto_update} = shift @args;
+        $self->{auto_update} = RHNC::_bool($self->{auto_update});
+
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { auto_errata_update => $self->{auto_update} } );
+    }
+
+    return $prev;
+}
+
+=head2 release           
+
+Get system's release.
+
+  $release = $sys->release;
+
+=cut
+sub release {
+    my ($self) = @_;
+    return $self->{release};
+}
+
+=head2 address1          
+
+Get or set address1 attribute of a system.
+
+  $a1 = $sys->address1;
+  $sys->address1( 'new address' );
+
+=cut
+sub address1 {
+    my ($self, @args) = @_;
+    my $prev = $self->{address1}->value();
+
+    if (@args) {
+        $self->{address1} = shift @args;
+
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { address1 => $self->{address1} } );
+    }
+
+    return $prev;
+}
+
+=head2 address2          
+
+Get or set address2 attribute of a system.
+
+  $a1 = $sys->address2;
+  $sys->address2( 'new address' );
+
+=cut
+sub address2 {
+    my ($self, @args) = @_;
+    my $prev = $self->{address2}->value();
+
+    if (@args) {
+        $self->{address2} = shift @args;
+
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { address2 => $self->{address2} } );
+    }
+
+    return $prev;
+}
+
+=head2 city          
+
+Get or set city attribute of a system.
+
+  $a1 = $sys->city;
+  $sys->city( 'new address' );
+
+=cut
+sub city {
+    my ($self, @args) = @_;
+    my $prev = $self->{city}->value();
+
+    if (@args) {
+        $self->{city} = shift @args;
+
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { city => $self->{city} } );
+    }
+
+    return $prev;
+}
+
+=head2 state          
+
+Get or set state attribute of a system.
+
+  $a1 = $sys->state;
+  $sys->state( 'new address' );
+
+=cut
+sub state {
+    my ($self, @args) = @_;
+    my $prev = $self->{state}->value();
+
+    if (@args) {
+        $self->{state} = shift @args;
+
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { state => $self->{state} } );
+    }
+
+    return $prev;
+}
+
+=head2 country          
+
+Get or set country attribute of a system.
+
+  $a1 = $sys->country;
+  $sys->country( 'new address' );
+
+=cut
+sub country {
+    my ($self, @args) = @_;
+    my $prev = $self->{country}->value();
+
+    if (@args) {
+        $self->{country} = shift @args;
+
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { country => $self->{country} } );
+    }
+
+    return $prev;
+}
+
+
+=head2 building          
+
+Get or set building attribute of a system.
+
+  $a1 = $sys->building;
+  $sys->building( 'new address' );
+
+=cut
+sub building {
+    my ($self, @args) = @_;
+    my $prev = $self->{building}->value();
+
+    if (@args) {
+        $self->{building} = shift @args;
+
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { building => $self->{building} } );
+    }
+
+    return $prev;
+}
+
+=head2 room          
+
+Get or set room attribute of a system.
+
+  $a1 = $sys->room;
+  $sys->room( 'new address' );
+
+=cut
+sub room {
+    my ($self, @args) = @_;
+    my $prev = $self->{room}->value();
+
+    if (@args) {
+        $self->{room} = shift @args;
+
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { room => $self->{room} } );
+    }
+
+    return $prev;
+}
+
+=head2 rack          
+
+Get or set rack attribute of a system.
+
+  $a1 = $sys->rack;
+  $sys->rack( 'new address' );
+
+=cut
+sub rack {
+    my ($self, @args) = @_;
+    my $prev = $self->{rack}->value();
+
+    if (@args) {
+        $self->{rack} = shift @args;
+
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { rack => $self->{rack} } );
+    }
+
+    return $prev;
+}
+
+=head2 description          
+
+Get or set description attribute of a system.
+
+  $a1 = $sys->description;
+  $sys->description( 'new address' );
+
+=cut
+sub description {
+    my ($self, @args) = @_;
+    my $prev = $self->{description}->value();
+
+    if (@args) {
+        $self->{description} = shift @args;
+
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { description => $self->{description} } );
+    }
+
+    return $prev;
+}
+
+=head2 hostname          
+
+Return system's hostname.
+
+  $hostname = $sys->hostname;
+
+=cut
+
+sub hostname {
+    my ($self) = @_;
+    return $self->{hostname};
+}
+
+=head2 osa_status        
+
+Return system's OSA status.
+
+  $hostname = $sys->osa_status;
+
+Returns one in C<qw( unknown offline online )>.
+
+=cut
+
+sub osa_status {
+    my ($self) = @_;
+    return $self->{osa_status};
+}
+
+=head2 lock_status       
+
+Get or set a system's lock_status.
+
+  $lock_status = $sys->lock_status;
+  $sys->lock_status( 0 ); # unlock
+  $sys->lock_status( 1 ); # lock
+
+=cut
+
+sub lock_status {
+    my ($self, @args) = @_;
+    my $prev = $self->{lock_status}->value();
+
+    if (@args) {
+        $self->{lock_status} = shift @args;
+        $self->{lock_status} = RHNC::_bool($self->{lock_status});
+
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { lock_status => $self->{lock_status} } );
+    }
+
+    return $prev;
 }
 
 =head2 search
@@ -339,6 +683,148 @@ sub get {
 
     return $self;
 }
+
+=head2 devices
+
+=cut
+sub devices {
+
+}
+
+=head2 dmi
+
+=cut
+sub dmi {
+
+}
+
+=head2 entitlements
+
+=cut
+sub entitlements {
+
+}
+
+=head2 custom_values
+
+=cut
+sub custom_values {
+
+}
+
+=head2 event_history
+
+=cut
+sub event_history {
+
+}
+
+
+=head2 memory
+
+=cut
+sub memory {
+
+}
+
+=head2 network
+
+=cut
+sub network {
+
+}
+
+=head2 network_devices
+
+=cut
+sub network_devices {
+
+}
+
+
+=head2 registration_date
+
+=cut
+sub registration_date {
+
+}
+
+=head2 relevant_errata
+
+All & by type
+
+=cut
+my %errata_type = (
+    RHSA => 'Security Advisory',
+    RHBA => 'Bug Fix Advisory',
+    RHEA => 'Product Enhancement Advisory',
+    b    => 'Security Advisory',
+    s    => 'Bug Fix Advisory',
+    e    => 'Product Enhancement Advisory',
+    bug  => 'Security Advisory',
+    sec  => 'Bug Fix Advisory',
+    enh  => 'Product Enhancement Advisory',
+);
+
+sub relevant_errata {
+    my ( $self, $type ) = @_;
+    my $res;
+
+    if ( defined $type && defined $errata_type{$type} ) {
+        $res = $self->{rhnc}->call( 'system.getRelevantErrataByType',
+            $self->{id}, $errata_type{$type} );
+    }
+    else {
+        my $res =
+          $self->{rhnc}->call( 'system.getRelevantErrata', $self->{id} );
+    }
+
+    return $res;
+}
+
+
+=head2 base_channel
+
+Get only.
+
+=cut
+sub base_channel {
+
+}
+
+
+=head2 running_kernel
+
+=cut
+sub running_kernel {
+
+}
+
+
+
+=head2 as_string
+
+=cut
+
+sub as_string {
+    my ($self) = @_;
+    my $str;
+
+    $str = $self->name . ":\n";
+    foreach my $k ( sort ( keys %{$self} ) ) {
+        next if $k eq 'rhnc';
+        if ( defined $self->{$k} ) {
+            $str .= "  $k: $self->{$k}\n";
+        }
+    }
+
+    return $str;
+
+}
+
+
+
+
 
 =head1 AUTHOR
 
