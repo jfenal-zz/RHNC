@@ -572,6 +572,31 @@ sub get {
     return $self;
 }
 
+=head2 as_string
+
+Returns a printable string to describe the kickstart.
+
+  print $ks->as_string;
+
+
+=cut
+
+sub as_string {
+    my ($self) = @_;
+    my $str;
+
+    $str = $self->name . ":\n";
+    foreach my $k ( sort ( keys %{$self} ) ) {
+        next if $k eq 'rhnc';
+        if ( defined $self->{$k} ) {
+            $str .= "  $k: $self->{$k}\n";
+        }
+    }
+
+    return $str;
+
+}
+
 =head1 DIAGNOSTICS
 
 =head1 CONFIGURATION AND ENVIRONMENT
