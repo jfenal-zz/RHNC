@@ -48,3 +48,8 @@ Error encountered calling activationkey.setDetails : Fault returned
 from XML RPC Server, fault code -211: redstone.xmlrpc.XmlRpcFault:
 Invalid channel
 
+TO OPEN :
+Inconsistency in object content between system. calls:
+getDetails return struct key auto_update
+setDetails need struct key auto_errata_update
+
