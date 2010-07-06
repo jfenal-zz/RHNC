@@ -1,8 +1,5 @@
 Find the right Getopt::Long version introducing String parsing --> the last one, 2.36 :(
 
-RHNC::SystemGroup->as_string
-RHNC::System->as_string
-RHNC::Kickstart->as_string
 RHNC::Kickstart->render
 
 ----------
