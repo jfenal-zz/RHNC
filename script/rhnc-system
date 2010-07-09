@@ -85,21 +85,19 @@ sub get_details {
       );
 
     while ( $sys = shift @args ) {
-        print "$sys:\n";
         my $system = RHNC::System::get( $rhnc, $sys );
+        if ($verbose eq 1 ) {
+            $system->connection_path;
+            $system->cpu;
+            $system->custom_values;
+            $system->dmi;
+        }
+        if ($verbose eq 2 ) {
+            $system->devices;
+        }
 
         print $system->as_string;
 
-#        foreach my $k ( sort ( keys %{$system} ) ) {
-#            next if $k eq 'rhnc';
-#            if ( $k eq 'packages' ) {
-#                print "  $k: " . $system->packages() . "\n";
-#            }
-#            else {
-#                print "  $k : $system->{$k}\n"
-#                  if defined $system->{$k};
-#            }
-#        }
     }
 
     return 0;

@@ -729,19 +729,17 @@ Get CPU information as hash.
 
   $cpu = $sys->cpu;
 
-  $aoh = [
-      {
-          cache    => q( ),
-          family   => q( ),
-          mhz      => q( ),
-          flags    => q( ),
-          model    => q( ),
-          vendor   => q( ),
-          arch     => q( ),
-          stepping => q( ),
-          count    => q( ),
-      }
-  ];
+  $cpu = {
+      cache    => q( ),
+      family   => q( ),
+      mhz      => q( ),
+      flags    => q( ),
+      model    => q( ),
+      vendor   => q( ),
+      arch     => q( ),
+      stepping => q( ),
+      count    => q( ),
+  };
 
 =cut
 
@@ -754,19 +752,84 @@ sub cpu {
     return $self->{cpu};
 }
 
+=head2 custom_values
+
+Return custom values set for the system.
+
+  $cv = $sys->custom_values;
+  $cv = {
+      cv1    => q( ),
+      cv2    => q( ),
+  };
+
+=cut
+
+sub custom_values {
+    my ($self) = @_;
+
+    if ( !defined $self->{custom_values} ) {
+        $self->{custom_values} = $self->{rhnc}->call(
+        'system.getCustomValues', $self->{id} );
+    }
+    return $self->{custom_values};
+}
+
+
 =head2 devices
+
+Return devices of a system.
+
+  $devices = $sys->devices;
+
+  $devices = {
+      device       => q( ),    # optional...
+      device_class => q( ),    # CDROM, FIREWIRE, HD, USB, VIDEO, OTHER, etc.
+      driver       => q( ),
+      description  => q( ),
+      bus          => q( ),
+      pcitype      => q( ),
+  };
 
 =cut
 
 sub devices {
+    my ($self) = @_;
 
+    if ( !defined $self->{devices} ) {
+        $self->{devices} =
+          $self->{rhnc}->call( 'system.getDevices', $self->{id} );
+    }
+    return $self->{devices};
 }
 
 =head2 dmi
 
+Return DMI information of a system.
+
+  $dmi = $sys->dmi;
+
+  $dmi = {
+      vendor        => q( ),
+      system        => q( ),
+      driver        => q( ),
+      product       => q( ),
+      asset         => q( ),
+      board         => q( ),
+      bios_release  => q( ),
+      bios_vendor   => q( ),
+      bios_version  => q( ),
+  };
+
+
 =cut
 
 sub dmi {
+    my ($self) = @_;
+
+    if ( !defined $self->{dmi} ) {
+        $self->{dmi} = $self->{rhnc}->call( 'system.getDmi', $self->{id} );
+    }
+    return $self->{dmi};
 
 }
 
@@ -775,14 +838,6 @@ sub dmi {
 =cut
 
 sub entitlements {
-
-}
-
-=head2 custom_values
-
-=cut
-
-sub custom_values {
 
 }
 
@@ -892,14 +947,16 @@ sub as_string {
     my ($self) = @_;
     my $str;
 
-    $str = $self->name . ":\n";
+    $str = $self->profile_name . ":\n";
     foreach my $k ( sort ( keys %{$self} ) ) {
         next if $k eq 'rhnc';
         if ( defined $self->{$k} ) {
 
             # SCALARs
-            if ( !ref $self->{$k} ) {
-                $str .= "  $k: $self->{$k}\n";
+            if ( !ref $self->{$k} && $self->{$k} ne q() ) {
+                my $s = $self->{$k};
+                $s =~ s/[\n\r]/,/g;
+                $str .= "  $k: $s\n";
             }
 
             # structs & arrays specifics
@@ -908,12 +965,24 @@ sub as_string {
                 $str .= join( q(,),
                     map { "$_->{position}:$_->{hostname}($_->{id})" }
                       @{ $self->{$k} } );
+                $str .= "\n";
             }
 
-            if ( $k eq 'cpu' ) {
+            if ( $k eq 'devices' ) {
+                foreach my $d ( @{$self->{$k} } ) {
+                    $str .= "  $k: ";
+                    if (defined $d->{device} && $d->{device} ne '') {
+                        $str .= "$d->{device}:";
+                    }
+                    $str .= "$d->{device_class},$d->{driver},$d->{description},$d->{bus},$d->{pcitype}\n";
+                }
+            }
+
+            if ( $k eq 'cpu' || $k eq 'custom_values' || $k eq 'dmi' ) {
                 $str .= "  $k:";
                 my $c = $self->{$k};
                 $str .= join( q(,), map { "$_=$c->{$_}" } keys %$c );
+                $str .= "\n";
             }
 
         }
