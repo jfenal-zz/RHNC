@@ -674,7 +674,6 @@ sub get {
         my $res = RHNC::System->search( $rhnc, $id_or_name );
         $id_or_name = $res->{id};
     }
-    else { print STDERR "we have an id : $id_or_name\n"; }
 
     my $res = $rhnc->call( 'system.getDetails', $id_or_name );
     croak "call failed" if !defined $res;
