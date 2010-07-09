@@ -701,15 +701,57 @@ order to reach the server.
 Returns array ref of hash :
 
   $aoh = $sys->connection_path();
-  
+
+  $aoh = [
+      {
+          position => 1,                 # first proxy from the system
+          id       => $proxy_system_id,  # system id of the proxy
+          hostname => 'proxy host name'  # proxy hostname, not profile name
+      }
+  ];
+
 =cut
 
 sub connection_path {
     my ($self) = @_;
 
-    return $self->{connection_path} =
-      $self->{rhnc}->call( 'system.setDetails', $self->{id},
-        { lock_status => $self->{lock_status} } );
+    if ( !defined $self->{connection_path} ) {
+        $self->{connection_path} =
+          $self->{rhnc}->call( 'system.getConnectionPath', $self->{id} );
+
+    }
+    return $self->{connection_path};
+}
+
+=head2 cpu
+
+Get CPU information as hash.
+
+  $cpu = $sys->cpu;
+
+  $aoh = [
+      {
+          cache    => q( ),
+          family   => q( ),
+          mhz      => q( ),
+          flags    => q( ),
+          model    => q( ),
+          vendor   => q( ),
+          arch     => q( ),
+          stepping => q( ),
+          count    => q( ),
+      }
+  ];
+
+=cut
+
+sub cpu {
+    my ($self) = @_;
+
+    if ( !defined $self->{cpu} ) {
+        $self->{cpu} = $self->{rhnc}->call( 'system.getCpu', $self->{id} );
+    }
+    return $self->{cpu};
 }
 
 =head2 devices
@@ -840,6 +882,10 @@ sub running_kernel {
 
 =head2 as_string
 
+Return a printable string describing the system.
+
+  print $sys->as_string;
+
 =cut
 
 sub as_string {
@@ -860,8 +906,14 @@ sub as_string {
             if ( $k eq 'connection_path' ) {
                 $str .= "  $k:";
                 $str .= join( q(,),
-                    map { "$c->{position}:$c->{hostname}($c->{id})" }
+                    map { "$_->{position}:$_->{hostname}($_->{id})" }
                       @{ $self->{$k} } );
+            }
+
+            if ( $k eq 'cpu' ) {
+                $str .= "  $k:";
+                my $c = $self->{$k};
+                $str .= join( q(,), map { "$_=$c->{$_}" } keys %$c );
             }
 
         }
