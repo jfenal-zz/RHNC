@@ -66,9 +66,9 @@ sub destroy {
 
 Print detailed information about the given system
 
-  rhnc-system get [-v]profilename
-  rhnc-system get_details [-v] profilename
   rhnc-system gd [-v] profilename
+  rhnc-system get [-v] profilename
+  rhnc-system get_details [-v] profilename
 
 =cut
 
@@ -87,16 +87,19 @@ sub get_details {
     while ( $sys = shift @args ) {
         print "$sys:\n";
         my $system = RHNC::System::get( $rhnc, $sys );
-        foreach my $k ( sort ( keys %{$system} ) ) {
-            next if $k eq 'rhnc';
-            if ( $k eq 'packages' ) {
-                print "  $k: " . $system->packages() . "\n";
-            }
-            else {
-                print "  $k : $system->{$k}\n"
-                  if defined $system->{$k};
-            }
-        }
+
+        print $system->as_string;
+
+#        foreach my $k ( sort ( keys %{$system} ) ) {
+#            next if $k eq 'rhnc';
+#            if ( $k eq 'packages' ) {
+#                print "  $k: " . $system->packages() . "\n";
+#            }
+#            else {
+#                print "  $k : $system->{$k}\n"
+#                  if defined $system->{$k};
+#            }
+#        }
     }
 
     return 0;
