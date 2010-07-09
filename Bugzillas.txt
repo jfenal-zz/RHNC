@@ -53,3 +53,13 @@ Inconsistency in object content between system. calls:
 getDetails return struct key auto_update
 setDetails need struct key auto_errata_update
 
+TO OPEN :
+system.getCustomValues mentions :
+Returns:
+    * struct - custom value
+              o string "custom info label"
+
+where it should mention
+Returns:
+    * struct - custom value
+              o string "custom info label" - value
