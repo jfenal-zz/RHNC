@@ -218,8 +218,8 @@ sub list {
     {
         if ($verbose) {
             printf( "%-40s (%d-%d): %5d systems, %s\n",
-                $sg->name(), $sg->org_id(), $sg->id(), $sg->system_count(),
-                $sg->description(), );
+                $sg->name(), $sg->org_id(), $sg->id(),
+                $sg->system_count(), $sg->description(), );
         }
         else {
             print $sg->name() . "\n";
@@ -256,7 +256,7 @@ sub list_systems {
         my $sg = RHNC::SystemGroup->get( $rhnc, $systemgroup );
         my $slist_ref = $sg->list_systems($rhnc);
         foreach my $s (@$slist_ref) {
-            print $s->name() . "\n";
+            print $s->profile_name() . "\n";
         }
     }
 

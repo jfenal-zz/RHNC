@@ -120,7 +120,6 @@ sub new {
     # Parameters standardization
     if ( defined $p{profile_name} && !defined $p{name} ) {
         $p{name} = $p{profile_name};
-        delete $p{profile_name};
     }
 
     # populate object from either @args or
@@ -216,22 +215,18 @@ sub id {
     return;
 }
 
-=head2 name
+=head2 _uniqueid
 
-Return system's profile name
+Return system's _uniqueid (id)
 
-  $lc = $s->name;
+  $lc = $s->_uniqueid;
 
 =cut
 
-sub name {
+sub _uniqueid {
     my ( $self, @args ) = @_;
 
-    if ( !defined $self->{name} && defined $self->{profile_name} ) {
-        $self->{name} = $self->{profile_name};
-    }
-
-    return $self->{name};
+    return $self->{id};
 }
 
 =head2 last_checkin
@@ -258,13 +253,16 @@ Get or set a system profile name.
 =cut
 
 sub profile_name {
-    my ($self, @args) = @_;
+    my ( $self, @args ) = @_;
     my $prev = $self->{profile_name};
 
-    if (@args) {
-        $self->{profile_name} = shift @args;
-        $self->{rhnc}
-          ->call( 'system.setProfileName', $self->{id}, $self->{profile_name} );
+    if ( scalar @args ) {
+        my $profile_name = shift @args;
+        $self->{rhnc}->call( 'system.setDetails', $self->{id},
+            { profile_name => $profile_name } )
+          or croak "Can't modify profile name to $self->{profile_name}";
+        $self->{profile_name} = $profile_name;
+        $self->{name}         = $profile_name;
     }
 
     return $prev;
@@ -282,7 +280,7 @@ Will update this status directly in Satellite.
 =cut
 
 sub base_entitlement {
-    my ($self, @args) = @_;
+    my ( $self, @args ) = @_;
     my $prev = $self->{base_entitlement};
 
     if (@args) {
@@ -296,11 +294,12 @@ sub base_entitlement {
 
 =head2 addon_entitlements
 
+TODO
 
 =cut
 
 sub addon_entitlements {
-        croak "Not implemented yet";
+    croak "Not implemented yet";
 }
 
 =head2 auto_update       
@@ -313,13 +312,14 @@ Will update this status directly in Satellite.
   $sys->auto_update( 0 );   # disable
 
 =cut
+
 sub auto_update {
-    my ($self, @args) = @_;
+    my ( $self, @args ) = @_;
     my $prev = $self->{auto_update}->value();
 
     if (@args) {
         $self->{auto_update} = shift @args;
-        $self->{auto_update} = RHNC::_bool($self->{auto_update});
+        $self->{auto_update} = RHNC::_bool( $self->{auto_update} );
 
         $self->{rhnc}->call( 'system.setDetails', $self->{id},
             { auto_errata_update => $self->{auto_update} } );
@@ -335,6 +335,7 @@ Get system's release.
   $release = $sys->release;
 
 =cut
+
 sub release {
     my ($self) = @_;
     return $self->{release};
@@ -348,9 +349,10 @@ Get or set address1 attribute of a system.
   $sys->address1( 'new address' );
 
 =cut
+
 sub address1 {
-    my ($self, @args) = @_;
-    my $prev = $self->{address1}->value();
+    my ( $self, @args ) = @_;
+    my $prev = $self->{address1};
 
     if (@args) {
         $self->{address1} = shift @args;
@@ -370,9 +372,10 @@ Get or set address2 attribute of a system.
   $sys->address2( 'new address' );
 
 =cut
+
 sub address2 {
-    my ($self, @args) = @_;
-    my $prev = $self->{address2}->value();
+    my ( $self, @args ) = @_;
+    my $prev = $self->{address2};
 
     if (@args) {
         $self->{address2} = shift @args;
@@ -392,15 +395,16 @@ Get or set city attribute of a system.
   $sys->city( 'new address' );
 
 =cut
+
 sub city {
-    my ($self, @args) = @_;
-    my $prev = $self->{city}->value();
+    my ( $self, @args ) = @_;
+    my $prev = $self->{city};
 
     if (@args) {
         $self->{city} = shift @args;
 
-        $self->{rhnc}->call( 'system.setDetails', $self->{id},
-            { city => $self->{city} } );
+        $self->{rhnc}
+          ->call( 'system.setDetails', $self->{id}, { city => $self->{city} } );
     }
 
     return $prev;
@@ -414,9 +418,10 @@ Get or set state attribute of a system.
   $sys->state( 'new address' );
 
 =cut
+
 sub state {
-    my ($self, @args) = @_;
-    my $prev = $self->{state}->value();
+    my ( $self, @args ) = @_;
+    my $prev = $self->{state};
 
     if (@args) {
         $self->{state} = shift @args;
@@ -436,9 +441,10 @@ Get or set country attribute of a system.
   $sys->country( 'new address' );
 
 =cut
+
 sub country {
-    my ($self, @args) = @_;
-    my $prev = $self->{country}->value();
+    my ( $self, @args ) = @_;
+    my $prev = $self->{country};
 
     if (@args) {
         $self->{country} = shift @args;
@@ -450,7 +456,6 @@ sub country {
     return $prev;
 }
 
-
 =head2 building          
 
 Get or set building attribute of a system.
@@ -459,9 +464,10 @@ Get or set building attribute of a system.
   $sys->building( 'new address' );
 
 =cut
+
 sub building {
-    my ($self, @args) = @_;
-    my $prev = $self->{building}->value();
+    my ( $self, @args ) = @_;
+    my $prev = $self->{building};
 
     if (@args) {
         $self->{building} = shift @args;
@@ -481,15 +487,16 @@ Get or set room attribute of a system.
   $sys->room( 'new address' );
 
 =cut
+
 sub room {
-    my ($self, @args) = @_;
-    my $prev = $self->{room}->value();
+    my ( $self, @args ) = @_;
+    my $prev = $self->{room};
 
     if (@args) {
         $self->{room} = shift @args;
 
-        $self->{rhnc}->call( 'system.setDetails', $self->{id},
-            { room => $self->{room} } );
+        $self->{rhnc}
+          ->call( 'system.setDetails', $self->{id}, { room => $self->{room} } );
     }
 
     return $prev;
@@ -503,15 +510,16 @@ Get or set rack attribute of a system.
   $sys->rack( 'new address' );
 
 =cut
+
 sub rack {
-    my ($self, @args) = @_;
-    my $prev = $self->{rack}->value();
+    my ( $self, @args ) = @_;
+    my $prev = $self->{rack};
 
     if (@args) {
         $self->{rack} = shift @args;
 
-        $self->{rhnc}->call( 'system.setDetails', $self->{id},
-            { rack => $self->{rack} } );
+        $self->{rhnc}
+          ->call( 'system.setDetails', $self->{id}, { rack => $self->{rack} } );
     }
 
     return $prev;
@@ -522,12 +530,13 @@ sub rack {
 Get or set description attribute of a system.
 
   $a1 = $sys->description;
-  $sys->description( 'new address' );
+  $sys->description( 'new description' );
 
 =cut
+
 sub description {
-    my ($self, @args) = @_;
-    my $prev = $self->{description}->value();
+    my ( $self, @args ) = @_;
+    my $prev = $self->{description};
 
     if (@args) {
         $self->{description} = shift @args;
@@ -578,12 +587,12 @@ Get or set a system's lock_status.
 =cut
 
 sub lock_status {
-    my ($self, @args) = @_;
+    my ( $self, @args ) = @_;
     my $prev = $self->{lock_status}->value();
 
     if (@args) {
         $self->{lock_status} = shift @args;
-        $self->{lock_status} = RHNC::_bool($self->{lock_status});
+        $self->{lock_status} = RHNC::_bool( $self->{lock_status} );
 
         $self->{rhnc}->call( 'system.setDetails', $self->{id},
             { lock_status => $self->{lock_status} } );
@@ -599,34 +608,30 @@ Get a system by profile name
 =cut
 
 sub search {
-    my ( $self, @p ) = @_;
+    my ( $class, @args ) = @_;
     my ( $rhnc, $name );
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
+    if ( ref $class eq __PACKAGE__ && defined $class->{rhnc} ) {
 
         # OO context, eg $ch->list_systems
-        $rhnc = $self->{rhnc};
+        $rhnc = $class->{rhnc};
     }
-    elsif ( ref $self eq 'RHNC::Session' ) {
+    elsif ( RHNC::Session::is_session($class) ) {
 
         # Called as RHNC::Channel::list_systems($rhnc)
-        $rhnc = $self;
+        $rhnc = $class;
     }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+    elsif ( !RHNC::Session::is_session( $rhnc = shift(@args) ) ) {
+        croak "No RHNC client given";
+    }
 
-        # Called as RHNC::Channel->list_systems($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        croak "No RHNC client given here";
-    }
-    $name = shift @p;
+    $name = shift @args;
 
     my $res = $rhnc->call( 'system.searchByName', $name );
 
     foreach my $s (@$res) {
         if ( $s->{name} eq $name ) {
-            $self = RHNC::System->new( rhnc => $rhnc, %$s );
+            my $self = RHNC::System->new( rhnc => $rhnc, %$s );
             return $self;
         }
     }
@@ -640,45 +645,49 @@ Get a system by profile id
 =cut
 
 sub get {
-    my ( $self, @p ) = @_;
+    my ( $class, @args ) = @_;
     my ( $rhnc, $id_or_name );
+    if ( ref $class eq __PACKAGE__ && defined $class->{rhnc} ) {
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
-        # OO context, eg $ch->list_systems
-        $rhnc = $self->{rhnc};
+        # OO context, eg $sys->get
+        $rhnc       = $class->{rhnc};
+        $id_or_name = shift @args;
     }
-    elsif ( ref $self eq 'RHNC::Session' ) {
+    elsif ( RHNC::Session::is_session($class) ) {
 
-        # Called as RHNC::Channel::list_systems($rhnc)
-        $rhnc = $self;
+        # Called as RHNC::System::get($rhnc)
+        $rhnc = $class;
     }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+    elsif ( __PACKAGE__ && !RHNC::Session::is_session( $rhnc = shift(@args) ) )
+    {
 
-        # Called as RHNC::Channel->list_systems($rhnc)
-        $rhnc = shift @p;
+        # RHNC::System->get( $rhnc )
+        croak "No RHNC client given";
     }
-    else {
-        croak "No RHNC client given here";
-    }
-    $id_or_name = shift @p;
-    if ( $id_or_name !~ m{ \A \d+ \z }imxs ) {
 
-        # we do not have an Id, let's search by name
+    if ( !defined $id_or_name ) {
+        $id_or_name = shift @args;
+    }
+    croak "No system id nor name given" if !defined $id_or_name;
+
+    if ( !is_systemid($id_or_name) ) {
         my $res = RHNC::System->search( $rhnc, $id_or_name );
         $id_or_name = $res->{id};
     }
-    my $res = $rhnc->call( 'system.getDetails', $id_or_name );
+    else { print STDERR "we have an id : $id_or_name\n"; }
 
-    $self = RHNC::System->new(
+    my $res = $rhnc->call( 'system.getDetails', $id_or_name );
+    croak "call failed" if !defined $res;
+
+    # Normalize booleans
+    $res->{lock_status} = $res->{lock_status}->value
+      if ref $res->{lock_status} ne 'SCALAR';
+    $res->{auto_update} = $res->{auto_update}->value
+      if ref $res->{lock_status} ne 'SCALAR';
+
+    my $self = RHNC::System->new(
         rhnc => $rhnc,
-        name => $res->{name},
-        id   => $res->{id},
-        (
-            defined $res->{last_checkin}
-            ? ( last_checkin => $res->{last_checkin}->value() )
-            : ()
-        ),
+        (%$res)
     );
 
     return $self;
@@ -687,6 +696,7 @@ sub get {
 =head2 devices
 
 =cut
+
 sub devices {
 
 }
@@ -694,6 +704,7 @@ sub devices {
 =head2 dmi
 
 =cut
+
 sub dmi {
 
 }
@@ -701,6 +712,7 @@ sub dmi {
 =head2 entitlements
 
 =cut
+
 sub entitlements {
 
 }
@@ -708,6 +720,7 @@ sub entitlements {
 =head2 custom_values
 
 =cut
+
 sub custom_values {
 
 }
@@ -715,14 +728,15 @@ sub custom_values {
 =head2 event_history
 
 =cut
+
 sub event_history {
 
 }
 
-
 =head2 memory
 
 =cut
+
 sub memory {
 
 }
@@ -730,6 +744,7 @@ sub memory {
 =head2 network
 
 =cut
+
 sub network {
 
 }
@@ -737,14 +752,15 @@ sub network {
 =head2 network_devices
 
 =cut
+
 sub network_devices {
 
 }
 
-
 =head2 registration_date
 
 =cut
+
 sub registration_date {
 
 }
@@ -754,6 +770,7 @@ sub registration_date {
 All & by type
 
 =cut
+
 my %errata_type = (
     RHSA => 'Security Advisory',
     RHBA => 'Bug Fix Advisory',
@@ -782,25 +799,23 @@ sub relevant_errata {
     return $res;
 }
 
-
 =head2 base_channel
 
 Get only.
 
 =cut
+
 sub base_channel {
 
 }
 
-
 =head2 running_kernel
 
 =cut
+
 sub running_kernel {
 
 }
-
-
 
 =head2 as_string
 
@@ -821,10 +836,6 @@ sub as_string {
     return $str;
 
 }
-
-
-
-
 
 =head1 AUTHOR
 

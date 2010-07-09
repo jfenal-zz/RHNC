@@ -236,7 +236,7 @@ if ( defined $cmd && defined $func{$cmd} ) {
 
 pod2usage(
     -exitval => 254,
-    verbose  => 99,
+    -verbose  => 99,
     -message => "No or unknown command given"
 );
 
