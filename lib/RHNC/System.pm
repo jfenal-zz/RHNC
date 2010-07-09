@@ -768,12 +768,11 @@ sub custom_values {
     my ($self) = @_;
 
     if ( !defined $self->{custom_values} ) {
-        $self->{custom_values} = $self->{rhnc}->call(
-        'system.getCustomValues', $self->{id} );
+        $self->{custom_values} =
+          $self->{rhnc}->call( 'system.getCustomValues', $self->{id} );
     }
     return $self->{custom_values};
 }
-
 
 =head2 devices
 
@@ -841,8 +840,8 @@ sub entitlements {
     my ($self) = @_;
 
     if ( !defined $self->{entitlements} ) {
-        $self->{entitlements} = $self->{rhnc}->call(
-'system.getEntitlements', $self->{id} );
+        $self->{entitlements} =
+          $self->{rhnc}->call( 'system.getEntitlements', $self->{id} );
     }
     return $self->{entitlements};
 }
@@ -975,12 +974,13 @@ sub as_string {
             }
 
             if ( $k eq 'devices' ) {
-                foreach my $d ( @{$self->{$k} } ) {
+                foreach my $d ( @{ $self->{$k} } ) {
                     $str .= "  $k: ";
-                    if (defined $d->{device} && $d->{device} ne '') {
+                    if ( defined $d->{device} && $d->{device} ne '' ) {
                         $str .= "$d->{device}:";
                     }
-                    $str .= "$d->{device_class},$d->{driver},$d->{description},$d->{bus},$d->{pcitype}\n";
+                    $str .=
+"$d->{device_class},$d->{driver},$d->{description},$d->{bus},$d->{pcitype}\n";
                 }
             }
 
