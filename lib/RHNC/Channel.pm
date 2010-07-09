@@ -100,10 +100,24 @@ sub _missing_parameter {
     confess "Missing parameter $parm";
 }
 
+=head2 _uniqueid
+
+Returns a C<RHNC::Channel> unique id.
+
+  $id = $chan->_uniqueid;
+
+=cut
+
+sub _uniqueid {
+    my ($s) = shift;
+    return $s->{key};
+}
 
 =head2 is_channel_id
 
 Returns true if channel id B<looks> valid, false otherwise.
+
+  $chan->is_channel_id;
 
 =cut
 
@@ -145,7 +159,7 @@ sub new {
             $self->{$i} = $p{$i};
         }
     }
-    if (defined $self->{rhnc}) {
+    if ( defined $self->{rhnc} ) {
         $self->{rhnc}->manage($self);
     }
 
@@ -219,7 +233,10 @@ sub list_errata {
         $rhnc       = $self;
         $id_or_name = shift @p;
     }
-    elsif (defined $self && $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+    elsif (defined $self
+        && $self eq __PACKAGE__
+        && ref( $p[0] ) eq 'RHNC::Session' )
+    {
 
         # Called as RHNC::Channel->list_errata($rhnc)
         $rhnc       = shift @p;
@@ -229,8 +246,8 @@ sub list_errata {
         confess "No RHNC client given here";
     }
 
-    if ( is_channel_id( $id_or_name) ) {
-        $id_or_name = __PACKAGE__->get( $rhnc, $id_or_name)->label;
+    if ( is_channel_id($id_or_name) ) {
+        $id_or_name = __PACKAGE__->get( $rhnc, $id_or_name )->label;
     }
 
     my $res = $rhnc->call( 'channel.software.listErrata', $id_or_name );
@@ -249,20 +266,24 @@ Return the list of packages in the channel.
 =cut
 
 sub list_packages {
-    my ($self, $update) = @_;
+    my ( $self, $update ) = @_;
     my $rhnc;
     my $id_or_name;
     my $plist = [];
 
     my $list;
-    if ( (defined $update || !defined $self->{list_packages}) && defined $self->{rhnc} ) {
+    if ( ( defined $update || !defined $self->{list_packages} )
+        && defined $self->{rhnc} )
+    {
         $rhnc = $self->{rhnc};
         $list =
           $self->{rhnc}
           ->call( 'channel.software.listAllPackages', $self->label() );
 
         foreach my $p (@$list) {
-            my $p = RHNC::Package->new( (defined $rhnc ? (rhnc => $rhnc) :()) , (%$p) );
+            my $p =
+              RHNC::Package->new( ( defined $rhnc ? ( rhnc => $rhnc ) : () ),
+                (%$p) );
             push @$plist, $p;
         }
 
@@ -280,20 +301,24 @@ Returns the list of latest_packages for the channels specified.
 =cut
 
 sub latest_packages {
-    my ($self, $update) = @_;
+    my ( $self, $update ) = @_;
     my $rhnc;
     my $id_or_name;
     my $plist = [];
 
     my $list;
-    if ( (defined $update || !defined $self->{latest_packages}) && defined $self->{rhnc} ) {
+    if ( ( defined $update || !defined $self->{latest_packages} )
+        && defined $self->{rhnc} )
+    {
         $rhnc = $self->{rhnc};
         $list =
           $self->{rhnc}
           ->call( 'channel.software.listLatestPackages', $self->label() );
 
         foreach my $p (@$list) {
-            my $p = RHNC::Package->new( (defined $rhnc ? (rhnc => $rhnc) :()) , (%$p) );
+            my $p =
+              RHNC::Package->new( ( defined $rhnc ? ( rhnc => $rhnc ) : () ),
+                (%$p) );
             push @$plist, $p;
         }
 
@@ -339,8 +364,8 @@ sub list_systems {
         confess "No RHNC client given here";
     }
 
-    if ( is_channel_id( $id_or_name) ) {
-        $id_or_name = __PACKAGE__->get( $rhnc, $id_or_name)->label;
+    if ( is_channel_id($id_or_name) ) {
+        $id_or_name = __PACKAGE__->get( $rhnc, $id_or_name )->label;
     }
 
     my $res =

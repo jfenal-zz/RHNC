@@ -207,6 +207,19 @@ sub new {
     return $self;
 }
 
+=head2 _uniqueid
+
+Return activation _uniqueid (key).
+
+    $name = $ak->_uniqueid;
+
+=cut
+
+sub _uniqueid {
+    my ( $self, @args ) = @_;
+    return $self->{key};
+}
+
 =head2 name
 
 Return activation key name (key).
