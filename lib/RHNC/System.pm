@@ -94,6 +94,7 @@ my %properties = (
     osa_status         => [ 0, undef, undef, undef ],
     lock_status        => [ 0, undef, undef, undef ],
     last_checkin       => [ 0, undef, undef, undef ],
+    connection_path    => [ 0, undef, undef, undef ],
 );
 
 =head2 new
@@ -692,6 +693,25 @@ sub get {
     return $self;
 }
 
+=head2 connection_path
+
+Return the list of proxies that the given system connects through in
+order to reach the server.
+
+Returns array ref of hash :
+
+  $aoh = $sys->connection_path();
+  
+=cut
+
+sub connection_path {
+    my ($self) = @_;
+
+    return $self->{connection_path} =
+      $self->{rhnc}->call( 'system.setDetails', $self->{id},
+        { lock_status => $self->{lock_status} } );
+}
+
 =head2 devices
 
 =cut
@@ -768,6 +788,8 @@ sub registration_date {
 
 All & by type
 
+TODO : Should really be in RHNC::Errata...
+
 =cut
 
 my %errata_type = (
@@ -828,12 +850,24 @@ sub as_string {
     foreach my $k ( sort ( keys %{$self} ) ) {
         next if $k eq 'rhnc';
         if ( defined $self->{$k} ) {
-            $str .= "  $k: $self->{$k}\n";
+
+            # SCALARs
+            if ( !ref $self->{$k} ) {
+                $str .= "  $k: $self->{$k}\n";
+            }
+
+            # structs & arrays specifics
+            if ( $k eq 'connection_path' ) {
+                $str .= "  $k:";
+                $str .= join( q(,),
+                    map { "$c->{position}:$c->{hostname}($c->{id})" }
+                      @{ $self->{$k} } );
+            }
+
         }
     }
 
     return $str;
-
 }
 
 =head1 AUTHOR
