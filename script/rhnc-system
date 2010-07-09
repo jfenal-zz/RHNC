@@ -86,6 +86,7 @@ sub get_details {
 
     while ( $sys = shift @args ) {
         my $system = RHNC::System::get( $rhnc, $sys );
+        $system->entitlements;
         if ($verbose == 1 ) {
             $system->connection_path;
             $system->cpu;

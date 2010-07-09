@@ -834,6 +834,10 @@ sub dmi {
 
 =head2 entitlements
 
+Returns array ref to list of all entitlements.
+
+  $e = $sys->entitlements;
+
 =cut
 
 sub entitlements {
@@ -964,6 +968,20 @@ sub as_string {
                 $str .= "  $k: $s\n";
             }
 
+            # HASHes
+            if ( ref $self->{$k} eq 'HASH') {
+                $str .= "  $k:";
+                my $c = $self->{$k};
+                $str .= join( q(,), map { "$_=$c->{$_}" } keys %$c );
+                $str .= "\n";
+            }
+
+            if ( $k eq 'entitlements' ) {
+                $str .= "  $k: ";
+                $str .= join(q(,), @{ $self->{$k} });
+                $str .= "\n";
+            }
+
             # structs & arrays specifics
             if ( $k eq 'connection_path' ) {
                 $str .= "  $k:";
@@ -983,14 +1001,6 @@ sub as_string {
 "$d->{device_class},$d->{driver},$d->{description},$d->{bus},$d->{pcitype}\n";
                 }
             }
-
-            if ( $k eq 'cpu' || $k eq 'custom_values' || $k eq 'dmi' ) {
-                $str .= "  $k:";
-                my $c = $self->{$k};
-                $str .= join( q(,), map { "$_=$c->{$_}" } keys %$c );
-                $str .= "\n";
-            }
-
         }
     }
 
