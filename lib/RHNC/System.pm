@@ -838,7 +838,13 @@ sub dmi {
 =cut
 
 sub entitlements {
+    my ($self) = @_;
 
+    if ( !defined $self->{entitlements} ) {
+        $self->{entitlements} = $self->{rhnc}->call(
+'system.getEntitlements', $self->{id} );
+    }
+    return $self->{entitlements};
 }
 
 =head2 event_history

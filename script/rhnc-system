@@ -75,7 +75,7 @@ Print detailed information about the given system
 sub get_details {
     my @args = @_;
     my $sys;
-    my $verbose;
+    my $verbose = 0;
 
     my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
       or pod2usage(
@@ -86,13 +86,13 @@ sub get_details {
 
     while ( $sys = shift @args ) {
         my $system = RHNC::System::get( $rhnc, $sys );
-        if ($verbose eq 1 ) {
+        if ($verbose == 1 ) {
             $system->connection_path;
             $system->cpu;
             $system->custom_values;
             $system->dmi;
         }
-        if ($verbose eq 2 ) {
+        if ($verbose == 2 ) {
             $system->devices;
         }
 
