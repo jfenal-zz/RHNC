@@ -895,9 +895,9 @@ sub entitlements {
 
 =cut
 
-sub event_history {
+#sub event_history {
 
-}
+#}
 
 =head2 memory
 
@@ -943,8 +943,8 @@ my %errata_type = (
     RHSA => 'Security Advisory',
     RHBA => 'Bug Fix Advisory',
     RHEA => 'Product Enhancement Advisory',
-    b    => 'Security Advisory',
-    s    => 'Bug Fix Advisory',
+    s    => 'Security Advisory',
+    b    => 'Bug Fix Advisory',
     e    => 'Product Enhancement Advisory',
     bug  => 'Security Advisory',
     sec  => 'Bug Fix Advisory',
@@ -960,7 +960,7 @@ sub relevant_errata {
             $self->{id}, $errata_type{$type} );
     }
     else {
-        my $res =
+        $res =
           $self->{rhnc}->call( 'system.getRelevantErrata', $self->{id} );
     }
 
@@ -973,6 +973,9 @@ Return or set base_channel for the system.
 
   my $channel_label = $sys->base_channel;
   my $old_channel_label = $sys->base_channel($new_channel_label);
+
+TODO : implement available_base_channels
+TODO : implement channel cloning to test this out.
 
 =cut
 
