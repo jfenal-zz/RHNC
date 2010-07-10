@@ -118,11 +118,6 @@ sub new {
     #    $self->_setdefaults();
     my %p = validate( @args, \%v );
 
-    # Parameters standardization
-    if ( defined $p{profile_name} && !defined $p{name} ) {
-        $p{name} = $p{profile_name};
-    }
-
     # populate object from either @args or
     # default
     for my $i ( keys %properties ) {
@@ -204,14 +199,20 @@ sub id {
     elsif ( $self eq __PACKAGE__ ) {
         $rhnc = shift @args;
         my $system = shift @args;
-        $self = __PACKAGE__->get( $rhnc, $system );
-        return $self->{id};
+        my $res = $rhnc->call('system.getId', $system );
+        if ( @$res eq 1 ) {
+            return $res->[0]->{id};
+        }
+        return;
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
         my $rhnc   = $self;
         my $system = shift @args;
-        $self = __PACKAGE__->get( $rhnc, $system );
-        return $self->{id};
+        my $res = $rhnc->call('system.getId', $system );
+        if ( @$res eq 1 ) {
+            return $res->[0]->{id};
+        }
+        return;
     }
     return;
 }
@@ -688,8 +689,13 @@ sub get {
     croak "No system id nor name given" if !defined $id_or_name;
 
     if ( !is_systemid($id_or_name) ) {
-        my $res = RHNC::System->search( $rhnc, $id_or_name );
-        $id_or_name = $res->{id};
+        my $res = RHNC::System->id( $rhnc, $id_or_name );
+        if (defined $res) {
+            $id_or_name = $res;
+        }
+        else {
+            croak "No such system profile name: $id_or_name";
+        }
     }
 
     my $res = $rhnc->call( 'system.getDetails', $id_or_name );
