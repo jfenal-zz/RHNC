@@ -14,7 +14,7 @@ my $rhnc = RHNC::Session->new();
 # Test list()
 my $slist = RHNC::System->list($rhnc);
 BEGIN { $tests++ }
-ok( keys %$slist > 0, "At least one system registered");
+ok( keys %$slist > 0, "At least one system registered" );
 
 my $system_id = ( keys %$slist )[0];
 
@@ -40,21 +40,20 @@ isa_ok( $sys, 'RHNC::System', "object created is indeed a RHNC::System" );
 # compare with other ways to get list
 diag("list testing");
 BEGIN { $tests++ }
-is_deeply( $slist, RHNC::System::list($rhnc), "RHNC::System::list");
+is_deeply( $slist, RHNC::System::list($rhnc), "RHNC::System::list" );
 BEGIN { $tests++ }
-is_deeply( $slist,  $sys->list, '$sys->list');
+is_deeply( $slist, $sys->list, '$sys->list' );
 BEGIN { $tests++ }
-is_deeply( $slist,  $sys->list('[a-zA-Z]*'), '$sys->list regexp');
+is_deeply( $slist, $sys->list('[a-zA-Z]*'), '$sys->list regexp' );
 
 BEGIN { $tests++ }
-eval { RHNC::System->list([]) };
-ok( $@, "RHNC::System->list(crap) croaks");
+eval { RHNC::System->list( [] ) };
+ok( $@, "RHNC::System->list(crap) croaks" );
 BEGIN { $tests++ }
 my $sys2 = RHNC::System->get( $rhnc, $system_id );
 delete $sys2->{rhnc};
-eval { $sys2->list([]) };
-ok( $@, '$sys->list(crap) croaks when no rhnc present');
-
+eval { $sys2->list( [] ) };
+ok( $@, '$sys->list(crap) croaks when no rhnc present' );
 
 #diag( $sys->as_string );
 
@@ -135,7 +134,7 @@ ok( $sys->release, "release" );
 diag("getters");
 my @getters = (
     qw( release address1 address2 city state country building room
-    description rack hostname osa_status base_channel running_kernel last_checkin )
+      description rack hostname osa_status base_channel running_kernel last_checkin )
 );
 BEGIN { $tests += 2 * 14; }
 $sys->get_details;
@@ -155,17 +154,18 @@ foreach my $method (@getters) {
 
 diag("Testing setters");
 my @setters = (
-    qw( address1 address2 city state country building room description rack )
+    qw( address1 address2 city state country building room description
+      rack )
 );
 BEGIN { $tests += 9; }
 foreach my $method (@setters) {
     my $content = 'new content';
-    if ( $method eq 'country') {
+    if ( $method eq 'country' ) {
         $content = 'FR';
     }
-    my $r = $sys->$method( $content );
-    if ($content ne 'country' ) {
-        is( $sys->$method( $r ), $content , "$method(q(new content))" );
+    my $r = $sys->$method($content);
+    if ( $content ne 'country' ) {
+        is( $sys->$method($r), $content, "$method(q(new content))" );
     }
 }
 
@@ -174,24 +174,70 @@ diag("Testing list_errata");
 my $e;
 $e = $sys->relevant_errata;
 BEGIN { $tests++; }
-isa_ok( $e, 'ARRAY', "relevant_errata returns ARRAY");
+isa_ok( $e, 'ARRAY', "relevant_errata returns ARRAY" );
 
 my $error;
 $error = 0;
-$e = $sys->relevant_errata('b'); # get security errata
+$e     = $sys->relevant_errata('b');    # get security errata
 foreach (@$e) { $error += $_->{advisory_name} =~ m/ \A RHBA .* /imxs ? 0 : 1; }
 BEGIN { $tests++; }
-ok( ! $error, "all errata are bug fix errata");
+ok( !$error, "all errata are bug fix errata" );
 
 $error = 0;
-$e = $sys->relevant_errata('RHSA'); # get security errata
+$e     = $sys->relevant_errata('RHSA');    # get security errata
 foreach (@$e) { $error += $_->{advisory_name} =~ m/ \A RHSA .* /imxs ? 0 : 1; }
 BEGIN { $tests++; }
-ok( ! $error, "all errata are security errata");
+ok( !$error, "all errata are security errata" );
 
 $error = 0;
-$e = $sys->relevant_errata('enh'); # get security errata
+$e     = $sys->relevant_errata('enh');     # get security errata
 foreach (@$e) { $error += $_->{advisory_name} =~ m/ \A RHEA .* /imxs ? 0 : 1; }
 BEGIN { $tests++; }
-ok( ! $error, "all errata are enhancement errata");
+ok( !$error, "all errata are enhancement errata" );
+
+diag("list with pattern");
+my $pattern = substr( $sys->profile_name, 1, 1 ) . '.*';
+my $search1 = RHNC::System::list( $rhnc, $pattern );
+my $search2 = RHNC::System->list( $rhnc, $pattern );
+my $search3 = $sys->list($pattern);
+
+BEGIN { $tests++; }
+is_deeply( $search1, $search2, "s1 = s2" );
+BEGIN { $tests++; }
+is_deeply( $search2, $search3, "s2 = s3" );
+
+diag( "base_channel" . $sys->profile_name );
+my $ac = $sys->available_base_channel;
+BEGIN { $tests++; }
+isa_ok( $ac, 'ARRAY', "available_base_channel returns array" );
+BEGIN { $tests++; }
+is( $ac->[0], $sys->base_channel,
+    "available_base_channel 1st elt is current base_channel" );
+
+my $oldbc = $sys->base_channel;
+my $oldcc = $sys->child_channels;
+diag("old child channels : " . join( q(,), @$oldcc) );
+BEGIN { $tests++; }
+isa_ok( $oldcc, 'ARRAY', "child_channels returns ARRAY ref" );
+
+BEGIN { $tests++; }
+is( $sys->base_channel( $ac->[1] ),
+    $oldbc, "Setting new base channel to $ac->[1]" );
+
+BEGIN { $tests += 3; }
+
+# force re get
+delete $sys->{base_channel};
+is( $sys->base_channel,             $ac->[1], "Testing new base_channel" );
+is( $sys->base_channel( $ac->[0] ), $ac->[1], "Testing new base_channel" );
+delete $sys->{base_channel};
+is( $sys->base_channel, $ac->[0], "Testing new base_channel" );
+
+diag( "Testing child channels setter: " . join( q(,), @$oldcc ) );
+$sys->child_channels($oldcc);     # set all
+delete $sys->{child_channels};    # force re-get
+BEGIN { $tests++; }
+my $newcc = $sys->child_channels;
+is_deeply( $oldcc, $newcc,
+    "set child channels same as before : " . join( q(,), @$newcc ) );
 

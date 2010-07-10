@@ -192,27 +192,26 @@ Return system's id.
 sub id {
     my ( $self, @args ) = @_;
     my $rhnc;
+    my $system;
 
     if ( ref $self eq __PACKAGE__ ) {
         return $self->{id};
     }
-    elsif ( $self eq __PACKAGE__ ) {
+
+    if ( $self eq __PACKAGE__ ) {
         $rhnc = shift @args;
-        my $system = shift @args;
-        my $res = $rhnc->call('system.getId', $system );
-        if ( @$res eq 1 ) {
-            return $res->[0]->{id};
-        }
-        return;
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
-        my $rhnc   = $self;
-        my $system = shift @args;
-        my $res = $rhnc->call('system.getId', $system );
-        if ( @$res eq 1 ) {
-            return $res->[0]->{id};
-        }
+        $rhnc   = $self;
+    }
+    else {
         return;
+    }
+
+    $system = shift @args;
+    my $res = $rhnc->call('system.getId', $system );
+    if ( @$res eq 1 ) {
+        return $res->[0]->{id};
     }
     return;
 }
@@ -619,43 +618,6 @@ sub lock_status {
     return $prev;
 }
 
-=head2 search
-
-Get a system by profile name 
-
-=cut
-
-sub search {
-    my ( $class, @args ) = @_;
-    my ( $rhnc, $name );
-
-    if ( ref $class eq __PACKAGE__ && defined $class->{rhnc} ) {
-
-        # OO context, eg $ch->list_systems
-        $rhnc = $class->{rhnc};
-    }
-    elsif ( RHNC::Session::is_session($class) ) {
-
-        # Called as RHNC::Channel::list_systems($rhnc)
-        $rhnc = $class;
-    }
-    elsif ( !RHNC::Session::is_session( $rhnc = shift(@args) ) ) {
-        croak "No RHNC client given";
-    }
-
-    $name = shift @args;
-
-    my $res = $rhnc->call( 'system.searchByName', $name );
-
-    foreach my $s (@$res) {
-        if ( $s->{name} eq $name ) {
-            my $self = RHNC::System->new( rhnc => $rhnc, %$s );
-            return $self;
-        }
-    }
-    return;
-}
-
 =head2 get
 
 Get a system by profile id 
@@ -967,6 +929,36 @@ sub relevant_errata {
     return $res;
 }
 
+=head2 available_base_channel
+
+Return an array ref to the list of available base channels one can
+subscribe a system to.
+The first element in the array if the current base channel;
+
+  my $ac = $sys->available_base_channel;
+
+=cut
+
+sub available_base_channel {
+    my ( $self, @args ) = @_;
+
+    my $res = $self->{rhnc}
+          ->call( 'system.listSubscribableBaseChannels', $self->{id});
+    my $ac = [];
+    my @bc;
+    my $current;
+    foreach my $c ( @$res ) {
+        if ($c->{current_base} ) {
+            $current = $c->{label};
+        }
+        else {
+            push @bc, $c->{label};
+        }
+    }
+    @$ac = ( $current, @bc );
+    return $ac;
+}
+
 =head2 base_channel
 
 Return or set base_channel for the system.
@@ -981,12 +973,77 @@ TODO : implement channel cloning to test this out.
 
 sub base_channel {
     my ( $self, @args ) = @_;
+    if (! defined $self->{base_channel} ) {
+        my $res=  $self->{rhnc}
+          ->call( 'system.getSubscribedBaseChannel', $self->{id} );
+
+        $self->{base_channel} = $res->{label};
+    }
     my $prev = $self->{base_channel};
 
     if (@args) {
         $self->{base_channel} = shift @args;
         $self->{rhnc}
           ->call( 'system.setBaseChannel', $self->{id}, $self->{base_channel} );
+    }
+    return $prev;
+}
+
+
+=head2 child_channels
+
+Return or set base_channel for the system.
+
+  my $channel_label = $sys->base_channel;
+  my $old_channel_label = $sys->base_channel($new_channel_label);
+
+TODO : implement available_base_channels
+TODO : implement channel cloning to test this out.
+
+=cut
+
+sub child_channels {
+    my ( $self, @args ) = @_;
+    if ( !defined $self->{child_channels} ) {
+        my $res =
+          $self->{rhnc}
+          ->call( 'system.listSubscribedChildChannels', $self->{id} );
+
+        $self->{child_channels} = [];
+        push @{ $self->{child_channels} }, map { $_->{label} } @$res;
+    }
+    my $prev = $self->{child_channels};
+
+    if (@args) {
+        my $c        = shift @args;
+        my $chan_ref = shift @args;
+        my @chans;
+
+        if ( $c eq 'add' && ref $chan_ref eq 'ARRAY' ) {
+            @chans = @$prev;
+            push @chans, @$chan_ref;
+        }
+        elsif ( $c eq 'remove' && ref $chan_ref eq 'ARRAY' ) {
+            my %chanh = map { $_ => 1 } @$prev;
+            foreach my $i (@$chan_ref) {
+                delete $chanh{$i};
+            }
+            @chans = keys %chanh;
+        }
+        elsif ( $c eq 'set' && ref $chan_ref eq 'ARRAY' ) {
+            @chans = @$chan_ref;
+        }
+        elsif ( ref $c eq 'ARRAY' ) {
+            @chans = @$c;
+        }
+
+        # set in Satellite if list not empty
+        my $res;
+        if (@chans) {
+            $res =
+              $self->{rhnc}
+              ->call( 'system.setChildChannels', $self->{id}, \@chans );
+        }
     }
     return $prev;
 }
