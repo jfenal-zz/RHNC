@@ -47,13 +47,38 @@ my @lsrv = split /\n/, last_script_stdout();
 BEGIN { $tests++; }
 run_ok( $s, [qw( list -v )], "$script list -v" );
 
-BEGIN { $tests+=12; }
-for my $i ( 1 .. 3) {
-    my $ns = int( rand( scalar( @lsrv ) ) );
-    my ($sysid, $sysname, $garb ) = split( /\s+/, $lsrv[$ns] );
+BEGIN { $tests += 12; }
+for my $i ( 1 .. 3 ) {
+    my $ns = int( rand( scalar(@lsrv) ) );
+    my ( $sysid, $sysname, $garb ) = split( /\s+/, $lsrv[$ns] );
     run_ok( $s, [ 'get', $sysid ], "$script get $sysid" );
     run_ok( $s, [ 'get', '-v', $sysname ], "$script get -v $sysname" );
     run_ok( $s, [ 'get', '-v', '-v', $sysid ], "$script get -v -v $sysid" );
-    run_ok( $s, [ 'get', '-v', '-v', '-v', $sysid ], "$script get -v -v $sysid" );
+    run_ok(
+        $s,
+        [ 'get', '-v', '-v', '-v', $sysid ],
+        "$script get -v -v $sysid"
+    );
 }
+
+# channels
+my @args;
+my $ns = int( rand( scalar(@lsrv) ) );
+my ($sysname) = split( /\s+/, $lsrv[$ns] );
+diag("Using $sysname");
+BEGIN { $tests++; }
+@args = ( qw( channel ), $sysname );
+run_ok( $s, \@args, "$script " . join( q( ), @args ) );
+BEGIN { $tests++; }
+@args = ( qw( channel -b ), $sysname );
+run_ok( $s, \@args, "$script " . join( q( ), @args ) );
+BEGIN { $tests++; }
+@args = ( qw( channel -c ), $sysname );
+run_ok( $s, \@args, "$script " . join( q( ), @args ) );
+BEGIN { $tests++; }
+@args = ( qw( channel -ab ), $sysname );
+run_ok( $s, \@args, "$script " . join( q( ), @args ) );
+BEGIN { $tests++; }
+@args = ( qw( channel -ac ), $sysname );
+run_ok( $s, \@args, "$script " . join( q( ), @args ) );
 

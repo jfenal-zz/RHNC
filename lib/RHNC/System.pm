@@ -929,7 +929,7 @@ sub relevant_errata {
     return $res;
 }
 
-=head2 available_base_channel
+=head2 available_base_channels
 
 Return an array ref to the list of available base channels one can
 subscribe a system to.
@@ -939,7 +939,7 @@ The first element in the array if the current base channel;
 
 =cut
 
-sub available_base_channel {
+sub available_base_channels {
     my ( $self, @args ) = @_;
 
     my $res = $self->{rhnc}
@@ -966,9 +966,6 @@ Return or set base_channel for the system.
   my $channel_label = $sys->base_channel;
   my $old_channel_label = $sys->base_channel($new_channel_label);
 
-TODO : implement available_base_channels
-TODO : implement channel cloning to test this out.
-
 =cut
 
 sub base_channel {
@@ -990,15 +987,44 @@ sub base_channel {
 }
 
 
+=head2 available_child_channels
+
+Return an array ref to the list of available child channels one can
+subscribe a system to.
+
+  my $ac = $sys->available_base_channel;
+  my $ac = $sys->available_base_channel(1)
+    ;    # get really all child channels, including currently subcribed ones.
+
+=cut
+
+sub available_child_channels {
+    my ( $self, @args ) = @_;
+    my $all = shift @args;
+
+    my $res = $self->{rhnc}
+          ->call( 'system.listSubscribableChildChannels', $self->{id});
+    my $ac = [];
+
+    if ($all) {
+        push @$ac, @{ $self->child_channels() };
+    }
+
+    my @cc = map { $_->{label } } @$res;
+
+    push @$ac, @cc;
+    return $ac;
+}
+
 =head2 child_channels
 
-Return or set base_channel for the system.
+Return or set child channels for the system.
 
-  my $channel_label = $sys->base_channel;
-  my $old_channel_label = $sys->base_channel($new_channel_label);
-
-TODO : implement available_base_channels
-TODO : implement channel cloning to test this out.
+  my @channel_labels = @{ $sys->child_channels };
+  my $old_channel_labels_ref = $sys->child_channels($new_child_channel);
+  my $ocl = $sys->child_channels( add => [ @list ] );
+  my $ocl = $sys->child_channels( remove => [ @list ] );
+  my $ocl = $sys->child_channels( set => [ @list ] );
 
 =cut
 

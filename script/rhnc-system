@@ -85,15 +85,17 @@ sub get_details {
       );
 
     while ( $sys = shift @args ) {
-        my $system = RHNC::System::get( $rhnc, $sys );
+        my $system = RHNC::System->get( $rhnc, $sys );
         $system->entitlements;
-        if ($verbose == 1 ) {
+        if ( $verbose == 1 ) {
             $system->get_details;
         }
-        elsif ($verbose == 2 ) {
+        elsif ( $verbose == 2 ) {
             $system->running_kernel;
+            $system->base_channel;
+            $system->child_channels;
         }
-        elsif ($verbose == 3 ) {
+        elsif ( $verbose == 3 ) {
             $system->custom_values;
             $system->cpu;
             $system->dmi;
@@ -153,6 +155,118 @@ sub rm_system {
 
     carp "not implemented yet";
 
+    return 0;
+}
+
+=head2 channel
+
+Channel manipulation.
+
+  rhnc-system channel system          # list channel hierarchy
+  rhnc-system channel -b system       # get base channel
+  rhnc-system channel -c system       # get child channels
+  rhnc-system channel -ab system      # get available base channels
+  rhnc-system channel -ac system      # get available child channels
+
+=cut
+
+sub channel {
+    my @args = @_;
+    my $sys;
+    my ( $verbose, $base, $child, $avail_base, $avail_child ) =
+      ( 0, 0, 0, 0, 0 );
+
+    my $result = GetOptionsFromArray(
+        \@args,
+        'verbose|v+'    => \$verbose,
+        'base|b'        => \$base,
+        'child|c'       => \$child,
+        'availbase|ab'  => \$avail_base,
+        'availchild|ac' => \$avail_child,
+      )
+      or pod2usage(
+        -exitval  => 254,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/channel'],
+      );
+    $sys = shift @args;
+    my $system = RHNC::System->get( $rhnc, $sys );
+
+    if ($avail_base) {
+        my @c = sort @{ $system->available_base_channels };
+        if (@c) {
+            print join( "\n", @c ) . "\n";
+        }
+        return 0;
+    }
+
+    if ($avail_child) {
+        my @c = sort @{ $system->available_child_channels };
+        if (@c) {
+            print join( "\n", @c ) . "\n";
+        }
+        return 0;
+    }
+
+    if ( !$base && !$child ) {
+        print $system->base_channel . "\n";
+        my @cc = sort @{ $system->child_channels };
+        if (@cc) {
+            print "+ " . join( "\n+ ", @cc ) . "\n";
+        }
+        return 0;
+    }
+
+    if ($base) {
+        print $system->base_channel . "\n";
+        return 0;
+    }
+    if ($child) {
+        my @cc = @{ $system->child_channels };
+        if (@cc) {
+            print join( "\n", @cc ) . "\n";
+        }
+    }
+    return 0;
+}
+
+=head2 set
+
+System properties manipulation.
+
+  rhnc-system set -b channel system          # set base channel
+  rhnc-system set -c channel,channel system  # set child channels
+
+=cut
+
+sub set {
+    my @args = @_;
+    my $sys;
+    my ( $verbose, $base, $child, $avail_base, $avail_child ) =
+      ( 0, 0, 0, 0, 0 );
+
+    my $result = GetOptionsFromArray(
+        \@args,
+        'verbose|v+' => \$verbose,
+        'base|b=s'   => \$base,
+        'child|c=s'  => \$child,
+      )
+      or pod2usage(
+        -exitval  => 254,
+        -verbose  => 99,
+        -sections => ['DESCRIPTION/channel'],
+      );
+    $sys = shift @args;
+    my $system = RHNC::System->get( $rhnc, $sys );
+
+    if ($base) {
+        $system->base_channel($base);
+        return 0;
+    }
+    if ($child) {
+        my @cc = split( m{ , }imxs, $child );
+        $system->child_channels( \@cc );
+    }
     return 0;
 }
 
@@ -227,6 +341,9 @@ my %func = (
     rm_systems           => \&rm_systems,
     llp                  => \&list_latest_packages,
     list_latest_packages => \&list_latest_packages,
+    channel              => \&channel,
+    chan                 => \&channel,
+    ch                   => \&channel,
 );
 
 my @args = @ARGV;
@@ -241,7 +358,7 @@ if ( defined $cmd && defined $func{$cmd} ) {
 
 pod2usage(
     -exitval => 254,
-    -verbose  => 99,
+    -verbose => 99,
     -message => "No or unknown command given"
 );
 

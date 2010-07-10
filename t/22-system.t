@@ -207,12 +207,12 @@ BEGIN { $tests++; }
 is_deeply( $search2, $search3, "s2 = s3" );
 
 diag( "base_channel" . $sys->profile_name );
-my $ac = $sys->available_base_channel;
+my $ac = $sys->available_base_channels;
 BEGIN { $tests++; }
-isa_ok( $ac, 'ARRAY', "available_base_channel returns array" );
+isa_ok( $ac, 'ARRAY', "available_base_channels returns array" );
 BEGIN { $tests++; }
 is( $ac->[0], $sys->base_channel,
-    "available_base_channel 1st elt is current base_channel" );
+    "available_base_channels 1st elt is current base_channel" );
 
 my $oldbc = $sys->base_channel;
 my $oldcc = $sys->child_channels;
