@@ -47,12 +47,13 @@ my @lsrv = split /\n/, last_script_stdout();
 BEGIN { $tests++; }
 run_ok( $s, [qw( list -v )], "$script list -v" );
 
-BEGIN { $tests+=9; }
+BEGIN { $tests+=12; }
 for my $i ( 1 .. 3) {
     my $ns = int( rand( scalar( @lsrv ) ) );
     my ($sysid, $sysname, $garb ) = split( /\s+/, $lsrv[$ns] );
     run_ok( $s, [ 'get', $sysid ], "$script get $sysid" );
     run_ok( $s, [ 'get', '-v', $sysname ], "$script get -v $sysname" );
     run_ok( $s, [ 'get', '-v', '-v', $sysid ], "$script get -v -v $sysid" );
+    run_ok( $s, [ 'get', '-v', '-v', '-v', $sysid ], "$script get -v -v $sysid" );
 }
 

@@ -316,14 +316,14 @@ Will update this status directly in Satellite.
 
 sub auto_update {
     my ( $self, @args ) = @_;
-    my $prev = $self->{auto_update}->value();
+    if ( !defined $self->{auto_update} ) { $self->get_details; }
+    my $prev = $self->{auto_update};
 
     if (@args) {
         $self->{auto_update} = shift @args;
-        $self->{auto_update} = RHNC::_bool( $self->{auto_update} );
 
         $self->{rhnc}->call( 'system.setDetails', $self->{id},
-            { auto_errata_update => $self->{auto_update} } );
+            { auto_errata_update => RHNC::_bool( $self->{auto_update} ) } );
     }
 
     return $prev;
@@ -339,6 +339,7 @@ Get system's release.
 
 sub release {
     my ($self) = @_;
+    if ( !defined $self->{release} ) { $self->get_details; }
     return $self->{release};
 }
 
@@ -353,6 +354,7 @@ Get or set address1 attribute of a system.
 
 sub address1 {
     my ( $self, @args ) = @_;
+    if ( !defined $self->{address1} ) { $self->get_details; }
     my $prev = $self->{address1};
 
     if (@args) {
@@ -376,6 +378,7 @@ Get or set address2 attribute of a system.
 
 sub address2 {
     my ( $self, @args ) = @_;
+    if ( !defined $self->{address2} ) { $self->get_details; }
     my $prev = $self->{address2};
 
     if (@args) {
@@ -399,6 +402,7 @@ Get or set city attribute of a system.
 
 sub city {
     my ( $self, @args ) = @_;
+    if ( !defined $self->{city} ) { $self->get_details; }
     my $prev = $self->{city};
 
     if (@args) {
@@ -422,6 +426,7 @@ Get or set state attribute of a system.
 
 sub state {
     my ( $self, @args ) = @_;
+    if ( !defined $self->{state} ) { $self->get_details; }
     my $prev = $self->{state};
 
     if (@args) {
@@ -445,6 +450,7 @@ Get or set country attribute of a system.
 
 sub country {
     my ( $self, @args ) = @_;
+    if ( !defined $self->{country} ) { $self->get_details; }
     my $prev = $self->{country};
 
     if (@args) {
@@ -468,6 +474,7 @@ Get or set building attribute of a system.
 
 sub building {
     my ( $self, @args ) = @_;
+    if ( !defined $self->{building} ) { $self->get_details; }
     my $prev = $self->{building};
 
     if (@args) {
@@ -491,6 +498,8 @@ Get or set room attribute of a system.
 
 sub room {
     my ( $self, @args ) = @_;
+    if ( !defined $self->{room} ) { $self->get_details; }
+
     my $prev = $self->{room};
 
     if (@args) {
@@ -514,6 +523,7 @@ Get or set rack attribute of a system.
 
 sub rack {
     my ( $self, @args ) = @_;
+    if ( !defined $self->{rack} ) { $self->get_details; }
     my $prev = $self->{rack};
 
     if (@args) {
@@ -537,6 +547,7 @@ Get or set description attribute of a system.
 
 sub description {
     my ( $self, @args ) = @_;
+    if ( !defined $self->{description} ) { $self->get_details; }
     my $prev = $self->{description};
 
     if (@args) {
@@ -559,6 +570,7 @@ Return system's hostname.
 
 sub hostname {
     my ($self) = @_;
+    if ( !defined $self->{hostname} ) { $self->get_details; }
     return $self->{hostname};
 }
 
@@ -574,6 +586,8 @@ Returns one in C<qw( unknown offline online )>.
 
 sub osa_status {
     my ($self) = @_;
+    if ( !defined $self->{osa_status} ) { $self->get_details; }
+
     return $self->{osa_status};
 }
 
@@ -589,14 +603,16 @@ Get or set a system's lock_status.
 
 sub lock_status {
     my ( $self, @args ) = @_;
-    my $prev = $self->{lock_status}->value();
+    if ( !defined $self->{lock_status} ) { $self->get_details; }
+
+    my $prev = $self->{lock_status};
 
     if (@args) {
         $self->{lock_status} = shift @args;
-        $self->{lock_status} = RHNC::_bool( $self->{lock_status} );
+        my $v = RHNC::_bool( $self->{lock_status} );
 
-        $self->{rhnc}->call( 'system.setDetails', $self->{id},
-            { lock_status => $self->{lock_status} } );
+        $self->{rhnc}->call( 'system.setLockStatus', $self->{id},
+            RHNC::_bool( $self->{lock_status} ) );
     }
 
     return $prev;
@@ -685,10 +701,28 @@ sub get {
     $res->{auto_update} = $res->{auto_update}->value
       if ref $res->{lock_status} ne 'SCALAR';
 
-    my $self = RHNC::System->new(
+    my $self = __PACKAGE__->new(
         rhnc => $rhnc,
         (%$res)
     );
+
+    return $self;
+}
+
+=head2 get_details
+
+Get more details about current object, and populate results.
+
+=cut 
+
+sub get_details {
+    my ($self) = @_;
+
+    my $res = $self->{rhnc}->call( 'system.getDetails', $self->{id} );
+
+    foreach my $k ( keys %$res ) {
+        $self->{$k} = $res->{$k};
+    }
 
     return $self;
 }
@@ -842,6 +876,7 @@ Returns array ref to list of all entitlements.
 
 sub entitlements {
     my ($self) = @_;
+    my $prev = $self->{entitlements};
 
     if ( !defined $self->{entitlements} ) {
         $self->{entitlements} =
@@ -928,20 +963,41 @@ sub relevant_errata {
 
 =head2 base_channel
 
-Get only.
+Return or set base_channel for the system.
+
+  my $channel_label = $sys->base_channel;
+  my $old_channel_label = $sys->base_channel($new_channel_label);
 
 =cut
 
 sub base_channel {
+    my ( $self, @args ) = @_;
+    my $prev = $self->{base_channel};
 
+    if (@args) {
+        $self->{base_channel} = shift @args;
+        $self->{rhnc}
+          ->call( 'system.setBaseChannel', $self->{id}, $self->{base_channel} );
+    }
+    return $prev;
 }
 
 =head2 running_kernel
 
+Get current running kernel information.
+
+  $k = $sys->running_kernel;
+
 =cut
 
 sub running_kernel {
+    my ($self) = @_;
 
+    if ( !defined $self->{running_kernel} ) {
+        $self->{running_kernel} =
+          $self->{rhnc}->call( 'system.getRunningKernel', $self->{id} );
+    }
+    return $self->{running_kernel};
 }
 
 =head2 as_string
@@ -969,7 +1025,7 @@ sub as_string {
             }
 
             # HASHes
-            if ( ref $self->{$k} eq 'HASH') {
+            if ( ref $self->{$k} eq 'HASH' ) {
                 $str .= "  $k:";
                 my $c = $self->{$k};
                 $str .= join( q(,), map { "$_=$c->{$_}" } keys %$c );
@@ -978,7 +1034,7 @@ sub as_string {
 
             if ( $k eq 'entitlements' ) {
                 $str .= "  $k: ";
-                $str .= join(q(,), @{ $self->{$k} });
+                $str .= join( q(,), @{ $self->{$k} } );
                 $str .= "\n";
             }
 
