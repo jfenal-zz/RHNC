@@ -168,3 +168,30 @@ foreach my $method (@setters) {
         is( $sys->$method( $r ), $content , "$method(q(new content))" );
     }
 }
+
+# list_errata
+diag("Testing list_errata");
+my $e;
+$e = $sys->relevant_errata;
+BEGIN { $tests++; }
+isa_ok( $e, 'ARRAY', "relevant_errata returns ARRAY");
+
+my $error;
+$error = 0;
+$e = $sys->relevant_errata('b'); # get security errata
+foreach (@$e) { $error += $_->{advisory_name} =~ m/ \A RHBA .* /imxs ? 0 : 1; }
+BEGIN { $tests++; }
+ok( ! $error, "all errata are bug fix errata");
+
+$error = 0;
+$e = $sys->relevant_errata('RHSA'); # get security errata
+foreach (@$e) { $error += $_->{advisory_name} =~ m/ \A RHSA .* /imxs ? 0 : 1; }
+BEGIN { $tests++; }
+ok( ! $error, "all errata are security errata");
+
+$error = 0;
+$e = $sys->relevant_errata('enh'); # get security errata
+foreach (@$e) { $error += $_->{advisory_name} =~ m/ \A RHEA .* /imxs ? 0 : 1; }
+BEGIN { $tests++; }
+ok( ! $error, "all errata are enhancement errata");
+
