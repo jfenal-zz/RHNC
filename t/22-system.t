@@ -11,7 +11,10 @@ plan tests => $tests;
 
 my $rhnc = RHNC::Session->new();
 
+# Test list()
 my $slist = RHNC::System->list($rhnc);
+BEGIN { $tests++ }
+ok( keys %$slist > 0, "At least one system registered");
 
 my $system_id = ( keys %$slist )[0];
 
@@ -33,6 +36,25 @@ isa_ok( $sys, 'RHNC::System', "object created is indeed a RHNC::System" );
 BEGIN { $tests++ }
 $sys = $sys->get($system_id);
 isa_ok( $sys, 'RHNC::System', "object created is indeed a RHNC::System" );
+
+# compare with other ways to get list
+diag("list testing");
+BEGIN { $tests++ }
+is_deeply( $slist, RHNC::System::list($rhnc), "RHNC::System::list");
+BEGIN { $tests++ }
+is_deeply( $slist,  $sys->list, '$sys->list');
+BEGIN { $tests++ }
+is_deeply( $slist,  $sys->list('[a-zA-Z]*'), '$sys->list regexp');
+
+BEGIN { $tests++ }
+eval { RHNC::System->list([]) };
+ok( $@, "RHNC::System->list(crap) croaks");
+BEGIN { $tests++ }
+my $sys2 = RHNC::System->get( $rhnc, $system_id );
+delete $sys2->{rhnc};
+eval { $sys2->list([]) };
+ok( $@, '$sys->list(crap) croaks when no rhnc present');
+
 
 #diag( $sys->as_string );
 
@@ -61,19 +83,21 @@ BEGIN { $tests++ }
 $sys = $sys->get($pname);
 isa_ok( $sys, 'RHNC::System', "object created is indeed a RHNC::System" );
 
-BEGIN { $tests += 4; }
+BEGIN { $tests++; }
 my $id = $sys->id;
-like( $id, qr/\d+/, "system id is a number" );
-is(
-    $id,
-    RHNC::System->id( $rhnc, $sys->profile_name ),
-    "RHNC::System->id is id"
-);
-is(
-    $id,
-    RHNC::System::id( $rhnc, $sys->profile_name ),
-    "RHNC::System::id is id"
-);
+ok( RHNC::System::is_systemid($id), "system id $id looks like a system id" );
+my $id2;
+$id2 = RHNC::System->id( $rhnc, $sys->profile_name );
+
+BEGIN { $tests++; }
+is( $id, $id2, "RHNC::System->id is id" );
+BEGIN { $tests++; }
+ok( RHNC::System::is_systemid($id2), "system id $id2 looks like a system id" );
+
+$id2 = RHNC::System::id( $rhnc, $sys->profile_name );
+BEGIN { $tests++; }
+is( $id, $id2, "RHNC::System::id $id2 is id" );
+BEGIN { $tests++; }
 ok( !RHNC::System::id( [] ), "RHNC::System::id( crap )" );
 
 BEGIN { $tests += 3; }
@@ -108,13 +132,39 @@ ok( $sys->lock_status($au), "lock_status" );
 BEGIN { $tests += 3; }
 ok( $sys->release, "release" );
 
+diag("getters");
 my @getters = (
-    qw( release address1 address2 city state country building room rack hostname osa_status base_channel running_kernel )
+    qw( release address1 address2 city state country building room
+    description rack hostname osa_status base_channel running_kernel last_checkin )
 );
-BEGIN { $tests += 11; }
+BEGIN { $tests += 2 * 13; }
 $sys->get_details;
+my %get;
 foreach my $method (@getters) {
     my $r = $sys->$method();
+    $get{$method} = $r;
     ok( $r || $r eq '', "$method" );
 }
+diag("getters with satellite request");
+foreach my $method (@getters) {
+    my $sys2 = $sys->get( $sys->id );
+    delete $sys2->{$method};
+    my $r = $sys2->$method();
+    is( $r, $get{$method}, "$method" );
+}
 
+diag("Testing setters");
+my @setters = (
+    qw( address1 address2 city state country building room description rack )
+);
+BEGIN { $tests += 9; }
+foreach my $method (@setters) {
+    my $content = 'new content';
+    if ( $method eq 'country') {
+        $content = 'FR';
+    }
+    my $r = $sys->$method( $content );
+    if ($content ne 'country' ) {
+        is( $sys->$method( $r ), $content , "$method(q(new content))" );
+    }
+}
