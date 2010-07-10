@@ -137,7 +137,7 @@ my @getters = (
     qw( release address1 address2 city state country building room
     description rack hostname osa_status base_channel running_kernel last_checkin )
 );
-BEGIN { $tests += 2 * 13; }
+BEGIN { $tests += 2 * 14; }
 $sys->get_details;
 my %get;
 foreach my $method (@getters) {
