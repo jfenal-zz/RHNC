@@ -171,7 +171,7 @@ foreach my $method (@setters) {
 
 # list_errata
 diag("Testing list_errata");
-my $e;
+undef $e;
 $e = $sys->relevant_errata;
 BEGIN { $tests++; }
 isa_ok( $e, 'ARRAY', "relevant_errata returns ARRAY" );
