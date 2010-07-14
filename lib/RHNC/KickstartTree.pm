@@ -73,6 +73,20 @@ sub _setdefaults {
     return $self;
 }
 
+=head2 _uniqueid
+
+Return kickstart tree key _uniqueid (label).
+
+    $uuid = $kst->_uniqueid;
+
+=cut
+
+sub _uniqueid {
+    my ( $self ) = @_;
+    return $self->{label};
+}
+
+
 =head2 new
 
 =cut

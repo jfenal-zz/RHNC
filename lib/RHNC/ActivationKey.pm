@@ -209,14 +209,14 @@ sub new {
 
 =head2 _uniqueid
 
-Return activation _uniqueid (key).
+Return activation key _uniqueid (key).
 
-    $name = $ak->_uniqueid;
+    $uuid = $ak->_uniqueid;
 
 =cut
 
 sub _uniqueid {
-    my ( $self, @args ) = @_;
+    my ( $self ) = @_;
     return $self->{key};
 }
 

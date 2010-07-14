@@ -51,6 +51,21 @@ our %errata_type = (
     enh  => 'Product Enhancement Advisory',
 );
 
+=head2 _uniqueid
+
+Return errata _uniqueid (id).
+
+    $uuid = $e->_uniqueid;
+
+=cut
+
+sub _uniqueid {
+    my ( $self ) = @_;
+    return $self->{id};
+}
+
+shift
+
 =head2 new
 
 Create a new C<RHNC::Errata> object.

@@ -198,6 +198,19 @@ my %properties = (
     rhnc               => [ 0, undef, undef, undef ],
 );
 
+=head2 _uniqueid
+
+Return package _uniqueid (id).
+
+    $uuid = $pkg->_uniqueid;
+
+=cut
+
+sub _uniqueid {
+    my ( $self ) = @_;
+    return $self->{id};
+}
+
 =head2 new
 
 =cut

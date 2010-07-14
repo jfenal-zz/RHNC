@@ -95,6 +95,19 @@ sub is_system_group_id {
     return 0;
 }
 
+=head2 _uniqueid
+
+Return system group _uniqueid (id).
+
+    $uuid = $sg->_uniqueid;
+
+=cut
+
+sub _uniqueid {
+    my ( $self ) = @_;
+    return $self->{id};
+}
+
 =head2 new
 
 Create a new system group.

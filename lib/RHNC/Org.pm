@@ -472,6 +472,19 @@ sub id {
     return $self->{id};
 }
 
+=head2 _uniqueid
+
+Return org _uniqueid (id).
+
+    $uuid = $org>_uniqueid;
+
+=cut
+
+sub _uniqueid {
+    my ( $self, @args ) = @_;
+    return $self->{id};
+}
+
 =head2 list
 
 Return list of Organisations

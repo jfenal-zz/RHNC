@@ -109,8 +109,8 @@ Returns a C<RHNC::Channel> unique id.
 =cut
 
 sub _uniqueid {
-    my ($s) = shift;
-    return $s->{key};
+    my ($self) = @_;
+    return $self->{id};
 }
 
 =head2 is_channel_id

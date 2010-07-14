@@ -220,7 +220,7 @@ sub id {
 
 Return system's _uniqueid (id)
 
-  $lc = $s->_uniqueid;
+  $uuid = $sys->_uniqueid;
 
 =cut
 

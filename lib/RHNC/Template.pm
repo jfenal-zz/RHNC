@@ -36,8 +36,18 @@ Perhaps a little code snippet.
 
 =head1 SUBROUTINES/METHODS
 
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
+=head2 _uniqueid
+
+Returns a C<RHNC::Template> object instance's unique id (id).
+
+  $id = $object->_uniqueid;
+
+=cut
+
+sub _uniqueid {
+    my ($self) = @_;
+    return $self->{id};
+}
 
 =head2 new
 

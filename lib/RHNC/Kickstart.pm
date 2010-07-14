@@ -99,6 +99,21 @@ sub _missing_parameter {
     croak "Missing parameter $parm";
 }
 
+
+=head2 _uniqueid
+
+Return kickstart _uniqueid (label).
+
+    $uuid = $ks->_uniqueid;
+
+=cut
+
+sub _uniqueid {
+    my ( $self ) = @_;
+    return $self->{label};
+}
+
+
 =head2 new
 
 Create a new RHNC::Kickstart object.
