@@ -5,7 +5,7 @@ use strict;
 use Params::Validate;
 use Carp;
 
-use base 'RHNC';
+use base qw( RHNC );
 
 use vars qw( %properties %valid_prefix );
 

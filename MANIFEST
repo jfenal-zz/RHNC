@@ -5,6 +5,7 @@ lib/RHNC/Channel.pm
 lib/RHNC/Kickstart.pm
 lib/RHNC/KickstartTree.pm
 lib/RHNC/Org.pm
+lib/RHNC/Errata.pm
 lib/RHNC/Package.pm
 lib/RHNC.pm
 lib/RHNC/Session.pm

@@ -13,6 +13,7 @@ use Carp;
 use Frontier::Client;
 use RHNC::Session;
 use RHNC::ActivationKey;
+use RHNC::Errata;
 use RHNC::Kickstart;
 use RHNC::KickstartTree;
 use RHNC::Org;

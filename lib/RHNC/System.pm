@@ -895,31 +895,23 @@ sub registration_date {
 
 =head2 relevant_errata
 
-All & by type
+Retrieve relevant errata applicable to a particular system.
+Get either all, or by type.
 
-TODO : Should really be in RHNC::Errata...
+  $e = $sys->relevant_errata;
+  $e = $sys->relevant_errata( 'RHBA' );
+                                # or RHSA, or RHEA, see
+                                #  L<RHNC::Errata> for more shortcuts.
 
 =cut
-
-my %errata_type = (
-    RHSA => 'Security Advisory',
-    RHBA => 'Bug Fix Advisory',
-    RHEA => 'Product Enhancement Advisory',
-    s    => 'Security Advisory',
-    b    => 'Bug Fix Advisory',
-    e    => 'Product Enhancement Advisory',
-    bug  => 'Security Advisory',
-    sec  => 'Bug Fix Advisory',
-    enh  => 'Product Enhancement Advisory',
-);
 
 sub relevant_errata {
     my ( $self, $type ) = @_;
     my $res;
 
-    if ( defined $type && defined $errata_type{$type} ) {
+    if ( defined $type && defined $RHNC::Errata::errata_type{$type} ) {
         $res = $self->{rhnc}->call( 'system.getRelevantErrataByType',
-            $self->{id}, $errata_type{$type} );
+            $self->{id}, $RHNC::Errata::errata_type{$type} );
     }
     else {
         $res =
