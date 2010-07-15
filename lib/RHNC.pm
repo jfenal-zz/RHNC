@@ -97,12 +97,12 @@ sub manage {
 
     $object->{rhnc} = $self;
 
-    if ( !defined $object->name() || $object->name() eq q{} ) {
-        my @c = caller;
+    my $uid = $object->_uniqueid;
+    if ( !defined $uid || $uid eq q{} ) {
         croak 'Object name not defined';
     }
 
-    $self->{_managed}{ $object->name() } = \$object;
+    $self->{_managed}{$uid} = \$object;
 
     return $self;
 }
