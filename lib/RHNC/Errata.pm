@@ -64,8 +64,6 @@ sub _uniqueid {
     return $self->{id};
 }
 
-shift
-
 =head2 new
 
 Create a new C<RHNC::Errata> object.
