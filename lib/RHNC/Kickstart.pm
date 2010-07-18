@@ -156,12 +156,6 @@ sub new {
         $self->{server} = $self->{rhnc}->name();
     }
 
-    # FIXME : pas la bonne façon de savoir si on veut les créer...
-    # peut-être pas la chose à faire par défaut, même...
-    if ( defined $self->{rhnc} ) {
-        $self->{rhnc}->manage($self);
-    }
-
     return $self;
 }
 
@@ -408,7 +402,10 @@ sub create {
       ->call( 'kickstart.createProfile', $self->{label}, $self->{virt_type},
         $self->{tree_label}, $self->{server}, $self->{password}, );
     croak 'Create did not work' if !defined $res;
-    $self->{key} = $res;
+
+    if ( defined $res ) {
+        $self->{rhnc}->manage($self);
+    }
 
     return $self;
 }
@@ -630,7 +627,7 @@ progress on your bug as I make changes.
 
 =head1 AUTHOR
 
-Jérôme Fenal, L<jfenal@redhat.com>.
+Jerome Fenal, L<jfenal@free.fr>.
 
 
 =head1 SUPPORT
@@ -676,7 +673,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2009,2010 Jérôme Fenal, all rights reserved.
+Copyright 2009,2010 Jerome Fenal, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

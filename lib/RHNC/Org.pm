@@ -133,10 +133,6 @@ sub new {
         $self->{$i} = $p{$i};
     }
 
-    if ( defined $self->{rhnc} ) {
-        $self->{rhnc}->manage($self);
-    }
-
     return $self;
 }
 
@@ -187,9 +183,11 @@ sub create {
     );
     if ( defined $res ) {
         $self->{id} = $res->{id};
+        $self->{rhnc}->manage($self);
 
         return $self;
     }
+
     return;
 }
 
@@ -610,7 +608,7 @@ sub list_users {
 
 =head1 AUTHOR
 
-Jérôme Fenal, C<< <jfenal at redhat.com> >>
+Jerome Fenal, C<< <jfenal at free.fr> >>
 
 =head1 BUGS
 
@@ -655,7 +653,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright © 2009, 2010 Jérôme Fenal, all rights reserved.
+Copyright Â© 2009, 2010 Jerome Fenal, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -170,7 +170,7 @@ foreach my $method (@setters) {
 }
 
 # list_errata
-diag("Testing list_errata");
+diag("Testing list_errata with " . $sys->profile_name);
 undef $e;
 $e = $sys->relevant_errata;
 BEGIN { $tests++; }

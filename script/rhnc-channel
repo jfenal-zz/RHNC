@@ -396,7 +396,7 @@ sub add_packages {
     if ( scalar @package_id ) {
         $res =
           $self->{rhnc}
-          ->call( 'channel.software.addPackages', $self->{name}, \@package_id,
+          ->call( 'channel.software.addPackages', $self->{label}, \@package_id,
           );
     }
     return $res;
@@ -452,11 +452,11 @@ See L<RHNC>.
 
 =head1 AUTHOR
 
-Jérôme Fenal L<< <jfenal@free.fr> >>.
+Jerome Fenal L<< <jfenal@free.fr> >>.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2009, 2010 Jérôme Fenal, all rights reserved.
+Copyright 2009, 2010 Jerome Fenal, all rights reserved.
 
 This module is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

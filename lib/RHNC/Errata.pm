@@ -122,7 +122,7 @@ progress on your bug as I make changes.
 
 =head1 AUTHOR
 
-Jérôme Fenal, C<< <jfenal at redhat.com> >>
+Jerome Fenal, C<< <jfenal at free.fr> >>
 
 =head1 SUPPORT
 
@@ -159,7 +159,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2009 Jérôme Fenal, all rights reserved.
+Copyright 2009 Jerome Fenal, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

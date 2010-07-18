@@ -278,7 +278,7 @@ sub get {
 
 =head1 AUTHOR
 
-Jérôme Fenal, C<< <jfenal at redhat.com> >>
+Jérôme Fenal, C<< <jfenal at free.fr> >>
 
 =head1 BUGS
 

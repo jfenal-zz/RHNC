@@ -146,10 +146,6 @@ sub new {
     # validate object content
     $self->_validate_properties;
 
-    if ( defined $self->{rhnc} ) {
-        $self->{rhnc}->manage($self);
-    }
-
     return $self;
 }
 
@@ -182,13 +178,19 @@ sub create {
       $self->{rhnc}
       ->call( 'systemgroup.create', $self->{name}, $self->{description}, );
 
-    if ( defined $self->{system_ids} ) {
-        $self->add_systems( $self->{system_ids} );
-        $self->{system_count} = scalar @{ $self->{system_ids} };
-    }
-    $self->{org_id} = $self->{rhnc}->org_id;
+   if (defined $res) {
+        $self->{id} = $res->{id};
+        $self->{org_id} = $res->{org_id};
+        $self->{rhnc}->manage($self);
 
-    return $self;
+        if ( defined $self->{system_ids} ) {
+            $self->add_systems( $self->{system_ids} );
+            $self->{system_count} = scalar @{ $self->{system_ids} };
+        }
+        return $res;
+    }
+
+    return;
 }
 
 =head2 destroy
@@ -525,7 +527,7 @@ sub as_string {
 
 =head1 AUTHOR
 
-Jérôme Fenal, C<< <jfenal at redhat.com> >>
+Jerome Fenal, C<< <jfenal at free.fr> >>
 
 =head1 BUGS
 
@@ -570,7 +572,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2009,2010 Jérôme Fenal, all rights reserved.
+Copyright 2009,2010 Jerome Fenal, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

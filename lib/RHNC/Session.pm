@@ -401,7 +401,7 @@ sub version {
 
 =head1 AUTHOR
 
-Jérôme Fenal, C<< <jfenal at redhat.com> >>
+Jerome Fenal, C<< <jfenal at free.fr> >>
 
 =head1 BUGS AND LIMITATIONS
 
@@ -446,7 +446,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright © 2010 Jérôme Fenal, All Rights Reserved.
+Copyright © 2010 Jerome Fenal, All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

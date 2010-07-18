@@ -102,7 +102,7 @@ sub _missing_parameter {
 
 =head2 _uniqueid
 
-Returns a C<RHNC::Channel> unique id.
+Returns a C<RHNC::Channel> unique id (label).
 
   $id = $chan->_uniqueid;
 
@@ -110,7 +110,7 @@ Returns a C<RHNC::Channel> unique id.
 
 sub _uniqueid {
     my ($self) = @_;
-    return $self->{id};
+    return $self->{label};
 }
 
 =head2 is_channel_id
@@ -159,10 +159,6 @@ sub new {
             $self->{$i} = $p{$i};
         }
     }
-    if ( defined $self->{rhnc} ) {
-        $self->{rhnc}->manage($self);
-    }
-
     return $self;
 }
 
@@ -180,6 +176,10 @@ sub list_arches {
     my ( $self, @p ) = @_;
     my $rhnc;
 
+    if (! defined $self ) {
+        croak "No RHNC client given here";
+    }
+        
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
 
         # OO context, eg $ch->list_arches
@@ -190,13 +190,13 @@ sub list_arches {
         # Called as RHNC::Channel::list_arches($rhnc)
         $rhnc = $self;
     }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
+    elsif ( $self eq __PACKAGE__ && defined  $p[0]  && ref( $p[0] ) eq 'RHNC::Session' ) {
 
         # Called as RHNC::Channel->list_arches($rhnc)
         $rhnc = shift @p;
     }
     else {
-        confess "No RHNC client given here";
+        croak "No RHNC client given here";
     }
 
     my $res = $rhnc->call("channel.software.listArches");
@@ -341,27 +341,27 @@ sub list_systems {
     my ( $self, @p ) = @_;
     my $rhnc;
     my $id_or_name;
+    if (! defined $self) {
+        croak "No object to call list_systems from";
+    }
 
     if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
         # OO context, eg $ch->list_systems
         $rhnc       = $self->{rhnc};
         $id_or_name = $self->label();
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
-
         # Called as RHNC::Channel::list_systems($rhnc)
         $rhnc       = $self;
         $id_or_name = shift @p;
     }
     elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-
         # Called as RHNC::Channel->list_systems($rhnc)
         $rhnc       = shift @p;
         $id_or_name = shift @p;
     }
     else {
-        confess "No RHNC client given here";
+        croak "No RHNC client given here";
     }
 
     if ( is_channel_id($id_or_name) ) {
@@ -396,7 +396,7 @@ sub id {
 
 =head2 name
 
-Return channel name
+Return channel name (label).
 
   $name = $ch->name;
 
@@ -567,9 +567,11 @@ sub create {
       ->call( 'channel.software.create', $self->{label}, $self->{name},
         $self->{summary}, $self->{arch_name}, $self->{parent_channel_label},
       );
-    confess "Create $self->{label} did not work" if !defined $res;
-
-    return $self;
+    if ( defined $res ) {
+        $self->{rhnc}->manage($self);
+        return $self;
+    }
+    return;
 }
 
 =head2 destroy 
@@ -680,11 +682,11 @@ sub get {
         $id_or_name = shift @p;
     }
     else {
-        confess "No RHNC client given";
+        croak "No RHNC client given";
     }
 
     if ( !defined $id_or_name ) {
-        confess "No channel id or name specified in get";
+        croak "No channel id or name specified in get";
     }
 
     my $res = $rhnc->call( 'channel.software.getDetails', $id_or_name );
@@ -727,7 +729,7 @@ automatically be notified of progress on your bug as I make changes.
 
 =head1 AUTHOR
 
-Jérôme Fenal, C<< <jfenal at redhat.com> >>
+Jerome Fenal, C<< <jfenal at free.fr> >>
 
 
 =head1 SUPPORT
@@ -765,7 +767,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2009 Jérôme Fenal, all rights reserved.
+Copyright 2009 Jerome Fenal, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -17,7 +17,7 @@ BEGIN { $tests++; }
 ok( scalar @channels >= 0, 'got a list of ' . scalar(@channels) . ' channels' );
 
 my $tchan      = $channels[0];
-my $tchan_name = $tchan->name;
+my $tchan_name = $tchan->label;
 BEGIN { $tests++; }
 my $channel = $tchan->get();
 is( ref($channel), 'RHNC::Channel',
@@ -97,11 +97,12 @@ eval { $arches = $c->list_arches( ); };      # won't work
 ok( $@, "Error if no rhnc given 3" );
 ok( keys(%$arches) == 0, 'no arch if no $rhnc: ' . join( ', ', keys %$arches ) );
 
+diag("Using channel ". $channel->label);
 BEGIN { $tests+=3 ; }
 my $syslist;
 $syslist = $channel->list_systems();
 ok(keys %{ $syslist } >= 0, '0 or more systems subscribed' );
-$syslist = RHNC::Channel->list_systems( $rhnc, $channel->name);
+$syslist = RHNC::Channel->list_systems( $rhnc, $channel->label);
 ok(keys %{ $syslist } >= 0, '0 or more systems subscribed' );
 $syslist = RHNC::Channel::list_systems( $rhnc, $channel->id );
 ok(keys %{ $syslist } >= 0, '0 or more systems subscribed' );
