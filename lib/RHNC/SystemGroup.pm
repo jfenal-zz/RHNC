@@ -434,9 +434,41 @@ sub list {
     return @list;
 }
 
+=head2 as_string
+
+Returns a printable string to describe the system group.
+
+  print $sg->as_string;
+
+=cut
+
+sub as_string {
+    my ($self, $verbose) = @_;
+
+    if ( ! defined $verbose ) {
+        $verbose = 0;
+    }
+
+    my $str = $self->name . ":\n";
+    foreach my $k ( sort keys %{$self} ) {
+        next if $k eq 'rhnc';
+        $str .= "  $k: $self->{$k}\n"
+            if defined $self->{$k};
+    }
+    if ( $verbose == 1 ) {
+        $syslist = $self->list_systems;
+        if ( @$syslist ) {
+            $str .= "  system:";
+            $str .= join( "\n  system:", map { $_->profile_name } @$syslist;
+            $str .= "\n";
+        }
+    }
+    return $str;
+}
+
 =head1 AUTHOR
 
-Jérôme Fenal, C<< <jfenal at redhat.com> >>
+Jerome Fenal, C<< <jfenal at redhat.com> >>
 
 =head1 BUGS
 
@@ -481,7 +513,7 @@ L<http://search.cpan.org/dist/RHNC-Session/>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2009,2010 Jérôme Fenal, all rights reserved.
+Copyright 2009,2010 Jerome Fenal, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -1,4 +1,3 @@
-RHNC::SystemGroup->as_string
 RHNC::System->as_string
 RHNC::Kickstart->as_string
 RHNC::Kickstart->render
