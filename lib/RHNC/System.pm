@@ -3,7 +3,6 @@ package RHNC::System;
 use warnings;
 use strict;
 use Params::Validate;
-use Data::Dumper;
 use Carp;
 use base qw( RHNC );
 
@@ -931,7 +930,10 @@ sub network_devices {
     my ($self) = @_;
 
     if ( !defined $self->{network_devices} ) {
-        $self->{network_devices} = $self->{rhnc}->call( 'system.getNetworkDevices', $self->{id} );
+        my $res = $self->{rhnc}->call( 'system.getNetworkDevices', $self->{id} );
+        if (defined $res) {
+            $self->{network_devices} = $res;
+        }
     }
     return $self->{network_devices};
 
@@ -1199,10 +1201,28 @@ sub as_string {
                     if ( defined $d->{device} && $d->{device} ne '' ) {
                         $str .= "$d->{device}:";
                     }
-                    $str .=
-"$d->{device_class},$d->{driver},$d->{description},$d->{bus},$d->{pcitype}\n";
+                    $str .= "$d->{device_class},$d->{driver},$d->{description},$d->{bus},$d->{pcitype}\n";
                 }
             }
+
+            if ( $k eq 'network_devices' ) {
+                foreach my $d ( @{ $self->{$k} } ) {
+                    $str .= "  $k: ";
+                    if ( defined $d->{interface} && $d->{interface} ne '' ) {
+                        $str .= "$d->{interface}:";
+                    }
+                    my @info;
+                    foreach my $i ( qw( ip netmask broadcast hardware_address module ) ) {
+                        if (defined $d->{$i} && $d->{$i} ne q() ) {
+                            push @info, "$i=$d->{$i}";
+                        }
+                    }
+                    $str .= join q(,), @info;
+                    $str .= "\n";
+                }
+            }
+
+
         }
     }
 
