@@ -63,3 +63,11 @@ where it should mention
 Returns:
     * struct - custom value
               o string "custom info label" - value
+
+
+TO OPEN :
+Comestic : system.getNetworkDevices documentation in RHNS 5.3 gives :
+
+return #  string "broadcase" - Broadcast address for device.  
+should be broadcast, not broadcase. Quick fix in Javadoc, I guess :)
+
