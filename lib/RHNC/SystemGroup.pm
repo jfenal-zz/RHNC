@@ -525,6 +525,38 @@ sub as_string {
     return $str;
 }
 
+=head2 as_string
+
+Returns a printable string to describe the system group.
+
+  print $sg->as_string;
+
+=cut
+
+sub as_string {
+    my ($self, $verbose) = @_;
+
+    if ( ! defined $verbose ) {
+        $verbose = 0;
+    }
+
+    my $str = $self->name . ":\n";
+    foreach my $k ( sort keys %{$self} ) {
+        next if $k eq 'rhnc';
+        $str .= "  $k: $self->{$k}\n"
+            if defined $self->{$k};
+    }
+    if ( $verbose == 1 ) {
+        $syslist = $self->list_systems;
+        if ( @$syslist ) {
+            $str .= "  system:";
+            $str .= join( "\n  system:", map { $_->profile_name } @$syslist;
+            $str .= "\n";
+        }
+    }
+    return $str;
+}
+
 =head1 AUTHOR
 
 Jerome Fenal, C<< <jfenal at free.fr> >>

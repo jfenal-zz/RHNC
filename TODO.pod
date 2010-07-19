@@ -1,4 +1,3 @@
-Find the right Getopt::Long version introducing String parsing --> the last one, 2.36 :(
 
 - implement RHNC::Errata & rhnc-errata (create, modify, list, get,
 destroy)
