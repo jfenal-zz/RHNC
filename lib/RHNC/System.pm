@@ -209,6 +209,7 @@ sub id {
     }
 
     $system = shift @args;
+    print STDERR "system = $system\n";
     my $res = $rhnc->call('system.getId', $system );
     if ( @$res eq 1 ) {
         return $res->[0]->{id};
@@ -638,13 +639,14 @@ sub get {
         # Called as RHNC::System::get($rhnc)
         $rhnc = $class;
     }
-    elsif ( __PACKAGE__ && !RHNC::Session::is_session( $rhnc = shift(@args) ) )
+    elsif ( __PACKAGE__ && RHNC::Session::is_session( $args[0] ) )
     {
-
         # RHNC::System->get( $rhnc )
+        $rhnc = shift @args;
+    }
+    else {
         croak "No RHNC client given";
     }
-
     if ( !defined $id_or_name ) {
         $id_or_name = shift @args;
     }
@@ -673,6 +675,7 @@ sub get {
         rhnc => $rhnc,
         (%$res)
     );
+    $self->{rhnc}->manage($self);
 
     return $self;
 }
@@ -821,7 +824,6 @@ Return DMI information of a system.
       bios_version  => q( ),
   };
 
-
 =cut
 
 sub dmi {
@@ -863,34 +865,94 @@ sub entitlements {
 
 =head2 memory
 
+Return memory information about a system.
+
+  $memory = $sys->memory;
+
+  $memory = {
+      ram  => q( ),
+      swap => q( ),
+  };
+
+
 =cut
 
 sub memory {
+    my ($self) = @_;
 
+    if ( !defined $self->{memory} ) {
+        $self->{memory} = $self->{rhnc}->call( 'system.getMemory', $self->{id} );
+    }
+    return $self->{memory};
 }
 
 =head2 network
 
+Get the IP address and hostname for a given server. 
+
+  $network = $sys->network;
+
+  $network = {
+      ip       => q( ),
+      hostname => q( ),
+  };
+
+
 =cut
 
 sub network {
+    my ($self) = @_;
+
+    if ( !defined $self->{network} ) {
+        $self->{network} = $self->{rhnc}->call( 'system.getNetwork', $self->{id} );
+    }
+    return $self->{network};
 
 }
 
 =head2 network_devices
 
+Returns the network devices for the given server, as an ARRAY of HASH. 
+
+  $ndev = $sys->network_devices;
+
+  $ndev = [
+    ip               => q( ),
+    interface        => q( ),
+    netmask          => q( ),
+    hardware_address => q( ),
+    module           => q( ),
+    broadcast        => q( ),
+  ];
+
 =cut
 
 sub network_devices {
+    my ($self) = @_;
+
+    if ( !defined $self->{network_devices} ) {
+        $self->{network_devices} = $self->{rhnc}->call( 'system.getNetworkDevices', $self->{id} );
+    }
+    return $self->{network_devices};
+
 
 }
 
 =head2 registration_date
 
+Returns the date the system was registered (dateTime.iso8601).
+
+  $regdate = $sys->registration_date;
+
 =cut
 
 sub registration_date {
+    my ($self) = @_;
 
+    if ( !defined $self->{registration_date} ) {
+        $self->{registration_date} = $self->{rhnc}->call( 'system.getRegistrationDate', $self->{id} );
+    }
+    return $self->{registration_date};
 }
 
 =head2 relevant_errata
@@ -1102,7 +1164,7 @@ sub as_string {
         if ( defined $self->{$k} ) {
 
             # SCALARs
-            if ( !ref $self->{$k} && $self->{$k} ne q() ) {
+            if ( !ref $self->{$k} ) { #&& $self->{$k} ne q() ) {
                 my $s = $self->{$k};
                 $s =~ s/[\n\r]/,/g;
                 $str .= "  $k: $s\n";

@@ -128,18 +128,19 @@ ok( $au eq $sys->lock_status( !$au ), "lock_status" );
 ok( $sys->lock_status($au), "lock_status" );
 
 # getters only
-BEGIN { $tests += 3; }
+BEGIN { $tests ++; }
 ok( $sys->release, "release" );
 
 diag("getters");
-my @getters = (
-    qw( release address1 address2 city state country building room
-      description rack hostname osa_status base_channel running_kernel last_checkin )
+BEGIN {
+our @getters = (
+    qw( release address1 address2 city state country building room description rack hostname osa_status base_channel running_kernel last_checkin )
 );
-BEGIN { $tests += 2 * 14; }
+$tests += 2 * scalar(@getters); }
 $sys->get_details;
 my %get;
 foreach my $method (@getters) {
+    diag("Testing method $method");
     my $r = $sys->$method();
     $get{$method} = $r;
     ok( $r || $r eq '', "$method" );
@@ -241,3 +242,23 @@ my $newcc = $sys->child_channels;
 is_deeply( $oldcc, $newcc,
     "set child channels same as before : " . join( q(,), @$newcc ) );
 
+diag("Test getters for system ". $sys->profile_name);
+BEGIN {
+our %method_to_return = (
+    connection_path   => 'ARRAY',
+    cpu               => 'HASH',
+    custom_values     => 'HASH',
+    devices           => 'ARRAY',
+#    dmi               => 'HASH',
+    entitlements      => 'ARRAY',
+    memory            => 'HASH',
+    network           => 'HASH',
+    network_devices   => 'ARRAY',
+    registration_date => 'SCALAR',
+);
+
+$tests+= scalar keys %method_to_return; }
+
+foreach my $method (keys %method_to_return) {
+    isa_ok( $sys->$method(), $method_to_return{$method}, "method $method");
+}

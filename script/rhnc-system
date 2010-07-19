@@ -89,17 +89,21 @@ sub get_details {
         $system->entitlements;
         if ( $verbose == 1 ) {
             $system->get_details;
+            $system->registration_date;
         }
         elsif ( $verbose == 2 ) {
             $system->running_kernel;
             $system->base_channel;
             $system->child_channels;
+            $system->memory;
+            $system->network;
         }
         elsif ( $verbose == 3 ) {
             $system->custom_values;
             $system->cpu;
             $system->dmi;
             $system->devices;
+            $system->network_devices;
         }
 
         print $system->as_string;
