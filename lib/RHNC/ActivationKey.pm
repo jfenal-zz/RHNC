@@ -1,7 +1,5 @@
 package RHNC::ActivationKey;
 
-# $Id$
-
 use warnings;
 use strict;
 use Params::Validate;
@@ -87,6 +85,7 @@ my %properties = (
     description        => [ 1, undef, 0, undef ],
     base_channel_label => [ 0, q(),   0, undef ],
     usage_limit        => [ 0, 0,     0, undef ],
+    config_deploy      => [ 0, 0,     0, undef ],
     entitlements       => [
         1,
         [],
@@ -216,7 +215,7 @@ Return activation key _uniqueid (key).
 =cut
 
 sub _uniqueid {
-    my ( $self ) = @_;
+    my ($self) = @_;
     return $self->{key};
 }
 
@@ -380,8 +379,8 @@ sub server_group_ids {
 
 =head2 system_groups
 
-Return, set, add or remove array ref on server groups for the activation key.
-Return array ref on system groups for the activation key.
+Return, set, add or remove array ref of system groups for the activation key.
+Return array ref of system groups for the activation key.
 
 On modification, return the previous value via an array ref.
 
@@ -596,6 +595,94 @@ sub packages {
     return $prev;
 }
 
+=head2 config_channels
+
+Return, set, add or remove  array ref on group ids for the activation
+key.
+
+On modification, return the previous value via an array ref.
+
+  $config_channels = $ak->config_channel();
+
+  $config_channels = $ak->config_channels( add => [qw( label1 label2 )] );
+  $config_channels = $ak->config_channels( remove => [qw( label1 label2 )] );
+  $config_channels = $ak->config_channels( set => [qw( label1 label2 )] ); 
+  $config_channels = $ak->config_channels( [qw( label1 label2)] ); # same as set
+
+=cut
+
+sub config_channels {
+    my ( $self, @args ) = @_;
+    my $prev = \[];
+    my $chan_ref;
+
+    if ( defined $self->{config_channel_labels} ) {
+        $prev = $self->{config_channel_labels};
+    }
+    if (@args) {
+        my $c = shift @args;
+        $chan_ref = shift @args;
+        my $res;
+
+        if ( $c eq 'add' && ref $chan_ref eq 'ARRAY' ) {
+            $res = $self->{rhnc}->call( 'activationkey.addConfigChannels',
+                $self->{key}, $chan_ref );
+        }
+        elsif ( $c eq 'remove' && ref $chan_ref eq 'ARRAY' ) {
+            $res = $self->{rhnc}->call( 'activationkey.removeConfigChannels',
+                $self->{key}, $chan_ref );
+        }
+        elsif ( $c eq 'set' && ref $chan_ref eq 'ARRAY' && @$chan_ref ) {
+            $res = $self->{rhnc}->call( 'activationkey.setConfigChannels',
+                [ $self->{key} ], $chan_ref );
+        }
+        elsif ( ref $c eq 'ARRAY' && @$c ) {
+            $res = $self->{rhnc}
+              ->call( 'activationkey.setConfigChannels', [ $self->{key} ], $c );
+        }
+
+        croak "API call failed" if ! defined $res;
+        # if we set config channels, we need to set config_deploy
+        # internal status by gettting it from Satellite after setting
+        # the channels.
+        $self->config_deploy;
+    }
+    return $prev;
+}
+
+=head2 config_deploy
+
+Returns or set status of configuration deployement by the activation
+key.
+
+    $status = $ak->config_deploy;
+    $status = $ak->config_deploy(1);
+    $status = $ak->config_deploy(0);
+
+=cut
+
+sub config_deploy {
+    my ( $self, $deploy ) = @_;
+
+    if ( !defined $self->{config_deploy} ) {
+        $self->{config_deploy} =
+          $self->{rhnc}
+          ->call( 'activationkey.checkConfigDeployment', $self->{key} );
+    }
+
+    if ( defined $deploy ) {
+        my $call = $deploy ? 'enable' : 'disable';
+        if ( $self->{rhnc}
+            ->call( "activationkey.${call}ConfigDeployment", $self->{key} ) )
+        {
+            $self->{config_deploy} = $deploy;
+
+        }
+    }
+
+    return $self->{config_deploy};
+}
+
 =head2 create
 
 Create a new activation key.
@@ -611,6 +698,7 @@ Create a new activation key.
             qw( monitoring_entitled provisioning_entitled
               virtualization_host virtualization_host_platform )
         ],
+        config_deploy      => $bool,
         usage_limit => $bool,
     );
 
