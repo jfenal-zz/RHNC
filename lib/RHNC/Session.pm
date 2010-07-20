@@ -294,10 +294,10 @@ sub call {
         $result = $self->{client}->call( $call, $self->{session}, @args );
     };
 
-    # test eval (according PBP, testing $@ is not reliable)
+    # test eval (according to PBP, testing $@ is not reliable)
     if ( !defined $rc ) {
-        print STDERR "Error encountered calling $call : $EVAL_ERROR\n";
-        $result = undef;
+        carp "Error encountered calling $call : $EVAL_ERROR\n";
+        return;
     }
 
     return $result;
