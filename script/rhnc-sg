@@ -285,8 +285,8 @@ sub rm_systems {
       )
       or pod2usage(
         -exitval => 254,
-        -message => 'Wrong parameters for rm_systems',
-        -verbose => 1
+        -sections => ['DESCRIPTION/rm_systems'],
+        -verbose => 99,
       );
 
     if ( !defined $systemids ) {
