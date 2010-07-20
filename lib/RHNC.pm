@@ -21,6 +21,7 @@ use RHNC::Package;
 use RHNC::System;
 use RHNC::SystemGroup;
 use RHNC::Channel;
+use RHNC::ConfigChannel;
 use RHNC::System::CustomInfo;
 
 our $_xmlfalse = Frontier::RPC2::Boolean->new(0);
