@@ -511,29 +511,6 @@ Returns a printable string to describe the system group.
 =cut
 
 sub as_string {
-    my ($self) = @_;
-    my $str;
-
-    $str = $self->name . ":\n";
-    foreach my $k ( sort ( keys %{$self} ) ) {
-        next if $k eq 'rhnc';
-        if ( defined $self->{$k} ) {
-            $str .= "  $k: $self->{$k}\n";
-        }
-    }
-
-    return $str;
-}
-
-=head2 as_string
-
-Returns a printable string to describe the system group.
-
-  print $sg->as_string;
-
-=cut
-
-sub as_string {
     my ($self, $verbose) = @_;
 
     if ( ! defined $verbose ) {
@@ -547,10 +524,10 @@ sub as_string {
             if defined $self->{$k};
     }
     if ( $verbose == 1 ) {
-        $syslist = $self->list_systems;
+        my $syslist = $self->list_systems();
         if ( @$syslist ) {
             $str .= "  system:";
-            $str .= join( "\n  system:", map { $_->profile_name } @$syslist;
+            $str .= join( "\n  system:", map { $_->profile_name } @$syslist);
             $str .= "\n";
         }
     }
