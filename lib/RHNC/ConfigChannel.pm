@@ -7,6 +7,9 @@ package RHNC::ConfigChannel;
 
 use warnings;
 use strict;
+use Carp;
+
+use base qw( RHNC );
 
 =head1 NAME
 
@@ -19,7 +22,6 @@ Version 0.01
 =cut
 
 our $VERSION = '0.01';
-
 
 =head1 SYNOPSIS
 
@@ -57,9 +59,9 @@ use constant {
 };
 
 my %properties = (
-    rhnc => [ 0, undef, 0, undef ],
-    label => [ 1, undef, 0, undef ],
-    name => [ 1, undef, 0, undef ],
+    rhnc        => [ 0, undef, 0, undef ],
+    label       => [ 1, undef, 0, undef ],
+    name        => [ 1, undef, 0, undef ],
     description => [ 1, undef, 0, undef ],
 );
 
@@ -82,7 +84,7 @@ sub _validate_properties {
 
     foreach ( keys %properties ) {
         if ( $properties{$_}[MANDATORY] && !defined( $self->{$_} ) ) {
-            croak "Mandatory parameter $_ not present in object " .  $self->name;
+            croak "Mandatory parameter $_ not present in object " . $self->name;
         }
 
         if ( ref $properties{$_}[VALIDATE] eq 'CODE' ) {
@@ -94,7 +96,6 @@ sub _validate_properties {
     }
     return $self;
 }
-
 
 =head2 new
 
@@ -109,7 +110,6 @@ Create a new configuration channel object.
 sub new {
     my ( $class, @args ) = @_;
     $class = ref($class) || $class;
-
 
     my $self = {};
 
@@ -148,13 +148,19 @@ API : configchannel.update
 
 =cut 
 
+sub name {
+    my ($self) = @_;
+    my $prev = $self->{name};
+
+    return $prev;
+}
+
 =head2 description
 
 Get or set config channel description
 API : configchannel.update
 
 =cut
-
 
 =head2 schedule_file_compare
 
@@ -183,8 +189,6 @@ Create a new ConfigChannel::Path namespace ??
 Or ConfigChannelPath ??
 
 =cut
-
-
 
 =head1 DIAGNOSTICS
 
@@ -249,4 +253,4 @@ under the same terms as Perl itself.
 
 =cut
 
-1; # End of RHNC::ConfigChannel
+1;    # End of RHNC::ConfigChannel
