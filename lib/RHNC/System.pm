@@ -241,6 +241,11 @@ Return system's last_checkin
 sub last_checkin {
     my ( $self, @args ) = @_;
 
+    if ( ! defined $self->{last_checkin} ) {
+        my $res = $self->{rhnc}->call('system.getName', $self->{id} );
+        $self->{last_checkin} = $res->{last_checkin}->value;
+    }
+
     return $self->{last_checkin};
 }
 

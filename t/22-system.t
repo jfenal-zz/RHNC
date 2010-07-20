@@ -139,11 +139,12 @@ our @getters = (
 $tests += 2 * scalar(@getters); }
 $sys->get_details;
 my %get;
+diag("Using ". $sys->profile_name);
 foreach my $method (@getters) {
     diag("Testing method $method");
     my $r = $sys->$method();
     $get{$method} = $r;
-    ok( $r || $r eq '', "$method" );
+    ok( defined $r && ( $r || $r eq ''), "$method" );
 }
 diag("getters with satellite request");
 foreach my $method (@getters) {
