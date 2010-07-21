@@ -1,5 +1,6 @@
 Build.PL
 Changes
+TODO
 lib/RHNC/ActivationKey.pm
 lib/RHNC/ConfigChannel.pm
 lib/RHNC/Channel.pm
@@ -36,7 +37,6 @@ t/33-channel.t
 t/35-package.t
 t/36-configchannel.t
 t/boilerplate.t
-TODO.pod
 t/pod-coverage.t
 t/pod.t
 t/s20-org.t
