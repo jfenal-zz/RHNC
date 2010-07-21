@@ -33,6 +33,7 @@ t/31-activationkey.t
 t/32-kickstart.t
 t/33-channel.t
 t/35-package.t
+t/36-configchannel.t
 t/boilerplate.t
 TODO.pod
 t/pod-coverage.t

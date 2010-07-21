@@ -162,8 +162,7 @@ Create and return a new activation key.
 sub new {
     my ( $class, @args ) = @_;
 
-    #$class = ref($class) || $class;
-    $class = ref $class ? ref $class : $class;
+    $class = ref($class) || $class;
 
     if ( $class ne __PACKAGE__ ) {
         unshift @args, $class;
@@ -604,7 +603,8 @@ On modification, return the previous value via an array ref.
 
   $config_channels = $ak->config_channel();
 
-  $config_channels = $ak->config_channels( add => [qw( label1 label2 )] );
+  $config_channels = $ak->config_channels( add|insert|append => [qw( label1 label2
+  )], $where ); # where : top | bottom
   $config_channels = $ak->config_channels( remove => [qw( label1 label2 )] );
   $config_channels = $ak->config_channels( set => [qw( label1 label2 )] ); 
   $config_channels = $ak->config_channels( [qw( label1 label2)] ); # same as set
@@ -619,29 +619,55 @@ sub config_channels {
     if ( defined $self->{config_channel_labels} ) {
         $prev = $self->{config_channel_labels};
     }
+    else {
+        my $res =
+          $self->{rhnc}
+          ->call( 'activationkey.listConfigChannels', $self->{key} );
+        $prev = $self->{config_channel_labels} = [ map { $_->{label} } @$res ];
+    }
     if (@args) {
         my $c = shift @args;
         $chan_ref = shift @args;
         my $res;
 
-        if ( $c eq 'add' && ref $chan_ref eq 'ARRAY' ) {
-            $res = $self->{rhnc}->call( 'activationkey.addConfigChannels',
-                $self->{key}, $chan_ref );
+        if ( $c =~ m{ \A add | insert | append \z }imxs
+            && ref $chan_ref eq 'ARRAY' )
+        {
+            my $where = $RHNC::_xmlfalse;
+            if ( $c eq 'add' || $c eq 'insert' ) {
+                $where = $RHNC::_xmltrue;
+            }
+
+            $res = $self->{rhnc}->call(
+                'activationkey.addConfigChannels',
+                [ $self->{key} ],
+                $chan_ref, $where
+            );
         }
         elsif ( $c eq 'remove' && ref $chan_ref eq 'ARRAY' ) {
             $res = $self->{rhnc}->call( 'activationkey.removeConfigChannels',
-                $self->{key}, $chan_ref );
+                [ $self->{key} ], $chan_ref );
         }
         elsif ( $c eq 'set' && ref $chan_ref eq 'ARRAY' && @$chan_ref ) {
             $res = $self->{rhnc}->call( 'activationkey.setConfigChannels',
                 [ $self->{key} ], $chan_ref );
+            $self->{config_channel_labels} = $chan_ref;
         }
         elsif ( ref $c eq 'ARRAY' && @$c ) {
-            $res = $self->{rhnc}
+            $res =
+              $self->{rhnc}
               ->call( 'activationkey.setConfigChannels', [ $self->{key} ], $c );
+            $self->{config_channel_labels} = $chan_ref;
+        }
+        croak "API call failed" if !defined $res;
+
+        if ( $c eq 'add' || $c eq 'remove' ) {
+            my $res =
+              $self->{rhnc}
+              ->call( 'activationkey.listConfigChannels', $self->{key} );
+            $self->{config_channel_labels} = [ map { $_->{label} } @$res ];
         }
 
-        croak "API call failed" if ! defined $res;
         # if we set config channels, we need to set config_deploy
         # internal status by gettting it from Satellite after setting
         # the channels.
@@ -713,7 +739,7 @@ sub create {
         $class = __PACKAGE__;
     }
 
-    my $self = RHNC::ActivationKey->new(@args);
+    my $self = __PACKAGE__->new(@args);
 
     croak 'No RHNC client to persist to, exiting'
       if !defined $self->{rhnc};
@@ -761,7 +787,7 @@ sub list {
     my ( $self, @p ) = @_;
     my $rhnc;
 
-    if ( ref $self eq 'RHNC::ActivationKey' && defined $self->{rhnc} ) {
+    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
 
         # OO context, eg $ak-list
         $rhnc = $self->{rhnc};
@@ -784,7 +810,7 @@ sub list {
 
     my $l = [];
     foreach my $o (@$res) {
-        push @$l, RHNC::ActivationKey->new($o);
+        push @$l, __PACKAGE__->new($o);
     }
 
     return $l;
@@ -855,6 +881,8 @@ sub as_string {
     $output .= "\n  system_groups: " . join( ',', @{ $self->system_groups() } );
     $output .=
       "\n  child_channels: " . join( ',', @{ $self->child_channels() } );
+    $output .=
+      "\n  config_channels: " . join( ',', @{ $self->config_channels() } );
     $output .= "\n";
 
     return $output;
