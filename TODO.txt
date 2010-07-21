@@ -1,6 +1,8 @@
-
+- add config channel support to rhnc-ak 
+  - add/remove/append config channel.
+  - autodeploy or not.
 - implement RHNC::Errata & rhnc-errata (create, modify, list, get,
-destroy)
+  destroy)
 - RHNC::Kickstart->render
 - RHNC::System does not manage its objects
 
@@ -178,10 +180,6 @@ rhnc-user :
 
 
 
-
- De:    Dave Sullivan <dsulliva@redhat.com>
-
- FYI,
 
  I wrote some code that pulls from the rhn apis to list errata based
  on 
