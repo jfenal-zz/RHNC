@@ -7,9 +7,46 @@
 - RHNC::System does not manage its objects
 
 ----------
+http://cpansearch.perl.org/src/FANGLY/Getopt-Declare-1.13/lib/Getopt/Declare.pm
+
+Initialize client at load time if possible :
+sub import {
+    my ( $class, $defn ) = @_;
+    return if @_ < 2 || !length $defn;
+    $_[2] = RHNC::Session->new($defn);
+    exit(0) unless $_[2];
+    delete $_[2]{_internal};
+}
+
+Extend Params::Validate usage to replace internals of params checking.
+
+----------
 
 For each object, add a copy_to($rhnc) to copy the object to _another_
 Satellite or organisation within the same Satellite.
+
+
+
+----------
+Remove Getopt::Long 2.36 dependency (and be able to use even RHEL4
+Getopt::Long) :
+
+    sub add {
+        local @ARGV = @_;            # ! SEE local HERE !
+        my $data    = "file.dat";
+        my $length  = 24;
+        my $verbose = 0;
+        my $result  = GetOptions(
+            "l|length=i"       => \$length,    # numeric
+            "f|file=s"         => \$data,      # string
+            "v|verbose" => \$verbose           # flag
+        );                                     
+
+        print "$result, $data, $length, $verbose\n";
+        my @args = @ARGV;
+        print Dumper \@args;
+    }
+
 
 ----------
 
