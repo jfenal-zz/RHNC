@@ -27,6 +27,17 @@ use RHNC::System::CustomInfo;
 our $_xmlfalse = Frontier::RPC2::Boolean->new(0);
 our $_xmltrue  = Frontier::RPC2::Boolean->new(1);
 
+our %entitlement = (
+    m             => 'monitoring_entitled',
+    monitoring    => 'monitoring_entitled',
+    p             => 'provisioning_entitled',
+    provisioning  => 'provisioning_entitled',
+    vp            => 'virtualization_host_platform',
+    virt_platform => 'virtualization_host_platform',
+    v             => 'virtualization_host',
+    virt          => 'virtualization_host',
+);
+
 our @EXPORTS = qw( $VERSION $_xmlfalse $_xmltrue);
 
 =head1 NAME

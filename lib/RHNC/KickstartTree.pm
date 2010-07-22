@@ -34,8 +34,7 @@ our $VERSION = '0.01';
 
 =head1 SUBROUTINES/METHODS
 
-my %entitlements = map { $_ => 1 }
-  qw(monitoring_entitled provisioning_entitled virtualization_host virtualization_host_platform);
+my %entitlements = map { $_ => 1 } values %RHNC::entitlement;
 
 =cut
 

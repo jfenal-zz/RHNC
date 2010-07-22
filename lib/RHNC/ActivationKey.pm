@@ -56,12 +56,7 @@ if you don't export anything, such as for a purely object-oriented module.
 #
 # Accessors
 #
-my %entitlements = map { $_ => 1 } qw(
-  monitoring_entitled
-  provisioning_entitled
-  virtualization_host
-  virtualization_host_platform
-);
+my %entitlements = map { $_ => 1 } values %RHNC::entitlement;
 
 use constant {
     MANDATORY => 0,

@@ -49,11 +49,6 @@ if you don't export anything, such as for a purely object-oriented module.
 
 =cut
 
-# TODO : this appears in two
-
-my %entitlements = map { $_ => 1 }
-  qw(monitoring_entitled provisioning_entitled virtualization_host virtualization_host_platform);
-
 use constant {
     MANDATORY => 0,
     DEFAULT   => 1,
