@@ -1,8 +1,3 @@
-#
-# This package is just a template for future modules in the RHNC
-# namespace. It is not supposed to deliver a specific purpose in the
-# RHNC context
-#
 package RHNC::ConfigChannel;
 
 use warnings;
@@ -25,10 +20,6 @@ Version 0.01
 our $VERSION = '0.01';
 
 =head1 SYNOPSIS
-
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
 
     use RHNC::ConfigChannel;
 
