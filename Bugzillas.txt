@@ -1,5 +1,6 @@
 
-TO OPEN :
+OPENED 617738
+https://bugzilla.redhat.com/show_bug.cgi?id=617738
 
 Inconsistency in object content between channel calls :
 - channel.listSoftwareChannels : returns parent_label & arch
@@ -14,14 +15,16 @@ https://$satname/rhn/apidoc/handlers/ChannelSoftwareHandler.jsp#getDetails
 https://$satname/rhn/apidoc/handlers/ChannelSoftwareHandler.jsp#create
 
 
-TO OPEN :
+OPENED 617740
+https://bugzilla.redhat.com/show_bug.cgi?id=617740
 
 kickstart.createProfile requires virtualizationType to be set, but
 there is no mean to retrieve this information from any call in
 kickstart namespace.
 Nor in kickstart.profile nor kickstart.profile.system.
 
-TO OPEN  :
+OPENED 617742
+https://bugzilla.redhat.com/show_bug.cgi?id=617742
 
 kickstart.profile.getCustomOptions is documented to return an array of
 struct( int id, string arguments ).
@@ -29,18 +32,21 @@ However, in Satellite 5.3, it returns an array of struct (string name,
 string arguments), same as kickstart.profile.getAdvancedOptions.
 
 
-TO OPEN : 
+OPENED 617743
+https://bugzilla.redhat.com/show_bug.cgi?id=617743
 
 kickstart.profile.getVariables is documented to return an array of
 struct ( string key, string value ).
 However, in Satellite 5.3, it returns the struct directly, not using
 the (useless, I agree) array.
 
-TO OPEN :
+OPENED  617744
+https://bugzilla.redhat.com/show_bug.cgi?id=617744
 No API call provides the ability to rename an activation key, whereas
 possible in the UI.
 
-TO OPEN :
+OPENED 617745 
+https://bugzilla.redhat.com/show_bug.cgi?id=617745
 activationkey.setDetails cannot set back an empty base_channel_label to have
 "RHN Satellite default" functionnality
 End in error :
@@ -48,12 +54,14 @@ Error encountered calling activationkey.setDetails : Fault returned
 from XML RPC Server, fault code -211: redstone.xmlrpc.XmlRpcFault:
 Invalid channel
 
-TO OPEN :
+OPENED 617748
+https://bugzilla.redhat.com/show_bug.cgi?id=617748
 Inconsistency in object content between system. calls:
 getDetails return struct key auto_update
 setDetails need struct key auto_errata_update
 
-TO OPEN :
+OPENED 617750
+https://bugzilla.redhat.com/show_bug.cgi?id=617750
 system.getCustomValues mentions :
 Returns:
     * struct - custom value
@@ -65,13 +73,15 @@ Returns:
               o string "custom info label" - value
 
 
-TO OPEN :
+OPENED 617752
+https://bugzilla.redhat.com/show_bug.cgi?id=617752
 Comestic : system.getNetworkDevices documentation in RHNS 5.3 gives :
 
 return #  string "broadcase" - Broadcast address for device.  
 should be broadcast, not broadcase. Quick fix in Javadoc, I guess :)
 
 
-TO OPEN :
+OPENED 617753
+https://bugzilla.redhat.com/show_bug.cgi?id=617753
 configchannel namespace does not provide delete function...
 
