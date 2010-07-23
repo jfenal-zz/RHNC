@@ -2,7 +2,24 @@
 
 use strict;
 use warnings;
-use Test::More tests => 13;
+use File::Find;
+
+our @modules;
+my $tests = 0;
+use Test::More;
+
+BEGIN {
+    find(
+        sub {
+            push @modules, $File::Find::name
+              if $File::Find::name =~ m/.*\.pm$/
+                  && $File::Find::name !~ m/Template\.pm$/;
+        },
+        qw( lib )
+    );
+
+    $tests = scalar @modules;
+}
 
 sub not_in_file_ok {
     my ( $filename, %regex ) = @_;
@@ -34,6 +51,7 @@ sub module_boilerplate_ok {
         $module => 'the great new $MODULENAME' => qr/ - The great new /,
         'boilerplate description'  => qr/Quick summary of what the module/,
         'stub function definition' => qr/function[12]/,
+        "template" => qr/This package is just a template for future modules/,
     );
 }
 
@@ -49,17 +67,9 @@ TODO: {
 
     not_in_file_ok( Changes => "placeholder date/time" => qr(Date/time) );
 
-    module_boilerplate_ok('lib/RHNC.pm');
-    module_boilerplate_ok('lib/RHNC/Session.pm');
-    module_boilerplate_ok('lib/RHNC/ActivationKey.pm');
-    module_boilerplate_ok('lib/RHNC/Org.pm');
-    module_boilerplate_ok('lib/RHNC/Package.pm');
-    module_boilerplate_ok('lib/RHNC/Channel.pm');
-    module_boilerplate_ok('lib/RHNC/System/CustomInfo.pm');
-    module_boilerplate_ok('lib/RHNC/Kickstart.pm');
-    module_boilerplate_ok('lib/RHNC/KickstartTree.pm');
-    module_boilerplate_ok('lib/RHNC/System.pm');
-    module_boilerplate_ok('lib/RHNC/SystemGroup.pm');
+    foreach my $pm (@modules) {
+        module_boilerplate_ok $pm;
 
+    }
 }
-
+done_testing( 2 + scalar @modules );
