@@ -85,3 +85,7 @@ OPENED 617753
 https://bugzilla.redhat.com/show_bug.cgi?id=617753
 configchannel namespace does not provide delete function...
 
+OPENED 617910
+https://bugzilla.redhat.com/show_bug.cgi?id=617910
+Documentation for activationkey.setDetails should mention special
+values for usage_limit
