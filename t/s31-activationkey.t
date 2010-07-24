@@ -2,7 +2,7 @@
 #
 #===============================================================================
 #
-#         FILE:  s20-activationkey.t
+#         FILE:  s31-activationkey.t
 #
 #  DESCRIPTION:  test rhnc-ak
 #
@@ -81,10 +81,15 @@ BEGIN { $tests++; }    # 11
 run_ok( $s, [ 'destroy', $newak ], "$script destroy $newak" );
 
 BEGIN { $tests++; }    # 12
-@args = ( qw( create test-key -v -u 1 -d ), 'new test key2',
-  qw( -l 20 -b rhel-i386-server-5),
-  qw( -c rhel-i386-server-cluster-storage-5,rhel-i386-server-cluster-5),
-  qw( -p ricci,iscsi-initiator-utils,luci ), qw( -g Clusters,RHEL5 ) );
+@args = (
+    qw( create test-key -v -u 1 -d ),
+    'new test key2',
+    qw( -e p),
+    qw( -l 20 -b rhel-i386-server-5),
+    qw( -c rhel-i386-server-cluster-storage-5,rhel-i386-server-cluster-5),
+    qw( -p ricci,iscsi-initiator-utils,luci ),
+    qw( -g Clusters,RHEL5 )
+);
 run_ok( $s, \@args, "$script " . join( q( ), @args ) );
 undef $newak;
 $stdout = last_script_stdout();
@@ -96,7 +101,7 @@ BEGIN { $tests++; }    # 13
 ok( $newak, "we have a name : <$newak>" );
 
 BEGIN { $tests++; }    # 14
-@args = qw( set -n tintin -e , -d changed_description -l 10 -b , -c n -u 0); 
+@args = qw( set -e , -d changed_description -l 10 -b , -c n -u 0);
 run_ok( $s, \@args, "$script " . join( q( ), @args ) );
 
 BEGIN { $tests++; }    # 15
@@ -104,9 +109,19 @@ BEGIN { $tests++; }    # 15
 run_ok( $s, \@args, "$script " . join( q( ), @args ) );
 
 BEGIN { $tests++; }    # 16
+@args = (
+    'set',
+    -d => 'new_description',
+    -l => '20',
+    -u => '1',
+    $newak
+);
+run_ok( $s, \@args, "$script " . join( q( ), @args ) );
+
+BEGIN { $tests++; }    # 17
 @args = ( 'destroy', $newak );
 run_ok( $s, \@args, "$script " . join( q( ), @args ) );
 
-BEGIN { $tests++; }    # 16
+BEGIN { $tests++; }    # 18
 @args = qw( destroy non-existant-key-name );
 run_not_ok( $s, \@args, "$script " . join( q( ), @args ) );

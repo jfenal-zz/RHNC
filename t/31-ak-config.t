@@ -38,10 +38,10 @@ my %h;
 
 # set 2 config channel
 $ak->config_channels( set => [ $cc1->label, $cc2label ] );
-$ak = $ak->get( $ak->name );
+$ak = $ak->get( $ak->key );
 BEGIN { $tests++; }
 is( scalar( @{ $cc_ref = $ak->config_channels } ),
-    2, "Now 2 config channel in ak" . $ak->name );
+    2, "Now 2 config channel in ak" . $ak->key );
 diag( "config channels added : " . join ", ", @$cc_ref );
 %h = map { $_ => 1 } @$cc_ref;
 BEGIN { $tests++; }
@@ -53,11 +53,11 @@ ok( defined $h{$cc2label}, "$cc2label is here" );
 
 # remove 1 config channel
 $ak->config_channels( remove => [ $cc1label ] );
-$ak = $ak->get( $ak->name );
+$ak = $ak->get( $ak->key );
 
 BEGIN { $tests++; }
 is( scalar( @{ $cc_ref = $ak->config_channels } ),
-    1, "Now config channel in ak" . $ak->name );
+    1, "Now config channel in ak" . $ak->key );
 diag( "config channels in ak : " . join ", ", @$cc_ref );
 %h = map { $_ => 1 } @$cc_ref;
 BEGIN { $tests++; }
@@ -66,21 +66,21 @@ BEGIN { $tests++; }
 ok( defined $h{$cc2label}, "$cc2label is here" );
 
 $ak->config_channels( remove => [ $cc2label ] );
-$ak = $ak->get( $ak->name );
+$ak = $ak->get( $ak->key );
 BEGIN { $tests++; }
 is( scalar( @{ $cc_ref = $ak->config_channels } ),
-    0, "Now 0 config channel in ak" . $ak->name );
+    0, "Now 0 config channel in ak" . $ak->key );
 
 
 # re add 1st config channel
 $ak->config_channels( add => [ $cc1->label, $cc2label ] );
-$ak = $ak->get( $ak->name );
+$ak = $ak->get( $ak->key );
 BEGIN { $tests++; }
 is( scalar( @{ $ak->config_channels } ),
-    2, "Now 2 config channel in ak" . $ak->name );
+    2, "Now 2 config channel in ak" . $ak->key );
 BEGIN { $tests++; }
 is( scalar( @{ $cc_ref = $ak->config_channels } ),
-    2, "Now 2 config channel in ak" . $ak->name );
+    2, "Now 2 config channel in ak" . $ak->key );
 diag( "config channels added : " . join ", ", @$cc_ref );
 %h = map { $_ => 1 } @$cc_ref;
 BEGIN { $tests++; }

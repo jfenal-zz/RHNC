@@ -43,7 +43,7 @@ ok(
     ),
     "->create returns something"
 );
-$key = $ak->name();
+$key = $ak->key();
 
 BEGIN { $tests++; }
 isa_ok( $ak, 'RHNC::ActivationKey' );
@@ -84,7 +84,7 @@ ok(
     ),
     "->create returns something"
 );
-$key = $ak->name();
+$key = $ak->key();
 
 BEGIN { $tests++; }
 isa_ok( $ak, 'RHNC::ActivationKey' );
@@ -113,7 +113,7 @@ ok(
     $newak = $ak->create( rhnc => $rhnc, description => "Test activation key" ),
     "->create returns something"
 );
-$key = $newak->name();
+$key = $newak->key();
 BEGIN { $tests++; }
 ok( $ak->destroy, "destroy ok" );
 undef $ak;
@@ -135,7 +135,7 @@ is(
     "Test activation key",
     "description ok after create " . $ak->description()
 );
-$key = $ak->name();
+$key = $ak->key();
 BEGIN { $tests++; }
 is( $ak->universal_default, 0, 'universal_default' );
 
@@ -144,7 +144,7 @@ undef $ak;
 
 $ak = RHNC::ActivationKey->get( $rhnc, $key );
 BEGIN { $tests++; }
-like( $ak->name, qr{ [0-9a-f-]+ }imxs, "key name defined : $ak->{key}" );
+like( $ak->key, qr{ [0-9a-f-]+ }imxs, "key defined : $ak->{key}" );
 
 BEGIN { $tests++ }
 ok( $ak->destroy(), 'activation key destroyed' );
@@ -155,35 +155,35 @@ my @list;
 BEGIN { $tests++; }
 ok( @list, 'Get list : ' . scalar @list );
 
-#foreach (@list)  { print STDERR $_->name() . "\n"; }
+#foreach (@list)  { print STDERR $_->key() . "\n"; }
 
 @list = @{ RHNC::ActivationKey::list($rhnc) };
 BEGIN { $tests++; }
 ok( @list, 'Get list 2 : ' . scalar @list );
 
-#foreach (@list)  { print STDERR $_->name() . "\n"; }
+#foreach (@list)  { print STDERR $_->key() . "\n"; }
 
 BEGIN { $tests++; }
 @list = @{ RHNC::ActivationKey->list($rhnc) };
 ok( @list, 'Get list 3 : ' . scalar @list );
 
-#foreach (@list)  { print STDERR $_->name() . "\n"; }
+#foreach (@list)  { print STDERR $_->key() . "\n"; }
 
 my $k  = shift @list;
-my $kn = $k->name();
+my $kn = $k->key();
 diag("Testing key $kn");
 
 BEGIN { $tests++; }
 $ak = $ak->get($kn);
-like( $ak->{key}, qr{ [0-9a-f-_]+ }imxs, "key name defined : $ak->{key}" );
+like( $ak->{key}, qr{ [0-9a-f-_]+ }imxs, "key defined : $ak->{key}" );
 
 BEGIN { $tests++; }
 $ak = RHNC::ActivationKey::get( $rhnc, $kn );
-like( $ak->{key}, qr{ [0-9a-f-_]+ }imxs, "key name defined : $ak->{key}" );
+like( $ak->{key}, qr{ [0-9a-f-_]+ }imxs, "key defined : $ak->{key}" );
 
 BEGIN { $tests++; }
 $ak = RHNC::ActivationKey->get( $rhnc, $kn );
-like( $ak->{key}, qr{ [0-9a-f-_]+ }imxs, "key name defined : $ak->{key}" );
+like( $ak->{key}, qr{ [0-9a-f-_]+ }imxs, "key defined : $ak->{key}" );
 
 BEGIN { $tests++; }
 my $oak = RHNC::ActivationKey::create(
@@ -194,9 +194,8 @@ my $oak = RHNC::ActivationKey::create(
 isa_ok( $oak, 'RHNC::ActivationKey',
     "Create a new key via RHNC::ActivationKey::create" );
 BEGIN { $tests++; }
-$ak = $oak->get( $oak->name() );
-is( $oak->name(), $oak->name(),
-    "Newly created key name same after create then get" );
+$ak = $oak->get( $oak->key() );
+is( $oak->key(), $oak->key(), "Newly created key same after create then get" );
 
 BEGIN { $tests++; }
 ok( $oak->destroy, "destroy ok" );
@@ -231,7 +230,7 @@ $ak = RHNC::ActivationKey::create(
 BEGIN { $tests++; }
 isa_ok( $ak, 'RHNC::ActivationKey',
     "Create a new key via RHNC::ActivationKey::create" );
-diag( "Addind packages to " . $ak->name );
+diag( "Addind packages to " . $ak->key );
 my $prev;
 $prev = $ak->packages( add => [ $p1_name, $p2_name, $p3_name ] );
 
@@ -239,48 +238,47 @@ BEGIN { $tests++; }
 is( scalar @$prev, 0, "previous packages list empty" );
 
 diag("Get again activation key");
-$ak = $ak->get( $ak->name );
+$ak = $ak->get( $ak->key );
 my %pname = map { $_ => 1 } @{ $ak->packages };
 BEGIN { $tests += 3; }
 ok( defined $pname{$p1_name}, "$p1_name still present" );
 ok( defined $pname{$p2_name}, "$p2_name still present" );
 ok(
-    defined $pname{ $plist->[2]->name() },
+    defined $pname{ $plist->[2]->name },
     "$p3_name still present, but arch removed"
 );    # TODO : check if true at all times... ?
 
 $prev  = $ak->packages( remove => [ $p1_name, $p2_name ] );
-$ak    = $ak->get( $ak->name );
+$ak    = $ak->get( $ak->key );
 %pname = map { $_ => 1 } @{ $ak->packages };
 BEGIN { $tests++; }
 is( scalar keys %pname, 1, "Only 1 package left" );
 BEGIN { $tests++; }
 ok(
-    defined $pname{ $plist->[2]->name() },
+    defined $pname{ $plist->[2]->name },
     "$p3_name still present, but arch removed"
 );    # TODO : check if true at all times... ?
 
 $prev  = $ak->packages( [ $p1_name, $p2_name ] );
-$ak    = $ak->get( $ak->name );
+$ak    = $ak->get( $ak->key );
 %pname = map { $_ => 1 } @{ $ak->packages };
 BEGIN { $tests += 2; }
 ok( defined $pname{$p1_name}, "$p1_name still present" );
 ok( defined $pname{$p2_name}, "$p2_name still present" );
 
 $prev  = $ak->packages( set => [ $p1_name, $p3_name ] );
-$ak    = $ak->get( $ak->name );
+$ak    = $ak->get( $ak->key );
 %pname = map { $_ => 1 } @{ $ak->packages };
 BEGIN { $tests += 2; }
 ok( defined $pname{$p1_name}, "$p1_name still present" );
 ok(
-    defined $pname{ $plist->[2]->name() },
+    defined $pname{ $plist->[2]->name },
     "$p3_name still present, but arch removed"
 );    # TODO : check if true at all times... ?
 
-
 # usage limit
 diag("testing usage limit");
-$key = $ak->name;
+$key = $ak->key;
 diag "Usage limit for " . $key . " is " . $ak->usage_limit;
 $ak->usage_limit(20);
 $ak = $ak->get($key);
@@ -307,11 +305,11 @@ is( $ak->description, "New description", "description" );
 $ak->description("Test activation key");
 $ak = $ak->get($key);
 BEGIN { $tests++; }
-is( $ak->description, "Test activation key", "description"  );
+is( $ak->description, "Test activation key", "description" );
 
 # base_channel
 diag("testing base_channel");
-$ak->base_channel( "rhel-i386-server-5" );
+$ak->base_channel("rhel-i386-server-5");
 $ak = $ak->get($key);
 BEGIN { $tests++; }
 is( $ak->base_channel, "rhel-i386-server-5", "base_channel" );
@@ -329,90 +327,102 @@ my $g1 = RHNC::SystemGroup->create(
     description => "testgroup1"
 );
 BEGIN { $tests++; }
-$g1 = RHNC::SystemGroup->get($rhnc, "testgroup1");
-isa_ok($g1, 'RHNC::SystemGroup', 'Created g1');
+$g1 = RHNC::SystemGroup->get( $rhnc, "testgroup1" );
+isa_ok( $g1, 'RHNC::SystemGroup', 'Created g1' );
 my $g2 = RHNC::SystemGroup->create(
     rhnc        => $rhnc,
     name        => "testgroup2",
     description => "testgroup2"
 );
-$g2 = RHNC::SystemGroup->get($rhnc, "testgroup2");
+$g2 = RHNC::SystemGroup->get( $rhnc, "testgroup2" );
 BEGIN { $tests++; }
-isa_ok($g2, 'RHNC::SystemGroup', 'Created g2');
+isa_ok( $g2, 'RHNC::SystemGroup', 'Created g2' );
 
 BEGIN { $tests++; }
-is( scalar(@{$ak->server_group_ids}), 0, "No system group ids in ak".$ak->name);
+is(
+    scalar( @{ $ak->server_group_ids } ), 0, "No system group ids in
+ak" . $ak->key
+);
 BEGIN { $tests++; }
-is( scalar(@{$ak->system_groups}), 0, "No system group in ak".$ak->name);
+is( scalar( @{ $ak->system_groups } ), 0, "No system group in ak" . $ak->key );
 
-$ak->system_groups( [ $g1->name, $g2->id, 'crap' ]);
-$ak=$ak->get($ak->name);
+$ak->system_groups( [ $g1->name, $g2->id, 'crap' ] );
+$ak = $ak->get( $ak->key );
 BEGIN { $tests++; }
-is( scalar(@{$ak->server_group_ids}), 2, "Now 2 system group ids in ak".$ak->name);
+is( scalar( @{ $ak->server_group_ids } ),
+    2, "Now 2 system group ids in ak" . $ak->key );
 BEGIN { $tests++; }
 my $sg_ref;
-is( scalar(@{$sg_ref = $ak->system_groups} ), 2, "Now system group in ak".$ak->name);
-diag("system groups added : " . join ", ", @$sg_ref);
+is( scalar( @{ $sg_ref = $ak->system_groups } ),
+    2, "Now system group in ak" . $ak->key );
+diag( "system groups added : " . join ", ", @$sg_ref );
 my %h = map { $_ => 1 } @$sg_ref;
 BEGIN { $tests++; }
-ok( defined $h{testgroup1}, "testgroup1 is here");
+ok( defined $h{testgroup1}, "testgroup1 is here" );
 BEGIN { $tests++; }
-ok( defined $h{testgroup2}, "testgroup2 is here");
+ok( defined $h{testgroup2}, "testgroup2 is here" );
 
 # remove 1 group
-$ak->system_groups( remove => [ $g1->name, 'crap' ]);
-$ak=$ak->get($ak->name);
+$ak->system_groups( remove => [ $g1->name, 'crap' ] );
+$ak = $ak->get( $ak->key );
 BEGIN { $tests++; }
-is( scalar(@{$ak->server_group_ids}), 1, "Now 1 system group ids in ak".$ak->name);
+is( scalar( @{ $ak->server_group_ids } ),
+    1, "Now 1 system group ids in ak" . $ak->key );
 BEGIN { $tests++; }
-is( scalar(@{$sg_ref = $ak->system_groups} ), 1, "Now system group in ak".$ak->name);
-diag("system groups in ak : " . join ", ", @$sg_ref);
+is( scalar( @{ $sg_ref = $ak->system_groups } ),
+    1, "Now system group in ak" . $ak->key );
+diag( "system groups in ak : " . join ", ", @$sg_ref );
 %h = map { $_ => 1 } @$sg_ref;
 BEGIN { $tests++; }
-ok( ! defined $h{testgroup1}, "testgroup1 is not here");
+ok( !defined $h{testgroup1}, "testgroup1 is not here" );
 BEGIN { $tests++; }
-ok( defined $h{testgroup2}, "testgroup2 is here");
-
+ok( defined $h{testgroup2}, "testgroup2 is here" );
 
 # re add 1st group
-$ak->system_groups( add => [ $g1->name, 'crap' ]);
-$ak=$ak->get($ak->name);
+$ak->system_groups( add => [ $g1->name, 'crap' ] );
+$ak = $ak->get( $ak->key );
 BEGIN { $tests++; }
-is( scalar(@{$ak->server_group_ids}), 2, "Now 2 system group ids in ak".$ak->name);
+is( scalar( @{ $ak->server_group_ids } ),
+    2, "Now 2 system group ids in ak" . $ak->key );
 BEGIN { $tests++; }
-is( scalar(@{$sg_ref = $ak->system_groups} ), 2, "Now 2 system group in ak".$ak->name);
-diag("system groups added : " . join ", ", @$sg_ref);
+is( scalar( @{ $sg_ref = $ak->system_groups } ),
+    2, "Now 2 system group in ak" . $ak->key );
+diag( "system groups added : " . join ", ", @$sg_ref );
 %h = map { $_ => 1 } @$sg_ref;
 BEGIN { $tests++; }
-ok( defined $h{testgroup1}, "testgroup1 is here");
+ok( defined $h{testgroup1}, "testgroup1 is here" );
 BEGIN { $tests++; }
-ok( defined $h{testgroup2}, "testgroup2 is here");
+ok( defined $h{testgroup2}, "testgroup2 is here" );
 
 # set 1st group
-$ak->system_groups( set => [ $g1->name, 'crap' ]);
-$ak=$ak->get($ak->name);
+$ak->system_groups( set => [ $g1->name, 'crap' ] );
+$ak = $ak->get( $ak->key );
 BEGIN { $tests++; }
-is( scalar(@{$ak->server_group_ids}), 1, "Now 1 system group ids in ak".$ak->name);
+is( scalar( @{ $ak->server_group_ids } ),
+    1, "Now 1 system group ids in ak" . $ak->key );
 BEGIN { $tests++; }
-is( scalar(@{$sg_ref = $ak->system_groups} ), 1, "Now 1 system group in ak".$ak->name);
-diag("system groups added : " . join ", ", @$sg_ref);
+is( scalar( @{ $sg_ref = $ak->system_groups } ),
+    1, "Now 1 system group in ak" . $ak->key );
+diag( "system groups added : " . join ", ", @$sg_ref );
 %h = map { $_ => 1 } @$sg_ref;
 BEGIN { $tests++; }
-ok( defined $h{testgroup1}, "testgroup1 is here");
+ok( defined $h{testgroup1}, "testgroup1 is here" );
 BEGIN { $tests++; }
-ok( ! defined $h{testgroup2}, "testgroup2 is not here");
+ok( !defined $h{testgroup2}, "testgroup2 is not here" );
 
 # delete test groups
 BEGIN { $tests++; }
-ok($g1->destroy, "delete g1");
+ok( $g1->destroy, "delete g1" );
 BEGIN { $tests++; }
-ok($g2->destroy, "delete g2");
+ok( $g2->destroy, "delete g2" );
 
-$ak=$ak->get($ak->name);
+$ak = $ak->get( $ak->key );
 BEGIN { $tests++; }
-is( scalar(@{$ak->server_group_ids}), 0, "Now 0 system group ids in ak".$ak->name);
+is( scalar( @{ $ak->server_group_ids } ),
+    0, "Now 0 system group ids in ak" . $ak->key );
 BEGIN { $tests++; }
-is( scalar(@{$sg_ref = $ak->system_groups} ), 0, "Now 0 system group in ak".$ak->name);
+is( scalar( @{ $sg_ref = $ak->system_groups } ),
+    0, "Now 0 system group in ak" . $ak->key );
 
 BEGIN { $tests++; }
 ok( $ak->destroy, "destroy ok" );

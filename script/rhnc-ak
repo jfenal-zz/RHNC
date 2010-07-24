@@ -37,7 +37,7 @@ sub _usage {
 
 Create an activation key.
 
-  rhnc-ak create [ key_name ] \
+  rhnc-ak create [ key ] \
     -e provisioning,monitoring,virt,virt_platform \
      -d description,
     | -v ]                  \ # verbose
@@ -47,7 +47,6 @@ Create an activation key.
     [ -p packages ],        \ # comma separated list
     [ -c child_channels ],  \ # comma separated list
     [ -g system_groups ],   \ # comma separated list
-    activationkey_name
 
 =cut
 
@@ -55,17 +54,15 @@ sub create {
     local @ARGV = @_;
 
     my (
-        $entitlements, $name,              $base_channel, $usage_limit,
+        $entitlements, $key,               $base_channel, $usage_limit,
         $description,  $universal_default, $groups,       $child_channels,
         $packages,     $verbose
     );
 
-    $name              = q();
+    $key               = q();
     $universal_default = 0;
 
     my $result = GetOptions(
-
-        #        'n|name=s' => \$name,
         'e|entitlement|entitlements=s' => \$entitlements,
         'd|description=s'              => \$description,
         'b|base_channel=s'             => \$base_channel,
@@ -84,10 +81,11 @@ sub create {
 
     my @e = ();
     if ( defined $entitlements ) {
-        @e = map { $RHNC::entitlement{$_} } split( m{ [,] }imxs, $entitlements );
+        @e =
+          map { $RHNC::entitlement{$_} } split( m{ [,] }imxs, $entitlements );
     }
 
-    $name = shift @ARGV;
+    $key = shift @ARGV;
 
     if ( defined $base_channel ) {
         $base_channel = ( split( m/ [,] /imxs, $base_channel ) )[0];
@@ -97,7 +95,7 @@ sub create {
     }
     my $ak = RHNC::ActivationKey->create(
         rhnc => $rhnc,
-        ( $name ne q() ? ( key => $name ) : () ),
+        ( defined $key && $key ne q() ? ( key => $key ) : () ),
         description        => $description,
         base_channel_label => $base_channel,
         usage_limit        => $usage_limit,
@@ -109,7 +107,7 @@ sub create {
     # get it again, as modifying some parameters may have side
     # effects, such as virtualization_host will subscribe to
     # certain channels or add packages, same for provisioning_entitled
-    $ak = RHNC::ActivationKey->get( $rhnc, $ak->name );
+    $ak = RHNC::ActivationKey->get( $rhnc, $ak->key );
 
     $ak->child_channels( add => [ split /,/, $child_channels ] )
       if defined $child_channels;
@@ -118,7 +116,7 @@ sub create {
 
     # RHNC::ActivationKey->create croaks if create did not work
     if ($verbose) {
-        print "Created activation key : " . $ak->name() . "\n";
+        print "Created activation key : " . $ak->key() . "\n";
         if ( $verbose > 1 ) {
             print $ak->as_string;
         }
@@ -147,12 +145,12 @@ sub destroy {
         -sections => ['DESCRIPTION/destroy'],
       );
 
-    foreach my $kname (@ARGV) {
-        my $ak = RHNC::ActivationKey->get( $rhnc, $kname );
+    foreach my $key (@ARGV) {
+        my $ak = RHNC::ActivationKey->get( $rhnc, $key );
         if ( defined $ak ) {
-            $rc = $ak->destroy( $rhnc, $kname );
+            $rc = $ak->destroy( $rhnc, $key );
             if ($verbose) {
-                print "Destroyed activation key $kname\n";
+                print "Destroyed activation key $key\n";
             }
         }
     }
@@ -167,7 +165,7 @@ List activation keys.
   rhnc-ak l
   rhnc-ak list -v  : be verbose
   rhnc-ak list -r  : list reactivation keys (sort of, may work or not,
-                     based on activation key name in English and French)
+                     based on activation key description in English and French)
 
 =cut
 
@@ -196,7 +194,7 @@ sub list {
         $isre = 1
           if ( $desc =~ /Kickstart re-activation|-activation du kickstart/ );
         next AK if $isre && !$reactivationkey;
-        printf( "%-34s : %s\n", $ak->name(), $ak->description() );
+        printf( "%-34s : %s\n", $ak->key(), $ak->description() );
     }
     print "\n" . scalar(@akl) . " activation or reactivation keys\n";
 
@@ -207,11 +205,11 @@ sub list {
 
 Get information about activation key
 
-  rhnc-ak get activationkey-name
+  rhnc-ak get activationkey
   rhnc-ak get id
-  rhnc-ak get_details activationkey-name
+  rhnc-ak get_details activationkey
   rhnc-ak get_details id
-  rhnc-ak gd activationkey-name
+  rhnc-ak gd activationkey
   rhnc-ak gd id
 
 =cut
@@ -227,8 +225,8 @@ sub get {
         -sections => ['DESCRIPTION/get'],
       );
 
-    foreach my $k (@ARGV) {
-        my $ak = RHNC::ActivationKey->get( $rhnc, $k );
+    foreach my $key (@ARGV) {
+        my $ak = RHNC::ActivationKey->get( $rhnc, $key );
         print $ak->as_string;
     }
     return 0;
@@ -240,7 +238,6 @@ Set/modify details of an activation key.
 
   rhnc-ak set               \
     | -v ]                  \ # verbose
-    [ -n newname ]          \ # rename
     [ -d description ]      \ 
     [ -b base_channel ]     \ # label
     [ -l usage_limit ]      \
@@ -249,7 +246,7 @@ Set/modify details of an activation key.
     [ -p packages ],        \ # comma separated list
     [ -c child_channels ],  \ # comma separated list
     [ -f config_channels ], \ # comma separated list
-    activationkey_name [ activationkey_name ... ]
+    activationkey [ activationkey ... ]
 
 Or any one of those options.
 
@@ -259,14 +256,13 @@ sub set {
     local @ARGV = @_;
     my $rc;
     my (
-        $entitlements, $newname,        $base_channel,
-        $usage_limit,  $description,    $universal_default,
-        $groups,       $child_channels, $packages,
-        $verbose,      $config_channels,
+        $entitlements,   $base_channel,      $usage_limit,
+        $description,    $universal_default, $groups,
+        $child_channels, $packages,          $verbose,
+        $config_channels,
     );
 
     my $result = GetOptions(
-        'n|name=s'              => \$newname,
         'e|entitlements:s'      => \$entitlements,
         'd|description=s'       => \$description,
         'b|base_channel=s'      => \$base_channel,
@@ -290,34 +286,42 @@ sub set {
     }
 
     $rc = 0;
-    foreach my $kname (@ARGV) {
-        my $ak = RHNC::ActivationKey->get( $rhnc, $kname );
+    foreach my $key (@ARGV) {
+        my $ak = RHNC::ActivationKey->get( $rhnc, $key );
 
-        $rc += $ak->name($newname)            ? 0 : 1 if defined $newname;
         $rc += $ak->description($description) ? 0 : 1 if defined $description;
-        $rc += $ak->base_channel($base_channel) ? 0 : 1
+        $rc += $ak->base_channel($base_channel) ? 0 : 2
           if defined $base_channel;
-        $rc += $ak->usage_limit($usage_limit) ? 0 : 1 if defined $usage_limit;
-        $rc += $ak->universal_default($universal_default) ? 0 : 1
+
+        $ak->usage_limit($usage_limit) if defined $usage_limit;
+
+        $rc += $ak->universal_default($universal_default) ? 0 : 8
           if defined $universal_default;
         $rc +=
           $ak->entitlements(
-            [ map { $RHNC::entitlement{$_} } split( m/ [,] /imxs, $entitlements ) ] )
+            [
+                map { $RHNC::entitlement{$_} }
+                  split( m/ [,] /imxs, $entitlements )
+            ]
+          )
           ? 0
-          : 1
+          : 16
           if defined $entitlements;
         $rc +=
-          $ak->child_channels( set => [ split /,/, $child_channels ] ) ? 0 : 1
+          $ak->child_channels( set => [ split /,/, $child_channels ] ) ? 0 : 32
           if defined $child_channels;
-        $rc += $ak->packages( set => [ split /,/, $packages ] ) ? 0 : 1
+        $rc +=
+          $ak->packages( set => [ split /,/, $packages ] )
+          ? 0
+          : 64
           if defined $packages;
-        $rc += $ak->system_groups( set => [ split /,/, $groups ] ) ? 0 : 1
+        $rc += $ak->system_groups( set => [ split /,/, $groups ] ) ? 0 : 128
           if defined $groups;
 
         # get it again, as modifying some parameters may have side
         # effects, such as virtualization_host will subscribe to
         # certain channels or add packages, same for provisioning_entitled
-        $ak = RHNC::ActivationKey->get( $rhnc, $ak->name );
+        $ak = RHNC::ActivationKey->get( $rhnc, $ak->key );
         if ($verbose) {
             if ( $verbose > 1 ) {
                 print $ak->as_string;
@@ -339,7 +343,7 @@ Add incremental details of an activation key.
     [ -p packages ],        \ # comma separated list
     [ -i config_channels ], \ # comma separated list, insert
     [ -e config_channels ], \ # comma separated list, append
-    activationkey_name [ activationkey_name ... ]
+    activationkey [ activationkey ... ]
 
 Or any one of those options.
 
@@ -365,8 +369,8 @@ sub add {
       );
 
     $rc = 0;
-    foreach my $kname (@ARGV) {
-        my $ak = RHNC::ActivationKey->get( $rhnc, $kname );
+    foreach my $key (@ARGV) {
+        my $ak = RHNC::ActivationKey->get( $rhnc, $key );
 
         $rc +=
           $ak->child_channels( add => [ split /,/, $child_channels ] ) ? 0 : 1
@@ -382,7 +386,7 @@ sub add {
         # get it again, as modifying some parameters may have side
         # effects, such as virtualization_host will subscribe to
         # certain channels or add packages, same for provisioning_entitled
-        $ak = RHNC::ActivationKey->get( $rhnc, $ak->name );
+        $ak = RHNC::ActivationKey->get( $rhnc, $ak->key );
         if ($verbose) {
             if ( $verbose > 1 ) {
                 print $ak->as_string;
@@ -402,7 +406,7 @@ Remove incremental details of an activation key.
     [ -p packages ],        \ # comma separated list
     [ -c child_channels ],  \ # comma separated list
     [ -g system_groups ],   \ # comma separated list
-    activationkey_name [ activationkey_name ... ]
+    activationkey [ activationkey ... ]
 
 Or any one of those options.
 
@@ -427,8 +431,8 @@ sub remove {
       );
 
     $rc = 0;
-    foreach my $kname (@ARGV) {
-        my $ak = RHNC::ActivationKey->get( $rhnc, $kname );
+    foreach my $key (@ARGV) {
+        my $ak = RHNC::ActivationKey->get( $rhnc, $key );
 
         $rc +=
           $ak->child_channels( remove => [ split /,/, $child_channels ] )
@@ -443,7 +447,7 @@ sub remove {
         # get it again, as modifying some parameters may have side
         # effects, such as virtualization_host will subscribe to
         # certain channels or add packages, same for provisioning_entitled
-        $ak = RHNC::ActivationKey->get( $rhnc, $ak->name );
+        $ak = RHNC::ActivationKey->get( $rhnc, $ak->key );
         if ($verbose) {
             if ( $verbose > 1 ) {
                 print $ak->as_string;

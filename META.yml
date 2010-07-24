@@ -34,6 +34,12 @@ provides:
   RHNC::Channel:
     file: lib/RHNC/Channel.pm
     version: 0.01
+  RHNC::ConfigChannel:
+    file: lib/RHNC/ConfigChannel.pm
+    version: 0.01
+  RHNC::Errata:
+    file: lib/RHNC/Errata.pm
+    version: 0.01
   RHNC::Kickstart:
     file: lib/RHNC/Kickstart.pm
     version: 0.01

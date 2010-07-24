@@ -79,10 +79,10 @@ my %properties = (
     ],
     description        => [ 1, undef, 0, undef ],
     base_channel_label => [ 0, q(),   0, undef ],
-    usage_limit        => [ 0, 0,     0, undef ],
+    usage_limit        => [ 0, undef, 0, undef ],
     config_deploy      => [ 0, 0,     0, undef ],
     entitlements       => [
-        1,
+        0,
         [],
         sub {
             foreach my $p (@_) {
@@ -92,7 +92,7 @@ my %properties = (
         },
         undef
     ],
-    universal_default => [ 1, $RHNC::_xmlfalse, 0, undef ],
+    universal_default => [ 0, $RHNC::_xmlfalse, 0, undef ],
     server_group_ids     => [ 0, [], 0, undef ],
     child_channel_labels => [ 0, [], 0, undef ],
     packages             => [ 0, [], 0, undef ],
@@ -118,13 +118,13 @@ sub _validate_properties {
 
     foreach ( keys %properties ) {
         if ( $properties{$_}[MANDATORY] && !defined( $self->{$_} ) ) {
-            croak "Mandatory parameter $_ not present in object " . $self->name;
+            croak "Mandatory parameter $_ not present in object " . $self->key;
         }
 
         if ( ref $properties{$_}[VALIDATE] eq 'CODE' ) {
             if ( $properties{$_}[VALIDATE]( $self->{$_} ) ) {
                 croak "Property $_ does not pass validation for object"
-                  . $self->name;
+                  . $self->key;
             }
         }
     }
@@ -169,7 +169,7 @@ sub new {
     # populate object from defaults
     $self->_setdefaults();
 
-    my %v = map { $_ => 0 } ( keys %properties );
+    my %v = map { $_ => $properties{$_}[MANDATORY] } ( keys %properties );
 
     # validate args given
     my %p = validate( @args, \%v );
@@ -213,15 +213,15 @@ sub _uniqueid {
     return $self->{key};
 }
 
-=head2 name
+=head2 key
 
 Return activation key name (key).
 
-    $name = $ak->name;
+    $key = $ak->key;
 
 =cut
 
-sub name {
+sub key {
     my ( $self, @args ) = @_;
     my $prev = $self->{key};
 
@@ -524,6 +524,7 @@ sub usage_limit {
     }
     if (@args) {
         $self->{usage_limit} = shift @args;
+        $self->{usage_limit} = -1 if $self->{usage_limit} eq 'unlimited';
         $self->{rhnc}->call( 'activationkey.setDetails', $self->{key},
             { usage_limit => $self->{usage_limit}, } );
 
@@ -719,8 +720,9 @@ Create a new activation key.
             qw( monitoring_entitled provisioning_entitled
               virtualization_host virtualization_host_platform )
         ],
+        config_channels      => [ 'config_channel', ... ],
         config_deploy      => $bool,
-        usage_limit => $bool,
+        usage_limit => $usage_limit,  # optional, -1 for unlimited, or limit
     );
 
 =cut
@@ -748,6 +750,12 @@ sub create {
     );
     croak 'Create did not work' if !defined $res;
     $self->{key} = $res;
+
+    $self->usage_limit( $self->{usage_limit} ) if defined $self->{usage_limit};
+    $self->config_channels( $self->{config_channels} )
+      if defined $self->{config_channels};
+    $self->config_deploy( $self->{config_deploy} )
+      if defined $self->{config_deploy};
 
     return $self;
 }
@@ -864,7 +872,7 @@ sub as_string {
 
     my $output;
 
-    $output = "key: " . $self->name();
+    $output = "key: " . $self->key();
     $output .= "\n  description: " . $self->description();
     $output .= "\n  base_channel: " . $self->base_channel();
     $output .= "\n  entitlements: " . join( ',', @{ $self->entitlements() } );
