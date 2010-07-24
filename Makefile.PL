@@ -5,7 +5,15 @@ WriteMakefile
           'PL_FILES' => {},
           'INSTALLDIRS' => 'site',
           'NAME' => 'RHNC',
-          'EXE_FILES' => [],
+          'EXE_FILES' => [
+                           'script/rhnc-ak',
+                           'script/rhnc-channel',
+                           'script/rhnc-ks',
+                           'script/rhnc-org',
+                           'script/rhnc-pkg',
+                           'script/rhnc-sg',
+                           'script/rhnc-system'
+                         ],
           'VERSION_FROM' => 'lib/RHNC.pm',
           'PREREQ_PM' => {
                            'Test::More' => 0,

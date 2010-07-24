@@ -27,8 +27,11 @@ In order to test coverage, you will need not only Devel::Cover, but
 also a special invocation to make it work:
 
     ./Build testcover
-    perl -MDevel::Cover script/rhnc-channel l
-    cover
+
+If you need to test coverage for a specific test, use the PERL5OPT
+manner :
+
+    PERL5OPT=-MDevel::Cover perl t/test-script.t
 
 SUPPORT AND DOCUMENTATION
 
