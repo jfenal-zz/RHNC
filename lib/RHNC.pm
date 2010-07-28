@@ -1,14 +1,16 @@
 package RHNC;
 
-# $Id$
-# $Revision$
-
 use warnings;
 use strict;
-use vars qw(  %_properties );
-
+use Exporter qw( import );
+our @ISA = qw(Exporter);
 use Params::Validate;
 use Carp;
+
+our @EXPORT = qw( &entitlement_exists &entitlements &_unique
+&_intersect &_array_diff &_array_minus );
+
+use vars qw(  %_properties %entitlement_exists);
 
 use Frontier::Client;
 use RHNC::Session;
@@ -171,6 +173,72 @@ sub rhnc {
 
     return;
 }
+
+=head2 entitlements
+
+Return an array ref for possible entitlements.
+
+=cut
+
+my $entitlement_arrayref;
+
+sub entitlements {
+    if ( !defined $entitlement_arrayref ) {
+        my %e = map { $_ => 1 } values %entitlement;
+        $entitlement_arrayref = [ keys %e ];
+    }
+    return $entitlement_arrayref;
+}
+
+=head2 entitlement_exists
+
+Return true if the entitlement exists, false otherwise.
+
+=cut
+
+my %entitlement_exists;
+
+BEGIN {
+    %entitlement_exists = map { $_ => 1 } @{ entitlements() };
+}
+
+sub entitlement_exists {
+    my ($e) = @_;
+    if ( !defined $entitlement_exists{$e} ) {
+    }
+    return 1 if defined $entitlement_exists{$e};
+    return 0;
+}
+
+1;
+
+# Not shipped in RHEL... :( 
+# taken from Array::Utils by Sergei A. Fedorov
+
+sub _unique(@) {
+    return keys %{ { map { $_ => undef } @_ } };
+}
+
+sub _intersect(\@\@) {
+    my %e = map { $_ => undef } @{ $_[0] };
+    return grep { exists( $e{$_} ) } @{ $_[1] };
+}
+
+sub _array_diff(\@\@) {
+    my %e = map { $_ => undef } @{ $_[1] };
+    return @{
+        [
+            ( grep { ( exists $e{$_} ) ? ( delete $e{$_} ) : (1) } @{ $_[0] } ),
+            keys %e
+        ]
+      };
+}
+
+sub _array_minus(\@\@) {
+    my %e = map { $_ => undef } @{ $_[1] };
+    return grep( !exists( $e{$_} ), @{ $_[0] } );
+}
+
 
 =head1 DIAGNOSTICS
 
