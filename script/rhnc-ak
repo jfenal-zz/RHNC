@@ -352,15 +352,16 @@ Or any one of those options.
 sub add {
     local @ARGV = @_;
     my $rc;
-    my ( $groups, $child_channels, $packages, $config_channels, $verbose );
+    my ( $groups, $child_channels, $packages, $insert_config_channels,
+        $append_config_channels, $verbose );
 
     my $result = GetOptions(
-        'c|child_channels=s'  => \$child_channels,
-        'i|config_channels=s' => \$config_channels,
-        'a|config_channels=s' => \$config_channels,
-        'g|groups=s'          => \$groups,
-        'p|packages=s'        => \$packages,
-        'v|verbose+'          => \$verbose,
+        'c|child_channels=s'         => \$child_channels,
+        'i|insert_config_channels=s' => \$insert_config_channels,
+        'a|append_config_channels=s' => \$append_config_channels,
+        'g|groups=s'                 => \$groups,
+        'p|packages=s'               => \$packages,
+        'v|verbose+'                 => \$verbose,
       )
       or pod2usage(
         -exitval  => 254,
@@ -379,9 +380,12 @@ sub add {
           if defined $packages;
         $rc += $ak->system_groups( add => [ split /,/, $groups ] ) ? 0 : 4
           if defined $groups;
-        $rc +=
-          $ak->system_groups( add => [ split /,/, $$config_channels ] ) ? 0 : 8
-          if defined $groups;
+        $rc += $ak->config_channels(
+            append => [ split /,/, $append_config_channels ] ) ? 0 : 8
+          if defined $append_config_channels;
+        $rc += $ak->config_channels(
+            insert => [ split /,/, $insert_config_channels ] ) ? 0 : 16
+          if defined $insert_config_channels;
 
         # get it again, as modifying some parameters may have side
         # effects, such as virtualization_host will subscribe to
@@ -421,7 +425,7 @@ sub remove {
         'g|groups=s'          => \$groups,
         'c|child_channels=s'  => \$child_channels,
         'p|packages=s'        => \$packages,
-        'g|config_channels=s' => \$config_channels,
+        'f|config_channels=s' => \$config_channels,
         'v|verbose+'          => \$verbose,
       )
       or pod2usage(
@@ -439,10 +443,15 @@ sub remove {
           ? 0
           : 1
           if defined $child_channels;
-        $rc += $ak->packages( remove => [ split /,/, $packages ] ) ? 0 : 1
+        $rc += $ak->packages( remove => [ split /,/, $packages ] ) ? 0 : 2
           if defined $packages;
-        $rc += $ak->system_groups( remove => [ split /,/, $groups ] ) ? 0 : 1
+        $rc += $ak->system_groups( remove => [ split /,/, $groups ] ) ? 0 : 4
           if defined $groups;
+        $rc +=
+          $ak->config_channels( remove => [ split /,/, $config_channels ] )
+          ? 0
+          : 8
+          if defined $config_channels;
 
         # get it again, as modifying some parameters may have side
         # effects, such as virtualization_host will subscribe to
