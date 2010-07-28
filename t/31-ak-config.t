@@ -49,10 +49,8 @@ ok( defined $h{$cc1label}, "$cc1label is here" );
 BEGIN { $tests++; }
 ok( defined $h{$cc2label}, "$cc2label is here" );
 
-
-
 # remove 1 config channel
-$ak->config_channels( remove => [ $cc1label ] );
+$ak->config_channels( remove => [$cc1label] );
 $ak = $ak->get( $ak->key );
 
 BEGIN { $tests++; }
@@ -65,12 +63,11 @@ ok( !defined $h{$cc1label}, "$cc1label is not here" );
 BEGIN { $tests++; }
 ok( defined $h{$cc2label}, "$cc2label is here" );
 
-$ak->config_channels( remove => [ $cc2label ] );
+$ak->config_channels( remove => [$cc2label] );
 $ak = $ak->get( $ak->key );
 BEGIN { $tests++; }
 is( scalar( @{ $cc_ref = $ak->config_channels } ),
     0, "Now 0 config channel in ak" . $ak->key );
-
 
 # re add 1st config channel
 $ak->config_channels( add => [ $cc1->label, $cc2label ] );
