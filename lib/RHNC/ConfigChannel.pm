@@ -96,9 +96,14 @@ sub _validate_properties {
 
 Create a new configuration channel object.
 
-  my $cc = RHNC::Channel->new( ... );
-  my $cc = RHNC::Channel::new( ... );
-
+  @options = (
+      label       => 'label',
+      name        => 'name',
+      description => 'description',
+  
+  );
+  my $cc = RHNC::ConfigChannel->new( $rhnc, @options );
+  my $cc = RHNC::ConfigChannel::new( $rhnc, @options );
 
 =cut
 
