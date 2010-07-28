@@ -6,7 +6,6 @@ use Params::Validate;
 use Carp;
 
 use base qw( RHNC );
-
 use vars qw( %properties %valid_prefix );
 
 =head1 NAME
@@ -56,7 +55,6 @@ if you don't export anything, such as for a purely object-oriented module.
 #
 # Accessors
 #
-my %entitlements = map { $_ => 1 } values %RHNC::entitlement;
 
 use constant {
     MANDATORY => 0,
@@ -86,7 +84,7 @@ my %properties = (
         [],
         sub {
             foreach my $p (@_) {
-                if ( !defined $entitlements{$p} ) { return 0; }
+                if ( !RHNC::entitlement_exists($p) ) { return 0; }
             }
             return 1;
         },
@@ -325,31 +323,48 @@ On modification, return the previous value via an array ref.
 
 sub entitlements {
     my ( $self, @args ) = @_;
-    my $prev = \[];
+    my $prev;
 
     if ( defined $self->{entitlements} ) {
         $prev = $self->{entitlements};
     }
-
+    else {
+        $prev = $self->{entitlements} = [];
+    }
     if (@args) {
         my $c = shift @args;
-        if ( $c eq 'add' ) {
-            $self->{rhnc}->call( 'activationkey.addEntitlements', shift @args );
+        my $e = shift @args;
+        if ( ref $c eq 'ARRAY' ) {
+            $e = $c;
+            $c = 'set';
         }
-        elsif ( $c eq 'remove' ) {
-            $self->{rhnc}
-              ->call( 'activationkey.removeEntitlements', shift @args );
+        if ( ref $e ne 'ARRAY' ) {
+            $e = [ $e, @args ];
+        }
+
+        if ( $c eq 'add' && @$e ) {
+            my $res;
+            $res =
+              $self->{rhnc}
+              ->call( 'activationkey.addEntitlements', $self->{key}, $e );
+            $self->{entitlements} = RHNC::_unique( $self->{entitlements}, $e );
+        }
+        elsif ( $c eq 'remove' && @$e ) {
+            my $res;
+            $res =
+              $self->{rhnc}
+              ->call( 'activationkey.removeEntitlements', $self->{key}, $e );
+            $self->{entitlements} = RHNC::_array_minus( $self->{entitlements}, $e );
         }
         elsif ( $c eq 'set' ) {
-            $self->entitlements( 'remove' => $self->{entitlements} );
-            $self->entitlements( 'add' => shift @args ) if @args;
-        }
-        elsif ( ref $c eq 'ARRAY' ) {
 
-            # same as set
-            $self->entitlements( 'remove' => $self->{entitlements} );
-            $self->entitlements( 'add' => $c ) if @$c;
+            # set
+            $self->entitlements( remove => $self->{entitlements} )
+              if @{ $self->{entitlements} };
+            $self->entitlements( add => $e ) if @$e;
+            $self->{entitlements} = $e;
         }
+
     }
     return $prev;
 }
@@ -365,15 +380,20 @@ Return array ref on group ids for the activation key.
 sub server_group_ids {
     my ($self) = @_;
 
-    if ( defined $self->{server_group_ids} ) {
-        return $self->{server_group_ids};
+    if ( !defined $self->{server_group_ids} ) {
+        if ( defined $self->{rhnc} ) {
+            my $res =
+
+              $self->{rhnc}->call( 'activationkey.getDetails', $self->{key} );
+            $self->{server_group_ids} = $res->{server_group_ids};
+        }
     }
-    return;
+    return $self->{server_group_ids};
 }
 
 =head2 system_groups
 
-Return, set, add or remove array ref of system groups for the activation key.
+Return, set, add or remove array ref of system group names for the activation key.
 Return array ref of system groups for the activation key.
 
 On modification, return the previous value via an array ref.
@@ -397,60 +417,77 @@ sub system_groups {
     my ( $self, @args ) = @_;
     my $prev = [];
 
-    my $aksg = $self->{server_group_ids};
-    if ( defined $aksg ) {
-        my $groups = [];
+    # NB :
+    # - $self->{server_groups_ids} is the reference (gettable by
+    #   getDetails)
+    # - $self->{system_groups} must NOT exist
 
-        foreach my $sgid (@$aksg) {
-            my $sg = RHNC::SystemGroup->get( $self->{rhnc}, $sgid );
-            push @$groups, $sg->name();
+    # getter
+    my $aksg = $self->server_group_ids;
+    my $groupnames = [];
+    my $groupids   = [];
+
+    foreach my $sgid (@$aksg) {
+        my $sg = RHNC::SystemGroup->get( $self->{rhnc}, $sgid );
+        if (defined $sg) {
+            push @$groupnames, $sg->name();
+            push @$groupids,   $sg->id();
         }
-        $prev = $groups;
     }
+    #$self->{server_group_ids} = $groupids;
+    $prev = $groupnames;
 
     if (@args) {
+
+        # setter
         my $c      = shift @args;
         my $sg_ref = shift @args;
+        if ( ref $c eq 'ARRAY' ) {
+            $sg_ref = $c;
+            $c      = 'set';
+        }
 
-        if ( $c eq 'add' && ref $sg_ref eq 'ARRAY' ) {
-            my $sgids = [];
-            foreach my $sg (@$sg_ref) {
-                if ( RHNC::SystemGroup::is_system_group_id($sg) ) {
-                    push @$sgids, $sg;
-                }
-                else {
-                    my $sgo = RHNC::SystemGroup->get( $self->{rhnc}, $sg );
-                    push @$sgids, $sgo->id if defined $sgo;
-                }
+        # build a list of server group ids
+        my $sgids = [];
+        foreach my $sg (@$sg_ref) {
+            if ( ref $sg eq 'RHNC::SystemGroup' ) {
+                push @$sgids, $sg->id;
             }
-            $self->{rhnc}
-              ->call( 'activationkey.addServerGroups', $self->{key}, $sgids );
-            $self->{server_group_ids} = $sgids;
+            elsif ( RHNC::SystemGroup::is_system_group_id($sg) ) {
+                push @$sgids, $sg;
+            }
+            else {
+                my $sgo = RHNC::SystemGroup->get( $self->{rhnc}, $sg );
+                push @$sgids, $sgo->id if defined $sgo;
+            }
         }
-        elsif ( $c eq 'remove' && ref $sg_ref eq 'ARRAY' ) {
-            my $sgids = [];
-            foreach my $sg (@$sg_ref) {
-                if ( RHNC::SystemGroup::is_system_group_id($sg) ) {
-                    push @$sgids, $sg;
-                }
-                else {
-                    my $sgo = RHNC::SystemGroup->get( $self->{rhnc}, $sg );
-                    push @$sgids, $sgo->id if defined $sgo;
-                }
-            }
 
-            $self->{rhnc}
-              ->call( 'activationkey.removeServerGroups', $self->{key},
-                $sgids );
-            $self->{server_group_ids} = $sgids;
+        my $res;
+        if ( $c eq 'add' ) {
+            if (@$sgids) {
+                $res = $self->{rhnc}->call( 'activationkey.addServerGroups',
+                    $self->{key}, $sgids );
+
+                # maintain this, as this is the only thing we can maintain
+                undef $self->{server_group_ids};
+                $self->server_group_ids;
+            }
         }
-        elsif ( $c eq 'set' && ref $sg_ref eq 'ARRAY' ) {
-            $self->system_groups( 'remove' => $self->{server_group_ids} );
-            $self->system_groups( 'add'    => $sg_ref );
+        elsif ( $c eq 'remove' ) {
+            if (@$sgids) {
+                $res = $self->{rhnc}->call( 'activationkey.removeServerGroups',
+                    $self->{key}, $sgids );
+
+                # maintain this, as this is the only thing we can maintain
+                undef $self->{server_group_ids};
+                $self->server_group_ids;
+            }
         }
-        elsif ( ref $c eq 'ARRAY' ) {
-            $self->system_groups( 'remove' => $self->{server_group_ids} );
-            $self->system_groups( 'add' => $c ) if @$c;
+        elsif ( $c eq 'set' ) {
+            if ( defined $self->{server_group_ids} ) {
+                $self->system_groups( 'remove', $self->{server_group_ids} );
+            }
+            $self->system_groups( 'add' => $sg_ref ) if @$sg_ref;
         }
     }
 
@@ -476,31 +513,35 @@ On modification, return the previous value via an array ref.
 sub child_channels {
     my ( $self, @args ) = @_;
     my $prev = \[];
-    my $chan_ref;
 
     if ( defined $self->{child_channel_labels} ) {
         $prev = $self->{child_channel_labels};
     }
-    if (@args) {
-        my $c = shift @args;
-        $chan_ref = shift @args;
 
-        if ( $c eq 'add' && ref $chan_ref eq 'ARRAY' ) {
-            $self->{rhnc}->call( 'activationkey.addChildChannels',
-                $self->{key}, $chan_ref );
-        }
-        elsif ( $c eq 'remove' && ref $chan_ref eq 'ARRAY' ) {
-            $self->{rhnc}->call( 'activationkey.removeChildChannels',
-                $self->{key}, $chan_ref );
-        }
-        elsif ( $c eq 'set' && ref $chan_ref eq 'ARRAY' ) {
-            $self->child_channels( 'remove' => $self->{child_channel_labels} );
-            $self->child_channels( 'add'    => $chan_ref );
-        }
-        elsif ( ref $c eq 'ARRAY' ) {
-            $self->child_channels( 'remove' => $self->{child_channel_labels} );
-            $self->child_channels( 'add' => $c ) if @$c;
-        }
+    my $c        = shift @args;
+    my $chan_ref = shift @args;
+
+    if ( ref $c eq 'ARRAY' ) {
+        $chan_ref = $c;
+        $c        = 'set';
+    }
+    my $res;
+    if ( $c eq 'add' ) {
+        $res =
+          $self->{rhnc}
+          ->call( 'activationkey.addChildChannels', $self->{key}, $chan_ref );
+        croak "API call failed" if !defined $res;
+    }
+    elsif ( $c eq 'remove' ) {
+        $res =
+          $self->{rhnc}
+          ->call( 'activationkey.removeChildChannels', $self->{key},
+            $chan_ref );
+        croak "API call failed" if !defined $res;
+    }
+    elsif ( $c eq 'set' && ref $chan_ref eq 'ARRAY' ) {
+        $self->child_channels( 'remove' => $self->{child_channel_labels} );
+        $self->child_channels( 'add'    => $chan_ref );
     }
     return $prev;
 }
@@ -556,10 +597,13 @@ sub packages {
     if (@args) {
         my $c           = shift @args;
         my $pkglist_ref = shift @args;
+        if ( ref $c eq 'ARRAY' ) {
+            $pkglist_ref = $c;
+            $c           = 'set';
+        }
 
         my @pkglist;
         foreach my $p (@$pkglist_ref) {
-
             my ( $n, $v, $r, $a ) = RHNC::Package::split_package_name($p);
             push @pkglist,
               {
@@ -570,21 +614,22 @@ sub packages {
               };
         }
 
-        if ( $c eq 'add' && ref $pkglist_ref eq 'ARRAY' ) {
-            $self->{rhnc}
+        my $res;
+        if ( $c eq 'add' ) {
+            $res =
+              $self->{rhnc}
               ->call( 'activationkey.addPackages', $self->{key}, \@pkglist );
+            croak "API call failed" if !defined $res;
         }
-        elsif ( $c eq 'remove' && ref $pkglist_ref eq 'ARRAY' ) {
-            $self->{rhnc}
+        elsif ( $c eq 'remove' ) {
+            $res =
+              $self->{rhnc}
               ->call( 'activationkey.removePackages', $self->{key}, \@pkglist );
+            croak "API call failed" if !defined $res;
         }
-        elsif ( $c eq 'set' && ref $pkglist_ref eq 'ARRAY' ) {
+        elsif ( $c eq 'set' ) {
             $self->packages( 'remove' => $self->{package_names} );
             $self->packages( 'add'    => $pkglist_ref );
-        }
-        elsif ( ref $c eq 'ARRAY' ) {
-            $self->packages( 'remove' => $self->{package_names} );
-            $self->packages( 'add' => $c ) if @$c;
         }
     }
     return $prev;
@@ -625,50 +670,55 @@ sub config_channels {
         my $c = shift @args;
         $chan_ref = shift @args;
         my $res;
+        if ( ref $c eq 'ARRAY' ) {
+            $chan_ref = $c;
+            $c        = 'set';
+        }
 
-        if ( $c =~ m{ \A add | insert | append \z }imxs
-            && ref $chan_ref eq 'ARRAY' )
-        {
-            my $where = $RHNC::_xmlfalse;
-            if ( $c eq 'add' || $c eq 'insert' ) {
-                $where = $RHNC::_xmltrue;
+        if ( ref $chan_ref eq 'ARRAY' ) {
+            if ( $c =~ m{ \A add | insert | append \z }imxs ) {
+                my $where = $RHNC::_xmltrue;
+                if ( $c eq 'append' ) {
+                    $where = $RHNC::_xmlfalse;
+                }
+
+                $res = $self->{rhnc}->call(
+                    'activationkey.addConfigChannels',
+                    [ $self->{key} ],
+                    $chan_ref, $where
+                );
+            }
+            elsif ( $c eq 'remove' ) {
+                $res =
+                  $self->{rhnc}->call( 'activationkey.removeConfigChannels',
+                    [ $self->{key} ], $chan_ref );
+            }
+            elsif ( $c eq 'set' ) {
+                $self->{config_channel_labels} = $chan_ref;
+                $res = $self->{rhnc}->call( 'activationkey.setConfigChannels',
+                    [ $self->{key} ], $chan_ref );
             }
 
-            $res = $self->{rhnc}->call(
-                'activationkey.addConfigChannels',
-                [ $self->{key} ],
-                $chan_ref, $where
-            );
-        }
-        elsif ( $c eq 'remove' && ref $chan_ref eq 'ARRAY' ) {
-            $res = $self->{rhnc}->call( 'activationkey.removeConfigChannels',
-                [ $self->{key} ], $chan_ref );
-        }
-        elsif ( $c eq 'set' && ref $chan_ref eq 'ARRAY' && @$chan_ref ) {
-            $res = $self->{rhnc}->call( 'activationkey.setConfigChannels',
-                [ $self->{key} ], $chan_ref );
-            $self->{config_channel_labels} = $chan_ref;
-        }
-        elsif ( ref $c eq 'ARRAY' && @$c ) {
-            $res =
-              $self->{rhnc}
-              ->call( 'activationkey.setConfigChannels', [ $self->{key} ], $c );
-            $self->{config_channel_labels} = $chan_ref;
-        }
-        croak "API call failed" if !defined $res;
+            croak "API call failed" if !defined $res;
 
-        if ( $c eq 'add' || $c eq 'remove' ) {
-            my $res =
-              $self->{rhnc}
-              ->call( 'activationkey.listConfigChannels', $self->{key} );
-            $self->{config_channel_labels} = [ map { $_->{label} } @$res ];
-        }
+            if (   $c eq 'add'
+                || $c eq 'insert'
+                || $c eq 'append'
+                || $c eq 'remove' )
+            {
+                my $res =
+                  $self->{rhnc}
+                  ->call( 'activationkey.listConfigChannels', $self->{key} );
+                $self->{config_channel_labels} = [ map { $_->{label} } @$res ];
+            }
 
-        # if we set config channels, we need to set config_deploy
-        # internal status by gettting it from Satellite after setting
-        # the channels.
-        $self->config_deploy;
+            # if we set config channels, we need to set config_deploy
+            # internal status by getting it from Satellite after setting
+            # the channels.
+            $self->config_deploy;
+        }
     }
+
     return $prev;
 }
 

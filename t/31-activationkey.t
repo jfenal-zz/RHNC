@@ -339,10 +339,8 @@ BEGIN { $tests++; }
 isa_ok( $g2, 'RHNC::SystemGroup', 'Created g2' );
 
 BEGIN { $tests++; }
-is(
-    scalar( @{ $ak->server_group_ids } ), 0, "No system group ids in
-ak" . $ak->key
-);
+is( scalar( @{ $ak->server_group_ids } ),
+    0, "No system group ids in ak" . $ak->key );
 BEGIN { $tests++; }
 is( scalar( @{ $ak->system_groups } ), 0, "No system group in ak" . $ak->key );
 
