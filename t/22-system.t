@@ -121,11 +121,11 @@ ok( $au eq $sys->auto_update( !$au ), "auto_update" );
 ok( $sys->auto_update($au), "auto_update" );
 
 BEGIN { $tests += 3; }
-my $au = $sys->lock_status;
+my $ls = $sys->lock_status;
 diag("lock_status: $e");
-ok( $au eq 0 || $au, "lock_status" );
-ok( $au eq $sys->lock_status( !$au ), "lock_status" );
-ok( $sys->lock_status($au), "lock_status" );
+ok( $ls eq 0 || $ls, "lock_status" );
+ok( $ls eq $sys->lock_status( !$ls ), "lock_status" );
+ok( $sys->lock_status($ls), "lock_status" );
 
 # getters only
 BEGIN { $tests ++; }
