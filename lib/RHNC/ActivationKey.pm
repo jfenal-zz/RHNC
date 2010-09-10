@@ -354,7 +354,8 @@ sub entitlements {
             $res =
               $self->{rhnc}
               ->call( 'activationkey.removeEntitlements', $self->{key}, $e );
-            $self->{entitlements} = RHNC::_array_minus( $self->{entitlements}, $e );
+            $self->{entitlements} =
+              RHNC::_array_minus( $self->{entitlements}, $e );
         }
         elsif ( $c eq 'set' ) {
 
@@ -423,17 +424,18 @@ sub system_groups {
     # - $self->{system_groups} must NOT exist
 
     # getter
-    my $aksg = $self->server_group_ids;
+    my $aksg       = $self->server_group_ids;
     my $groupnames = [];
     my $groupids   = [];
 
     foreach my $sgid (@$aksg) {
         my $sg = RHNC::SystemGroup->get( $self->{rhnc}, $sgid );
-        if (defined $sg) {
+        if ( defined $sg ) {
             push @$groupnames, $sg->name();
             push @$groupids,   $sg->id();
         }
     }
+
     #$self->{server_group_ids} = $groupids;
     $prev = $groupnames;
 
@@ -837,27 +839,7 @@ Return a list of activation keys in the Satellite.
 =cut
 
 sub list {
-    my ( $self, @p ) = @_;
-    my $rhnc;
-
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
-        # OO context, eg $ak-list
-        $rhnc = $self->{rhnc};
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::ActivationKey::List($rhnc)
-        $rhnc = $self;
-    }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-
-        # Called as RHNC::ActivationKey->List($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        croak "No RHNC client given here";
-    }
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
     my $res = $rhnc->call('activationkey.listActivationKeys');
 
@@ -881,20 +863,7 @@ C<RHNC::ActivationKey> object.
 =cut
 
 sub get {
-    my ( $class, @args ) = @_;
-    my $rhnc;
-
-    if ( ref $class eq __PACKAGE__ && defined $class->{rhnc} ) {
-
-        # OO context, eg $ak->get
-        $rhnc = $class->{rhnc};
-    }
-    elsif ( RHNC::Session::is_session($class) ) {
-        $rhnc = $class;
-    }
-    elsif ( !RHNC::Session::is_session( $rhnc = shift(@args) ) ) {
-        croak "No RHNC client given";
-    }
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
     my $k = shift @args
       or croak "No activation key specified in get";
