@@ -172,31 +172,7 @@ Returns the list of _all_ available arches, as a HASH ref ( C<label => name> ).
 =cut
 
 sub list_arches {
-    my ( $self, @p ) = @_;
-    my $rhnc;
-
-    if (! defined $self ) {
-        croak "No RHNC client given here";
-    }
-        
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
-        # OO context, eg $ch->list_arches
-        $rhnc = $self->{rhnc};
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Channel::list_arches($rhnc)
-        $rhnc = $self;
-    }
-    elsif ( $self eq __PACKAGE__ && defined  $p[0]  && ref( $p[0] ) eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Channel->list_arches($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        croak "No RHNC client given here";
-    }
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
     my $res = $rhnc->call("channel.software.listArches");
 
@@ -216,34 +192,17 @@ Returns the list of errata for the channels specified.
 =cut
 
 sub list_errata {
-    my ( $self, @p ) = @_;
-    my $rhnc;
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
+
     my $id_or_name;
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
-        # OO context, eg $ch->list_errata
-        $rhnc       = $self->{rhnc};
+    if ( ref $self eq __PACKAGE__ ) {
         $id_or_name = $self->label();
     }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Channel::list_errata($rhnc)
-        $rhnc       = $self;
-        $id_or_name = shift @p;
-    }
-    elsif (defined $self
-        && $self eq __PACKAGE__
-        && ref( $p[0] ) eq 'RHNC::Session' )
-    {
-
-        # Called as RHNC::Channel->list_errata($rhnc)
-        $rhnc       = shift @p;
-        $id_or_name = shift @p;
-    }
     else {
-        confess "No RHNC client given here";
+        $id_or_name = shift @args;
     }
+    croak "No channel to give errata for" if !defined $id_or_name;
 
     if ( is_channel_id($id_or_name) ) {
         $id_or_name = __PACKAGE__->get( $rhnc, $id_or_name )->label;
@@ -337,30 +296,14 @@ Returns the list of systems for the channels specified.
 =cut
 
 sub list_systems {
-    my ( $self, @p ) = @_;
-    my $rhnc;
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
     my $id_or_name;
-    if (! defined $self) {
-        croak "No object to call list_systems from";
-    }
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-        # OO context, eg $ch->list_systems
-        $rhnc       = $self->{rhnc};
+    if ( ref $self eq __PACKAGE__ ) {
         $id_or_name = $self->label();
     }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-        # Called as RHNC::Channel::list_systems($rhnc)
-        $rhnc       = $self;
-        $id_or_name = shift @p;
-    }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-        # Called as RHNC::Channel->list_systems($rhnc)
-        $rhnc       = shift @p;
-        $id_or_name = shift @p;
-    }
     else {
-        croak "No RHNC client given here";
+        $id_or_name = shift @args;
     }
 
     if ( is_channel_id($id_or_name) ) {
@@ -596,27 +539,7 @@ List channels. Returns array ref of objects of type C<RHNC::Channel>.
 =cut
 
 sub list {
-    my ( $self, @p ) = @_;
-    my $rhnc;
-
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
-        # OO context, eg $ch->list
-        $rhnc = $self->{rhnc};
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Channel::List($rhnc)
-        $rhnc = $self;
-    }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Channel->List($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        confess "No RHNC client given here";
-    }
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
     # 1st, query all channels
     my $res1 = $rhnc->call('channel.listAllChannels');
@@ -655,33 +578,11 @@ Return detailled information about channel.
 =cut
 
 sub get {
-    my ( $self, @p ) = @_;
-    my $rhnc;
-    my $id_or_name;
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
-        # OO context, eg $channel->list
-        $rhnc       = $self->{rhnc};
-        $id_or_name = shift @p;
-        if ( !defined $id_or_name ) {
-            $id_or_name = $self->label();
-        }
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Channel::get($rhnc)
-        $rhnc       = $self;
-        $id_or_name = shift @p;
-    }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Channel->get($rhnc)
-        $rhnc       = shift @p;
-        $id_or_name = shift @p;
-    }
-    else {
-        croak "No RHNC client given";
+    my $id_or_name = shift @args;
+    if ( ref $self eq __PACKAGE__ && !defined $id_or_name ) {
+        $id_or_name = $self->label();
     }
 
     if ( !defined $id_or_name ) {
