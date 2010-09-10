@@ -81,10 +81,9 @@ Return kickstart tree key _uniqueid (label).
 =cut
 
 sub _uniqueid {
-    my ( $self ) = @_;
+    my ($self) = @_;
     return $self->{label};
 }
-
 
 =head2 new
 
@@ -208,27 +207,7 @@ sub destroy {
 =cut
 
 sub list {
-    my ( $self, @p ) = @_;
-    my $rhnc;
-
-    if ( ref $self eq 'RHNC::KickstartTree' && defined $self->{rhnc} ) {
-
-        # OO context, eg $ak-list
-        $rhnc = $self->{rhnc};
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::KickstartTree::List($rhnc)
-        $rhnc = $self;
-    }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-
-        # Called as RHNC::KickstartTree->List($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        croak "No RHNC client given here";
-    }
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
     my $res = $rhnc->call('kickstart.tree.list');
 
@@ -246,29 +225,9 @@ sub list {
 =cut
 
 sub get {
-    my ( $self, @p ) = @_;
-    my $rhnc;
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
-    if ( ref $self eq 'RHNC::KickstartTree' && defined $self->{rhnc} ) {
-
-        # OO context, eg $ak-list
-        $rhnc = $self->{rhnc};
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::KickstartTree::List($rhnc)
-        $rhnc = $self;
-    }
-    elsif ( $self eq __PACKAGE__ ) {
-
-        # Called as RHNC::KickstartTree->List($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        croak "No RHNC client given";
-    }
-
-    my $k = shift @p
+    my $k = shift @args
       or croak "No kickstart tree label specified in get";
 
     my $res = $rhnc->call( 'kickstart.tree.getDetails', $k );
@@ -285,27 +244,7 @@ sub get {
 =cut
 
 sub list_install_types {
-    my ( $self, @p ) = @_;
-    my $rhnc;
-
-    if ( ref $self eq 'RHNC::KickstartTree' && defined $self->{rhnc} ) {
-
-        # OO context, eg $ak-list
-        $rhnc = $self->{rhnc};
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::KickstartTree::List($rhnc)
-        $rhnc = $self;
-    }
-    elsif ( $self eq __PACKAGE__ ) {
-
-        # Called as RHNC::KickstartTree->List($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        croak "No RHNC client given";
-    }
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
     my $res = $rhnc->call('kickstart.tree.listInstallTypes');
 
