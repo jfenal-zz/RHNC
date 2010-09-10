@@ -104,7 +104,7 @@ Return system group _uniqueid (id).
 =cut
 
 sub _uniqueid {
-    my ( $self ) = @_;
+    my ($self) = @_;
     return $self->{id};
 }
 
@@ -178,8 +178,8 @@ sub create {
       $self->{rhnc}
       ->call( 'systemgroup.create', $self->{name}, $self->{description}, );
 
-   if (defined $res) {
-        $self->{id} = $res->{id};
+    if ( defined $res ) {
+        $self->{id}     = $res->{id};
         $self->{org_id} = $res->{org_id};
         $self->{rhnc}->manage($self);
 
@@ -418,28 +418,9 @@ By name:
 =cut
 
 sub get {
-    my ( $self, @p ) = @_;
-    my ( $rhnc, $id_or_name );
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
-        # OO context, eg $ch->get
-        $rhnc = $self->{rhnc};
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::SystemGroup::get($rhnc)
-        $rhnc = $self;
-    }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-
-        # Called as RHNC::SystemGroup->get($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        croak "No RHNC client given here";
-    }
-    $id_or_name = shift @p;
+    my $id_or_name = shift @args;
 
     my $res = $rhnc->call( 'systemgroup.getDetails', $id_or_name );
 
@@ -474,15 +455,7 @@ More likely in package context:
 =cut
 
 sub list {
-    my ( $self, $parm ) = @_;
-
-    my $rhnc;
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {    # OO context
-        $rhnc = $self->{rhnc};
-    }
-    else {    # package context
-        $rhnc = $parm;
-    }
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
     my $res  = $rhnc->call('systemgroup.listAllGroups');
     my $list = [];
@@ -511,9 +484,9 @@ Returns a printable string to describe the system group.
 =cut
 
 sub as_string {
-    my ($self, $verbose) = @_;
+    my ( $self, $verbose ) = @_;
 
-    if ( ! defined $verbose ) {
+    if ( !defined $verbose ) {
         $verbose = 0;
     }
 
@@ -521,13 +494,13 @@ sub as_string {
     foreach my $k ( sort keys %{$self} ) {
         next if $k eq 'rhnc';
         $str .= "  $k: $self->{$k}\n"
-            if defined $self->{$k};
+          if defined $self->{$k};
     }
     if ( $verbose == 1 ) {
         my $syslist = $self->list_systems();
-        if ( @$syslist ) {
+        if (@$syslist) {
             $str .= "  system:";
-            $str .= join( "\n  system:", map { $_->profile_name } @$syslist);
+            $str .= join( "\n  system:", map { $_->profile_name } @$syslist );
             $str .= "\n";
         }
     }
