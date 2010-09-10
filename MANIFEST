@@ -10,6 +10,7 @@ lib/RHNC/Org.pm
 lib/RHNC/Errata.pm
 lib/RHNC/Package.pm
 lib/RHNC.pm
+lib/RHNC/Schedule.pm
 lib/RHNC/Session.pm
 lib/RHNC/SystemGroup.pm
 lib/RHNC/System.pm

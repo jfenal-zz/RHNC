@@ -1,3 +1,6 @@
+- implement RHNC::Schedule::{list:what=actions,systems},cancel
+
+- add get method to ConfigChannel ??
 - add config channel support to rhnc-ak 
   - add/remove/append config channel.
   - autodeploy or not.
@@ -7,6 +10,9 @@
 - RHNC::System does not manage its objects
 
 ----------
+
+
+
 http://cpansearch.perl.org/src/FANGLY/Getopt-Declare-1.13/lib/Getopt/Declare.pm
 
 Initialize client at load time if possible :
@@ -76,6 +82,20 @@ Big change to schedule, once experimented :
     );
 - each object will be managed, and maintained in a global cache via
 its uniqueid and class.
+
+----------
+
+Default rhnc :
+Once previous change is implement, make all rhnc references optional,
+and as a named parameter, not a positional one, in all methods
+requiring it (list, create, etc.).
+
+Implement a "default" session, the first one created in
+C<$RHNC::default> if none specified.
+
+Croak where needed if none defined.
+
+----------
 
 perl-JSON & perl-JSON-XS are in EPEL & Fedora.
 
