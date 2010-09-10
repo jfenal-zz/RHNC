@@ -6,7 +6,8 @@ use Exporter qw( import );
 our @ISA = qw(Exporter);
 
 our @EXPORT = qw( &entitlement_exists &entitlements &_unique
-                  &_intersect &_array_diff &_array_minus );
+    &_intersect &_array_diff &_array_minus &_get_self_rhnc_args);
+
 use Params::Validate;
 use Carp;
 
@@ -20,6 +21,7 @@ use RHNC::Kickstart;
 use RHNC::KickstartTree;
 use RHNC::Org;
 use RHNC::Package;
+use RHNC::Schedule;
 use RHNC::System;
 use RHNC::SystemGroup;
 use RHNC::Channel;
@@ -247,9 +249,10 @@ sub _array_minus(\@\@) {
 # ($rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_);
 #
 sub _get_self_rhnc_args {
-    my ($package, $self, @args ) = @_;
+    my ( $package, $self, @args ) = @_;
+    my $rhnc;
 
-   if ( ref $self eq $package && defined $self->{rhnc} ) {
+    if ( ref $self eq $package && defined $self->{rhnc} ) {
 
         # OO context, eg $ch->list_systems
         $rhnc = $self->{rhnc};
@@ -259,16 +262,16 @@ sub _get_self_rhnc_args {
         # Called as __PACKAGE__::list_systems($rhnc)
         $rhnc = $self;
     }
-    elsif ( $self eq $package && ref( $p[0] ) eq 'RHNC::Session' ) {
+    elsif ( defined $self && $self eq $package && ref( $args[0] ) eq 'RHNC::Session' ) {
 
         # Called as __PACKAGE__->list_systems($rhnc)
-        $rhnc = shift @p;
+        $rhnc = shift @args;
     }
     else {
         croak "No RHNC client given here";
     }
- 
-    return ( $self, $rhnc, @p);
+
+    return ( $self, $rhnc, @args );
 }
 
 =head1 DIAGNOSTICS
