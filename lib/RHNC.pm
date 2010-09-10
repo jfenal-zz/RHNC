@@ -4,11 +4,11 @@ use warnings;
 use strict;
 use Exporter qw( import );
 our @ISA = qw(Exporter);
-use Params::Validate;
-use Carp;
 
 our @EXPORT = qw( &entitlement_exists &entitlements &_unique
-&_intersect &_array_diff &_array_minus );
+                  &_intersect &_array_diff &_array_minus );
+use Params::Validate;
+use Carp;
 
 use vars qw(  %_properties %entitlement_exists);
 
@@ -239,6 +239,37 @@ sub _array_minus(\@\@) {
     return grep( !exists( $e{$_} ), @{ $_[0] } );
 }
 
+#
+# _get_self_rhnc_args
+#
+# Do the heavy lifting to get $rhnc and remaining args for class methods
+#
+# ($rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_);
+#
+sub _get_self_rhnc_args {
+    my ($package, $self, @args ) = @_;
+
+   if ( ref $self eq $package && defined $self->{rhnc} ) {
+
+        # OO context, eg $ch->list_systems
+        $rhnc = $self->{rhnc};
+    }
+    elsif ( ref $self eq 'RHNC::Session' ) {
+
+        # Called as __PACKAGE__::list_systems($rhnc)
+        $rhnc = $self;
+    }
+    elsif ( $self eq $package && ref( $p[0] ) eq 'RHNC::Session' ) {
+
+        # Called as __PACKAGE__->list_systems($rhnc)
+        $rhnc = shift @p;
+    }
+    else {
+        croak "No RHNC client given here";
+    }
+ 
+    return ( $self, $rhnc, @p);
+}
 
 =head1 DIAGNOSTICS
 
