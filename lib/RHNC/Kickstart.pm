@@ -94,7 +94,6 @@ sub _missing_parameter {
     croak "Missing parameter $parm";
 }
 
-
 =head2 _uniqueid
 
 Return kickstart _uniqueid (label).
@@ -104,10 +103,9 @@ Return kickstart _uniqueid (label).
 =cut
 
 sub _uniqueid {
-    my ( $self ) = @_;
+    my ($self) = @_;
     return $self->{label};
 }
-
 
 =head2 new
 
@@ -451,27 +449,7 @@ Return the list of available L<RHNC::Kickstart> objects.
 =cut
 
 sub list {
-    my ( $self, @p ) = @_;
-    my $rhnc;
-
-    if ( ref $self eq 'RHNC::Kickstart' && defined $self->{rhnc} ) {
-
-        # OO context, eg $ak-list
-        $rhnc = $self->{rhnc};
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Kickstart::List($rhnc)
-        $rhnc = $self;
-    }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Kickstart->List($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        croak "No RHNC client given here";
-    }
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
     my $res = $rhnc->call('kickstart.listKickstarts');
 
@@ -496,29 +474,9 @@ Get (populate) complete kickstart profile.
 =cut
 
 sub get {
-    my ( $self, @p ) = @_;
-    my $rhnc;
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
-        # OO context, eg $ks->list()
-        $rhnc = $self->{rhnc};
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Kickstart::get($rhnc)
-        $rhnc = $self;
-    }
-    elsif ( $self eq __PACKAGE__ ) {
-
-        # Called as RHNC::Kickstart->get($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        croak "No RHNC client given";
-    }
-
-    my $name = shift @p
+    my $name = shift @args
       or croak "No kickstart name specified in get";
 
     # Step 1:
