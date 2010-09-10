@@ -207,7 +207,7 @@ Return package _uniqueid (id).
 =cut
 
 sub _uniqueid {
-    my ( $self ) = @_;
+    my ($self) = @_;
     return $self->{id};
 }
 
@@ -321,28 +321,9 @@ Return a C<RHNC::Package> object from a package id or a package name
 =cut
 
 sub get {
-    my ( $self, @args ) = @_;
-    my $rhnc;
-    my $id_or_name;
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
-    if ( ref $self eq 'RHNC::Package' && defined $self->{rhnc} ) {
-        # OO context, eg $ch->get
-        $rhnc       = $self->{rhnc};
-        $id_or_name = shift @args;
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-        # Called as RHNC::Package::get($rhnc)
-        $rhnc       = $self;
-        $id_or_name = shift @args;
-    }
-    elsif ( $self eq __PACKAGE__ && ref( $args[0] ) eq 'RHNC::Session' ) {
-        # Called as RHNC::Package->get($rhnc)
-        $rhnc       = shift @args;
-        $id_or_name = shift @args;
-    }
-    else {
-        croak "No RHNC client given here";
-    }
+    my $id_or_name = shift @args;
 
     if ( !defined $id_or_name ) {
         croak "No package id or name given";
@@ -376,32 +357,13 @@ Search a package by NVREA.
 =cut
 
 sub search {
-    my ( $self, @p ) = @_;
-    my ($rhnc);
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
-        # OO context, eg $ch->get
-        $rhnc = $self->{rhnc};
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::SystemGroup::get($rhnc)
-        $rhnc = $self;
-    }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-
-        # Called as RHNC::SystemGroup->get($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        croak "No RHNC client given here";
-    }
-    my $name    = shift @p;
-    my $version = shift @p;
-    my $release = shift @p;
-    my $arch    = shift @p;
-    my $epoch   = q();        #shift @p;
+    my $name    = shift @args;
+    my $version = shift @args;
+    my $release = shift @args;
+    my $arch    = shift @args;
+    my $epoch   = q();           #shift @p;
 
     my $res = $rhnc->call( 'packages.findByNvrea',
         $name, $version, $release, $epoch, $arch );
