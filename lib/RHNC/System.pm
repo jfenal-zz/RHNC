@@ -137,29 +137,8 @@ Return a hash of systems by id (keys being id, name, last_checkin).
 =cut
 
 sub list {
-    my ( $self, @p ) = @_;
-    my ( $rhnc, $pattern );
-
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
-        # OO context, eg $ch->list_systems
-        $rhnc = $self->{rhnc};
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Channel::list_systems($rhnc)
-        $rhnc = $self;
-    }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-
-        # Called as RHNC::Channel->list_systems($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        croak "No RHNC client given here";
-    }
-
-    $pattern = shift @p;
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
+    my $pattern = shift @args;
 
     my $list;
     if ( defined $pattern ) {
@@ -201,7 +180,7 @@ sub id {
         $rhnc = shift @args;
     }
     elsif ( ref $self eq 'RHNC::Session' ) {
-        $rhnc   = $self;
+        $rhnc = $self;
     }
     else {
         return;
@@ -209,7 +188,7 @@ sub id {
 
     $system = shift @args;
     print STDERR "system = $system\n";
-    my $res = $rhnc->call('system.getId', $system );
+    my $res = $rhnc->call( 'system.getId', $system );
     if ( @$res eq 1 ) {
         return $res->[0]->{id};
     }
@@ -241,8 +220,8 @@ Return system's last_checkin
 sub last_checkin {
     my ( $self, @args ) = @_;
 
-    if ( ! defined $self->{last_checkin} ) {
-        my $res = $self->{rhnc}->call('system.getName', $self->{id} );
+    if ( !defined $self->{last_checkin} ) {
+        my $res = $self->{rhnc}->call( 'system.getName', $self->{id} );
         $self->{last_checkin} = $res->{last_checkin}->value;
     }
 
@@ -630,35 +609,14 @@ Get a system by profile id
 =cut
 
 sub get {
-    my ( $class, @args ) = @_;
-    my ( $rhnc, $id_or_name );
-    if ( ref $class eq __PACKAGE__ && defined $class->{rhnc} ) {
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
+    my $id_or_name = shift @args;
 
-        # OO context, eg $sys->get
-        $rhnc       = $class->{rhnc};
-        $id_or_name = shift @args;
-    }
-    elsif ( RHNC::Session::is_session($class) ) {
-
-        # Called as RHNC::System::get($rhnc)
-        $rhnc = $class;
-    }
-    elsif ( __PACKAGE__ && RHNC::Session::is_session( $args[0] ) )
-    {
-        # RHNC::System->get( $rhnc )
-        $rhnc = shift @args;
-    }
-    else {
-        croak "No RHNC client given";
-    }
-    if ( !defined $id_or_name ) {
-        $id_or_name = shift @args;
-    }
     croak "No system id nor name given" if !defined $id_or_name;
 
     if ( !is_systemid($id_or_name) ) {
         my $res = RHNC::System->id( $rhnc, $id_or_name );
-        if (defined $res) {
+        if ( defined $res ) {
             $id_or_name = $res;
         }
         else {
@@ -675,7 +633,7 @@ sub get {
     $res->{auto_update} = $res->{auto_update}->value
       if ref $res->{lock_status} ne 'SCALAR';
 
-    my $self = __PACKAGE__->new(
+    $self = __PACKAGE__->new(
         rhnc => $rhnc,
         (%$res)
     );
@@ -885,7 +843,8 @@ sub memory {
     my ($self) = @_;
 
     if ( !defined $self->{memory} ) {
-        $self->{memory} = $self->{rhnc}->call( 'system.getMemory', $self->{id} );
+        $self->{memory} =
+          $self->{rhnc}->call( 'system.getMemory', $self->{id} );
     }
     return $self->{memory};
 }
@@ -908,7 +867,8 @@ sub network {
     my ($self) = @_;
 
     if ( !defined $self->{network} ) {
-        $self->{network} = $self->{rhnc}->call( 'system.getNetwork', $self->{id} );
+        $self->{network} =
+          $self->{rhnc}->call( 'system.getNetwork', $self->{id} );
     }
     return $self->{network};
 
@@ -935,13 +895,13 @@ sub network_devices {
     my ($self) = @_;
 
     if ( !defined $self->{network_devices} ) {
-        my $res = $self->{rhnc}->call( 'system.getNetworkDevices', $self->{id} );
-        if (defined $res) {
+        my $res =
+          $self->{rhnc}->call( 'system.getNetworkDevices', $self->{id} );
+        if ( defined $res ) {
             $self->{network_devices} = $res;
         }
     }
     return $self->{network_devices};
-
 
 }
 
@@ -957,7 +917,8 @@ sub registration_date {
     my ($self) = @_;
 
     if ( !defined $self->{registration_date} ) {
-        $self->{registration_date} = $self->{rhnc}->call( 'system.getRegistrationDate', $self->{id} );
+        $self->{registration_date} =
+          $self->{rhnc}->call( 'system.getRegistrationDate', $self->{id} );
     }
     return $self->{registration_date};
 }
@@ -983,8 +944,7 @@ sub relevant_errata {
             $self->{id}, $RHNC::Errata::errata_type{$type} );
     }
     else {
-        $res =
-          $self->{rhnc}->call( 'system.getRelevantErrata', $self->{id} );
+        $res = $self->{rhnc}->call( 'system.getRelevantErrata', $self->{id} );
     }
 
     return $res;
@@ -1003,13 +963,13 @@ The first element in the array if the current base channel;
 sub available_base_channels {
     my ( $self, @args ) = @_;
 
-    my $res = $self->{rhnc}
-          ->call( 'system.listSubscribableBaseChannels', $self->{id});
+    my $res =
+      $self->{rhnc}->call( 'system.listSubscribableBaseChannels', $self->{id} );
     my $ac = [];
     my @bc;
     my $current;
-    foreach my $c ( @$res ) {
-        if ($c->{current_base} ) {
+    foreach my $c (@$res) {
+        if ( $c->{current_base} ) {
             $current = $c->{label};
         }
         else {
@@ -1031,9 +991,9 @@ Return or set base_channel for the system.
 
 sub base_channel {
     my ( $self, @args ) = @_;
-    if (! defined $self->{base_channel} ) {
-        my $res=  $self->{rhnc}
-          ->call( 'system.getSubscribedBaseChannel', $self->{id} );
+    if ( !defined $self->{base_channel} ) {
+        my $res =
+          $self->{rhnc}->call( 'system.getSubscribedBaseChannel', $self->{id} );
 
         $self->{base_channel} = $res->{label};
     }
@@ -1046,7 +1006,6 @@ sub base_channel {
     }
     return $prev;
 }
-
 
 =head2 available_child_channels
 
@@ -1063,15 +1022,16 @@ sub available_child_channels {
     my ( $self, @args ) = @_;
     my $all = shift @args;
 
-    my $res = $self->{rhnc}
-          ->call( 'system.listSubscribableChildChannels', $self->{id});
+    my $res =
+      $self->{rhnc}
+      ->call( 'system.listSubscribableChildChannels', $self->{id} );
     my $ac = [];
 
     if ($all) {
         push @$ac, @{ $self->child_channels() };
     }
 
-    my @cc = map { $_->{label } } @$res;
+    my @cc = map { $_->{label} } @$res;
 
     push @$ac, @cc;
     return $ac;
@@ -1171,7 +1131,7 @@ sub as_string {
         if ( defined $self->{$k} ) {
 
             # SCALARs
-            if ( !ref $self->{$k} ) { #&& $self->{$k} ne q() ) {
+            if ( !ref $self->{$k} ) {    #&& $self->{$k} ne q() ) {
                 my $s = $self->{$k};
                 $s =~ s/[\n\r]/,/g;
                 $str .= "  $k: $s\n";
@@ -1206,7 +1166,8 @@ sub as_string {
                     if ( defined $d->{device} && $d->{device} ne '' ) {
                         $str .= "$d->{device}:";
                     }
-                    $str .= "$d->{device_class},$d->{driver},$d->{description},$d->{bus},$d->{pcitype}\n";
+                    $str .=
+"$d->{device_class},$d->{driver},$d->{description},$d->{bus},$d->{pcitype}\n";
                 }
             }
 
@@ -1217,8 +1178,10 @@ sub as_string {
                         $str .= "$d->{interface}:";
                     }
                     my @info;
-                    foreach my $i ( qw( ip netmask broadcast hardware_address module ) ) {
-                        if (defined $d->{$i} && $d->{$i} ne q() ) {
+                    foreach
+                      my $i (qw( ip netmask broadcast hardware_address module ))
+                    {
+                        if ( defined $d->{$i} && $d->{$i} ne q() ) {
                             push @info, "$i=$d->{$i}";
                         }
                     }
@@ -1226,7 +1189,6 @@ sub as_string {
                     $str .= "\n";
                 }
             }
-
 
         }
     }
