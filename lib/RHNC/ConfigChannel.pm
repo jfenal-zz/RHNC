@@ -51,13 +51,13 @@ use constant {
 };
 
 my %properties = (
-    rhnc        => [ 0, undef, 0, undef ],
-    label       => [ 1, undef, 0, undef ],
-    name        => [ 0, undef, 0, undef ],
-    description => [ 0, undef, 0, undef ],
+    rhnc              => [ 0, undef, 0, undef ],
+    label             => [ 1, undef, 0, undef ],
+    name              => [ 0, undef, 0, undef ],
+    description       => [ 0, undef, 0, undef ],
     configChannelType => [ 0, undef, 0, undef ],
-    orgId => [ 0, undef, 0, undef ],
-    id => [ 0, undef, 0, undef ],
+    orgId             => [ 0, undef, 0, undef ],
+    id                => [ 0, undef, 0, undef ],
 );
 
 sub _setdefaults {
@@ -132,12 +132,13 @@ sub new {
             $self->{$i} = $p{$i};
         }
     }
-    if ( ! defined $self->{name} ) { $self->{name} = $self->{label}; }
-    if ( ! defined $self->{description} ) { $self->{description} = $self->{label}; }
+    if ( !defined $self->{name} ) { $self->{name} = $self->{label}; }
+    if ( !defined $self->{description} ) {
+        $self->{description} = $self->{label};
+    }
 
     # validate object content
     $self->_validate_properties;
-    
 
     return $self;
 }
@@ -155,7 +156,7 @@ Create a new configuration channel.
 =cut
 
 sub create {
-    my ($class, @args) = @_;
+    my ( $class, @args ) = @_;
 
     $class = ref($class) || $class;
     if ( $class ne __PACKAGE__ ) {
@@ -168,15 +169,15 @@ sub create {
     croak 'No RHNC client to persist to, exiting'
       if !defined $self->{rhnc};
 
-        $self->{rhnc}->manage($self);
+    $self->{rhnc}->manage($self);
 
-    my $res = $self->{rhnc}->call(
-        'configchannel.create', $self->{label},
-        $self->{name},   $self->{description},
-    );
+    my $res =
+      $self->{rhnc}
+      ->call( 'configchannel.create', $self->{label}, $self->{name},
+        $self->{description}, );
     croak 'Create did not work' if !defined $res;
-    $self->{id} = $res->{id};
-    $self->{org_id} = $res->{orgId};
+    $self->{id}                = $res->{id};
+    $self->{org_id}            = $res->{orgId};
     $self->{configChannelType} = $res->{configChannelType};
 
     return $self;
@@ -189,7 +190,7 @@ Return config channel label
 =cut
 
 sub label {
-    my ($self)= @_;
+    my ($self) = @_;
 
     return $self->{label};
 }
@@ -218,31 +219,12 @@ List all the global config channels accessible to the logged-in user.
 =cut
 
 sub list {
-    my ( $self, @p ) = @_;
-    my $rhnc;
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
 
-    if ( ref $self eq __PACKAGE__ && defined $self->{rhnc} ) {
-
-        # OO context, eg $ak-list
-        $rhnc = $self->{rhnc};
-    }
-    elsif ( ref $self eq 'RHNC::Session' ) {
-
-        # Called as RHNC::ActivationKey::List($rhnc)
-        $rhnc = $self;
-    }
-    elsif ( $self eq __PACKAGE__ && ref( $p[0] ) eq 'RHNC::Session' ) {
-
-        # Called as RHNC::ActivationKey->List($rhnc)
-        $rhnc = shift @p;
-    }
-    else {
-        croak "No RHNC client given here";
-    }
-    my $l = [];
+    my $l   = [];
     my $res = $rhnc->call('configchannel.listGlobals');
     foreach my $o (@$res) {
-        push @$l, __PACKAGE__->new(rhnc => $rhnc, %$o);
+        push @$l, __PACKAGE__->new( rhnc => $rhnc, %$o );
     }
 
     return $l;
@@ -306,9 +288,8 @@ FIXME : no API for this...
 =cut
 
 sub destroy {
-    croak "This method cannot be implemented, missing API call"; 
+    croak "This method cannot be implemented, missing API call";
 }
-
 
 =head2 schedule_file_compare
 
