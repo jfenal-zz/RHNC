@@ -11,7 +11,7 @@ use RHNC;
 use RHNC::Channel;
 use Pod::Usage;
 use Carp;
-use Getopt::Long qw(GetOptionsFromArray);
+use Getopt::Long;
 use Data::Dumper;
 
 use vars qw( $rhnc );
@@ -43,10 +43,11 @@ Create a new channel
 =cut
 
 sub create {
-    my @args = @_;
+    local @ARGV = @_;
+
     my ( $label, $name, $summary, $arch, $parent );
-    my $result = GetOptionsFromArray(
-        \@args,
+
+    my $result = GetOptions(
         'n|name=s'    => \$name,
         's|summary=s' => \$summary,
         'a|arch=s'    => \$arch,
@@ -57,7 +58,7 @@ sub create {
         -verbose  => 99,
         -sections => ['DESCRIPTION/create'],
       );
-    $label = shift @args;
+    $label = shift @ARGV;
     if ( !defined $label ) {
         croak "No defined label ($label) to create a channel";
     }
@@ -175,11 +176,10 @@ system subscribed.
 =cut
 
 sub list {
-    my @args = @_;
+    local @ARGV = @_;
     my ( $verbose, $all ) = ( 0, 0 );
 
-    my $result = GetOptionsFromArray(
-        \@args,
+    my $result = GetOptions(
         'verbose|v+' => \$verbose,
         'all|a'      => \$all,
       )
@@ -291,12 +291,11 @@ List packages (NVRA) in the channel(s)
 =cut
 
 sub list_packages {
-    my @args = @_;
+    local @ARGV = @_;
     my $label_or_id;
     my ( $verbose, $all ) = ( 0, 0 );
 
-    my $result = GetOptionsFromArray(
-        \@args,
+    my $result = GetOptions(
         'verbose|v+' => \$verbose,
         'all|a'     => \$all,
       )
@@ -306,7 +305,7 @@ sub list_packages {
         -sections => 'DESCRIPTION/list_packages',
       );
 
-    while ( $label_or_id = shift @args ) {
+    while ( $label_or_id = shift @ARGV ) {
         my $chan = RHNC::Channel->get( $rhnc, $label_or_id );
         my @pkglist;
         if ($all) {
