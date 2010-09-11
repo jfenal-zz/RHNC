@@ -42,6 +42,10 @@ sub _uniqueid {
 
 =head2 new
 
+Create a new RHNC::Schedule action object.
+
+Not of use unless you know what you do.
+
 =cut
 
 sub new {
@@ -52,12 +56,12 @@ sub new {
 
     bless $self, $class;
 
-    @{$self} = @args;
+    %{$self} = @args;
 
     return $self;
 }
 
-=head2 list
+=head2 actions
 
 Returns a list of actions.
 
@@ -66,9 +70,12 @@ archived).
 
 Using an argument, you can request only the specific actions.
 
-  $action_arrayref = RHNC::Schedule->list( rhnc => $rhnc );
-  $action_arrayref = RHNC::Schedule->list( rhnc => $rhnc );
-  $action_arrayref = RHNC::Schedule->list( rhnc => $rhnc );
+  $action_arrayref = RHNC::Schedule->actions( $rhnc );
+  $action_arrayref = RHNC::Schedule->actions( $rhnc, 'all' );
+  $action_arrayref = RHNC::Schedule->actions( $rhnc, 'completed' );
+  $action_arrayref = RHNC::Schedule->actions( $rhnc, 'archived' );
+  $action_arrayref = RHNC::Schedule->actions( $rhnc, 'failed' );
+  $action_arrayref = RHNC::Schedule->actions( $rhnc, 'in progress' );
 
 =cut
 my %schedule_action_method = (
@@ -81,12 +88,15 @@ my %schedule_action_method = (
     inprogress => 'listInProgressActions',
 );
 
-sub list {
+sub actions {
     my ($self, $rhnc, @args ) = RHNC::_get_self_rhnc_args(__PACKAGE__, @_);
     my $action_type = shift @args;
-    my $list;
 
+    my $list;
     if (defined $action_type) {
+        $action_type = lc $action_type;
+        $action_type =~ s/[\s_]//g;
+
         my $method = $schedule_action_method{$action_type};
         $list = $rhnc->call("schedule.$method");
     }
@@ -94,25 +104,35 @@ sub list {
         $list = $rhnc->call('schedule.listAllActions');
     }
 
-    my $by_id = {};
-    foreach my $s (@$list) {
-        my $id = $s->{id};
-        $by_id->{$id}{id}           = $id;
-        $by_id->{$id}{name}         = $s->{name};
-        $by_id->{$id}{last_checkin} = $s->{last_checkin};
+    my $actions = [];
+    foreach my $action (@$list) {
+        push(
+            @$actions,
+            RHNC::Schedule->new(
+                rhnc => $rhnc,
+                %{$action},
+            )
+        );
     }
 
-    return $by_id;
+    return $actions;
 }
 
+=head2 as_string
 
-=head2 search
+Return a printable string from a L<RHNC::Schedule> object.
+
+  print $sched->as_string;
 
 =cut
 
-sub search {
+sub as_string {
+    my ($self) = @_;
+    my $str = "$self->{id},\"$self->{type}\",\"$self->{scheduler}\",";
+    $str .= $self->{earliest}->value();
+    $str .= ",\"$self->{name}\"\n";
 
-
+    return $str;
 }
 
 =head1 DIAGNOSTICS

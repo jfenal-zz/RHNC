@@ -45,7 +45,9 @@ t/s20-org.t
 t/s21-sg.t
 t/s22-system.t
 t/s31-activationkey.t
+t/s32-kickstart.t
 t/s33-channel.t
 t/s35-package.t
+t/s40-schedule.t
 t/script-pod-coverage.t
 Makefile.PL
