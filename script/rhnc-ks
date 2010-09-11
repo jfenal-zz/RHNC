@@ -9,7 +9,7 @@ use lib qw( . .. lib ../lib );
 use RHNC;
 use RHNC::Session;
 use Carp;
-use Getopt::Long qw(GetOptionsFromArray);
+use Getopt::Long;
 use Data::Dumper;
 use Pod::Usage;
 
@@ -87,10 +87,10 @@ Be verbose
 =cut
 
 sub list {
-    my @args = @_;
+    local @ARGV = @_;
     my ($verbose);
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+    my $result = GetOptions( 'verbose|v+' => \$verbose, )
       or pod2usage(
         -exitval  => 254,
         -verbose  => 99,
@@ -135,17 +135,17 @@ Be verbose
 =cut
 
 sub get_details {
-    my @args = @_;
+    local @ARGV = @_;
     my ($verbose);
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+    my $result = GetOptions( 'verbose|v+' => \$verbose, )
       or pod2usage(
         -exitval  => 254,
         -verbose  => 99,
         -sections => ['DESCRIPTION/get_details'],
       );
 
-    foreach my $ks_name (@args) {
+    foreach my $ks_name (@ARGV) {
 
         my $ks = RHNC::Kickstart->get( $rhnc, $ks_name );
 
