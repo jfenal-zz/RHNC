@@ -1,7 +1,4 @@
 #!/usr/bin/perl
-#
-# $Id$
-#
 
 use strict;
 use warnings;
@@ -10,7 +7,7 @@ use lib qw( . .. lib ../lib );
 use RHNC;
 use Pod::Usage;
 use Carp;
-use Getopt::Long qw(GetOptionsFromArray);
+use Getopt::Long;
 use Data::Dumper;
 
 use vars qw( $rhnc );
@@ -44,12 +41,11 @@ Add systems to one or multiple system groups.
 =cut
 
 sub add_systems {
-    my @args = @_;
+    local @ARGV = @_;
     my ( $name, $systemids, @system_ids );
     my $verbose;
 
-    my $result = GetOptionsFromArray(
-        \@args,
+    my $result = GetOptions(
         'systemids|s=s' => \$systemids,
         'verbose|v+'    => \$verbose
       )
@@ -68,7 +64,7 @@ sub add_systems {
     @system_ids = split( m/ [,] /imxs, $systemids );
 
     my $rc = 0;
-    while ( $name = shift @args ) {
+    while ( $name = shift @ARGV ) {
         my $sg = RHNC::SystemGroup->get( $rhnc, $name );
         my $res = $sg->add_systems( \@system_ids );
         $rc += $res ? 0 : 1;
@@ -85,12 +81,11 @@ Create a new system group.
 =cut
 
 sub create {
-    my @args = @_;
+    local @ARGV = @_;
     my ( $name, $description, $systemids, @system_ids );
     my $verbose;
 
-    my $result = GetOptionsFromArray(
-        \@args,
+    my $result = GetOptions(
         'description|d=s' => \$description,
         'systemids|s=s'   => \$systemids,
         'verbose|v+'      => \$verbose,
@@ -101,7 +96,7 @@ sub create {
         -sections => ['DESCRIPTION/create'],
       );
 
-    $name = shift @args;
+    $name = shift @ARGV;
 
     if ( !defined $name ) {
         croak "No defined name ($name) to create a system group";
@@ -137,17 +132,17 @@ Destroy (delete) a system group, or multiple ones.
 =cut
 
 sub destroy {
-    my @args = @_;
+    local @ARGV = @_;
     my $verbose;
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+    my $result = GetOptions( 'verbose|v+' => \$verbose, )
       or pod2usage(
         -exitval  => 254,
         -verbose  => 99,
         -sections => ['DESCRIPTION/destroy'],
       );
 
-    foreach my $name (@args) {
+    foreach my $name (@ARGV) {
         my $sg = RHNC::SystemGroup->get( $rhnc, $name );
         if ( defined $sg ) {
             $sg->destroy( $rhnc, $name );
@@ -171,10 +166,10 @@ Print detailed information about the given systemgroup(s).
 =cut
 
 sub get {
-    my @args = @_;
+    local @ARGV = @_;
     my $verbose;
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+    my $result = GetOptions( 'verbose|v+' => \$verbose, )
       or pod2usage(
         -exitval  => 254,
         -verbose  => 99,
@@ -182,7 +177,7 @@ sub get {
       );
 
     my $sg;
-    while ( $sg = shift @args ) {
+    while ( $sg = shift @ARGV ) {
         my $systemgroup = RHNC::SystemGroup->get( $rhnc, $sg );
         print $systemgroup->as_string;
     }
@@ -200,10 +195,10 @@ List system groups.
 =cut
 
 sub list {
-    my @args    = @_;
+    local @ARGV = @_;
     my $verbose = 0;
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+    my $result = GetOptions( 'verbose|v+' => \$verbose, )
       or pod2usage(
         -exitval  => 254,
         -verbose  => 99,
@@ -241,18 +236,18 @@ List the systems inside a system group
 =cut
 
 sub list_systems {
-    my @args = @_;
+    local @ARGV = @_;
     my $systemgroup;
     my $verbose = 0;
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+    my $result = GetOptions( 'verbose|v+' => \$verbose, )
       or pod2usage(
         -exitval  => 254,
         -verbose  => 99,
         -sections => ['DESCRIPTION/list_systems'],
       );
 
-    while ( $systemgroup = shift @args ) {
+    while ( $systemgroup = shift @ARGV ) {
         my $sg = RHNC::SystemGroup->get( $rhnc, $systemgroup );
         my $slist_ref = $sg->list_systems($rhnc);
         foreach my $s (@$slist_ref) {
@@ -274,12 +269,11 @@ Remove systems from one or multiple system groups.
 =cut
 
 sub rm_systems {
-    my @args    = @_;
+    local @ARGV = @_;
     my $verbose = 0;
 
     my ( $name, $systemids, @system_ids );
-    my $result = GetOptionsFromArray(
-        \@args,
+    my $result = GetOptions(
         'systemids|s=s' => \$systemids,
         'verbose|v+'    => \$verbose
       )
@@ -298,7 +292,7 @@ sub rm_systems {
     @system_ids = split( m/ [,] /imxs, $systemids );
 
     my $rc = 0;
-    while ( $name = shift @args ) {
+    while ( $name = shift @ARGV ) {
         my $sg = RHNC::SystemGroup->get( $rhnc, $name );
         my $res = $sg->remove_systems( \@system_ids );
         $rc += $res ? 0 : 1;
