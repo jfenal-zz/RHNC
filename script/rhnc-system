@@ -10,7 +10,7 @@ use lib qw( . .. lib ../lib );
 use RHNC;
 use Pod::Usage;
 use Carp;
-use Getopt::Long qw(GetOptionsFromArray);
+use Getopt::Long;
 use Data::Dumper;
 
 use vars qw( $rhnc );
@@ -41,10 +41,10 @@ Destroy a system profile
 =cut
 
 sub destroy {
-    my @args = @_;
+    local @ARGV = @_;
     my $verbose;
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+    my $result = GetOptions( 'verbose|v+' => \$verbose, )
       or pod2usage(
         -exitval  => 254,
         -verbose  => 99,
@@ -52,7 +52,7 @@ sub destroy {
       );
 
     carp "not implemented yet";
-    foreach my $kname (@args) {
+    foreach my $kname (@ARGV) {
         my $sys = RHNC::System->get( $rhnc, $kname );
         if ( defined $sys ) {
             $sys->destroy( $rhnc, $kname );
@@ -73,18 +73,18 @@ Print detailed information about the given system
 =cut
 
 sub get_details {
-    my @args = @_;
+    local @ARGV = @_;
     my $sys;
     my $verbose = 0;
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+    my $result = GetOptions( 'verbose|v+' => \$verbose, )
       or pod2usage(
         -exitval  => 254,
         -verbose  => 99,
         -sections => ['DESCRIPTION/get_details'],
       );
 
-    while ( $sys = shift @args ) {
+    while ( $sys = shift @ARGV ) {
         my $system = RHNC::System->get( $rhnc, $sys );
         $system->entitlements;
         if ( $verbose == 1 ) {
@@ -123,10 +123,10 @@ List system groups
 =cut
 
 sub list {
-    my @args = @_;
+    local @ARGV = @_;
     my ($verbose);
 
-    my $result = GetOptionsFromArray( \@args, 'verbose|v+' => \$verbose, )
+    my $result = GetOptions( 'verbose|v+' => \$verbose, )
       or pod2usage(
         -exitval  => 254,
         -verbose  => 99,
@@ -175,13 +175,12 @@ Channel manipulation.
 =cut
 
 sub channel {
-    my @args = @_;
+    local @ARGV = @_;
     my $sys;
     my ( $verbose, $base, $child, $avail_base, $avail_child ) =
       ( 0, 0, 0, 0, 0 );
 
-    my $result = GetOptionsFromArray(
-        \@args,
+    my $result = GetOptions(
         'verbose|v+'    => \$verbose,
         'base|b'        => \$base,
         'child|c'       => \$child,
@@ -193,7 +192,7 @@ sub channel {
         -verbose  => 99,
         -sections => ['DESCRIPTION/channel'],
       );
-    $sys = shift @args;
+    $sys = shift @ARGV;
     my $system = RHNC::System->get( $rhnc, $sys );
 
     if ($avail_base) {
@@ -244,13 +243,12 @@ System properties manipulation.
 =cut
 
 sub set {
-    my @args = @_;
+    local @ARGV = @_;
     my $sys;
     my ( $verbose, $base, $child, $avail_base, $avail_child ) =
       ( 0, 0, 0, 0, 0 );
 
-    my $result = GetOptionsFromArray(
-        \@args,
+    my $result = GetOptions(
         'verbose|v+' => \$verbose,
         'base|b=s'   => \$base,
         'child|c=s'  => \$child,
@@ -260,7 +258,7 @@ sub set {
         -verbose  => 99,
         -sections => ['DESCRIPTION/channel'],
       );
-    $sys = shift @args;
+    $sys = shift @ARGV;
     my $system = RHNC::System->get( $rhnc, $sys );
 
     if ($base) {
