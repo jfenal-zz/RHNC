@@ -10,7 +10,7 @@ use lib qw( . .. lib ../lib );
 use RHNC;
 use Pod::Usage;
 use Carp;
-use Getopt::Long qw(GetOptionsFromArray);
+use Getopt::Long;
 use Data::Dumper;
 
 use vars qw( $rhnc );
@@ -108,11 +108,11 @@ List the canonical arches allowed by this script
 =cut
 
 sub list_arch_canon {
-    my @args   = @_;
+    local @ARGV = @_;
     my $update = 0;
     my $verbose = 0;
 
-    my $result = GetOptionsFromArray( \@args, 'update|u' => \$update, 'verbose|v+' => \$verbose,)
+    my $result = GetOptions( 'update|u' => \$update, 'verbose|v+' => \$verbose,)
       or pod2usage(
         -exitval => 254,
         -verbose => 1,
