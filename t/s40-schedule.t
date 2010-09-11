@@ -45,12 +45,15 @@ run_ok( $s, [qw( actions )], "$script actions" );
 my @actions = split /\n/, last_script_stdout();
 
 my @actoptions;
+
 BEGIN {
-@actoptions = qw( a c f p );
-$tests += scalar @actoptions; }
-foreach my $action (@actoptions) {
-    run_ok( $s, [ 'actions', "-$action" ], "$script actions -$action" );
+    @actoptions = ( '-a', '-c', '-f', '-p', );
+    $tests += scalar @actoptions;
 }
+foreach my $action (@actoptions) {
+    run_ok( $s, [ 'actions', "$action" ], "$script actions $action" );
+}
+
 =pod
 my @sysoptions;
 BEGIN {
