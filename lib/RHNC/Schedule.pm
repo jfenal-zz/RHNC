@@ -15,7 +15,6 @@ Version 0.01
 
 our $VERSION = '0.01';
 
-
 =head1 SYNOPSIS
 
     use RHNC::Schedule;
@@ -78,6 +77,7 @@ Using an argument, you can request only the specific actions.
   $action_arrayref = RHNC::Schedule->actions( $rhnc, 'in progress' );
 
 =cut
+
 my %schedule_action_method = (
     undef      => 'listAllActions',
     ''         => 'listAllActions',
@@ -89,11 +89,11 @@ my %schedule_action_method = (
 );
 
 sub actions {
-    my ($self, $rhnc, @args ) = RHNC::_get_self_rhnc_args(__PACKAGE__, @_);
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
     my $action_type = shift @args;
 
     my $list;
-    if (defined $action_type) {
+    if ( defined $action_type ) {
         $action_type = lc $action_type;
         $action_type =~ s/[\s_]//g;
 
@@ -198,4 +198,4 @@ under the same terms as Perl itself.
 
 =cut
 
-1; # End of RHNC::Schedule
+1;    # End of RHNC::Schedule
