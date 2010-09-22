@@ -66,12 +66,229 @@ sub new {
     my ( $class, @args ) = @_;
     $class = ref($class) || $class;
 
-
     my $self = {};
 
     bless $self, $class;
 
+    %$self = @args;
+
     return $self;
+}
+
+
+=head2 get
+
+Get details about a C<RHNC::Errata> object.
+
+=cut
+
+sub get {
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
+    my $id_or_name = shift @args;
+
+    croak "No errata id given" if !defined $id_or_name;
+
+    my $res = $rhnc->call( 'errata.getDetails', $id_or_name );
+
+    if (defined $res) {
+        my $e = __PACKAGE__->new( rhnc => $rhnc, name => $id_or_name, %$res);
+        return $e;
+    }
+
+    return;
+}
+
+
+=head2 create
+
+Create a new errata from an errata object
+
+C<rhnc> attribute will have to be defined.
+
+=cut
+
+sub create {
+
+}
+
+
+=head2 publish
+
+Publish a created errata.
+
+=cut
+
+sub publish {
+
+}
+
+
+#
+# Getters & setters
+#
+
+=head2 synopsis
+
+Return synopsis for erratum
+
+  print $errata->synopsis();
+
+=cut
+sub synopsis {
+    my ($self) = @_;
+
+    return $self->{description};
+}
+
+
+=head2 advisory_name
+
+Return advisory_name for erratum
+
+  print $errata->advisory_name();
+
+=cut
+sub advisory_name {
+
+}
+
+
+=head2 advisory_release
+
+Return advisory_release for erratum
+
+  print $errata->advisory_release();
+
+=cut
+sub advisory_release {}
+
+
+=head2 advisory_type
+
+Return advisory_type for erratum
+
+  print $errata->advisory_type();
+
+=cut
+sub advisory_type {
+    #" - Type of advisory (one of the following: 'Security Advisory', 'Product Enhancement Advisory', or 'Bug Fix Advisory'
+}
+
+
+
+=head2 product
+
+Return product for erratum
+
+  print $errata->product();
+
+=cut
+sub product {
+}
+
+
+=head2 topic
+
+Return topic for erratum
+
+  print $errata->topic();
+
+=cut
+sub topic {
+}
+
+
+=head2 description
+
+Return description for erratum
+
+  print $errata->description();
+
+=cut
+sub description {
+}
+
+
+=head2 references
+
+Return references for erratum
+
+  print $errata->references();
+
+=cut
+sub references {
+}
+
+
+=head2 notes
+
+Return notes for erratum
+
+  print $errata->notes();
+
+=cut
+sub notes {
+}
+
+
+=head2 solution
+
+Return solution for erratum
+
+  print $errata->solution();
+
+=cut
+sub solution {
+}
+
+
+
+=head2 cve
+
+Get CVE list for given errata as an array ref.
+
+  @cves = @{ $errata->cve() };
+
+=cut
+
+sub cve {
+    my ( $self) = @_;
+
+    my $res = $self->{rhnc}->call( 'errata.listCves', $self->name() );
+
+    if (defined $res) {
+        return $res;
+    }
+
+    return;
+}
+
+
+=head2 findByCve
+
+Search errata by CVE id.
+
+Returns a array ref to the list of corresponding errata.
+
+  my @errata = RHNC::Errata::cve( $rhnc, $cve_id );
+  my @errata = RHNC::Errata->cve( $rhnc, $cve_id );
+
+=cut
+
+sub findByCve {
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
+    my $id_or_name = shift @args;
+
+    croak "No errata id given" if !defined $id_or_name;
+
+    my $res = $rhnc->call( 'errata.findByCve', $id_or_name );
+
+    my @errata;
+    foreach my $e ( @$res ) {
+        push @errata, __PACKAGE__->new( rhnc => $rhnc, %$e);
+    }
+
+    return \@errata;
 }
 
 

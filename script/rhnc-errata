@@ -1,0 +1,175 @@
+#!/usr/bin/perl
+#
+# $Id$
+#
+
+use strict;
+use warnings;
+
+use lib qw( . .. lib ../lib );
+use RHNC;
+use Pod::Usage;
+use Carp;
+use Getopt::Long;
+
+use vars qw( $rhnc );
+
+=head1 NAME
+
+rhnc-errata - List errata, and relevant servers.
+
+=head1 USAGE
+
+  rhnc-errata command [options or parameters]
+
+=head1 REQUIRED ARGUMENTS
+
+At least B<command> is required for this script to operate. No shell is
+currently offered, although this may come in the future.
+
+=head1 DESCRIPTION
+
+The following commands are available:
+
+=cut
+
+=head2 get
+
+Get details about an errata.
+
+  rhnc-errata get RHSA-2010:0001
+
+=cut
+
+sub get {
+    local @ARGV = @_;
+    my $verbose = 0;
+    my $result = GetOptions(
+        'verbose|v+'            => \$verbose
+      )
+      or pod2usage(
+        -exitval  => 254,
+        -sections => ['DESCRIPTION/get'],
+        -verbose  => 99,
+      );
+
+    for my $errata ( @ARGV ) {
+        my $e = RHNC::Errata->get( $rhnc, $errata );
+        if (defined $e) {
+            $e->cve();
+            print $e->as_string();
+        }
+    }
+
+    return 0;
+}
+
+
+=head2 cve
+
+List errata by CVE number.
+
+  rhnc-errata cve CVE-2010-0001
+
+=cut
+
+sub cve {
+    local @ARGV = @_;
+    my $verbose = 0;
+    my $result = GetOptions(
+        'verbose|v+'            => \$verbose
+      )
+      or pod2usage(
+        -exitval  => 254,
+        -sections => ['DESCRIPTION/get'],
+        -verbose  => 99,
+      );
+
+    for my $errata ( @ARGV ) {
+        my $e = RHNC::Errata->findByCve( $rhnc, $errata );
+        print $e->as_string();
+    }
+
+    return 0;
+}
+
+=head1 OPTIONS
+
+See various commands for options available.
+
+=head1 DIAGNOSTICS
+
+See L<EXIT STATUS>.
+
+=head1 EXIT STATUS
+
+TODO. 
+This script will return 1 for success, 0 for failure. Not very
+consistent for now, likely to change.
+
+=head1 CONFIGURATION
+
+See L<RHNC>.
+
+=head1 DEPENDENCIES
+
+=over 4
+
+=item * L<RHNC>
+
+=item * L<Pod::Usage>
+
+=back
+
+=head1 INCOMPATIBILITIES
+
+See L<RHNC>.
+
+=head1 BUGS AND LIMITATIONS
+
+See L<RHNC>.
+
+=head1 AUTHOR
+
+Jerome Fenal L<< <jfenal@free.fr> >>.
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2009, 2010 Jerome Fenal, all rights reserved.
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
+
+package main;
+
+#
+# Main
+#
+
+$rhnc = RHNC::Session->new();
+
+my %func = (
+    cve     => \&cve,
+    get     => \&get,
+    systems => \&systems,
+    cancel  => \&cancel,
+);
+
+my @args = @ARGV;
+my $cmd  = shift @args;
+my $rc;
+
+if ( defined $cmd && defined $func{$cmd} ) {
+    $rhnc = RHNC::Session->new();
+    $rc   = $func{$cmd}->(@args);
+    exit $rc;
+}
+
+pod2usage(
+    -exitval => 254,
+    -verbose  => 99,
+    -message => "No or unknown command given"
+);
+

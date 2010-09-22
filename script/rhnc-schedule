@@ -1,0 +1,266 @@
+#!/usr/bin/perl
+#
+# $Id$
+#
+
+use strict;
+use warnings;
+
+use lib qw( . .. lib ../lib );
+use RHNC;
+use Pod::Usage;
+use Carp;
+use Getopt::Long;
+use Data::Dumper;
+
+use vars qw( $rhnc );
+
+=head1 NAME
+
+rhnc-schedule - List scheduled actions, and related systems.
+
+=head1 USAGE
+
+  rhnc-schedule command [options or parameters]
+
+=head1 REQUIRED ARGUMENTS
+
+At least B<command> is required for this script to operate. No shell is
+currently offered, although this may come in the future.
+
+=head1 DESCRIPTION
+
+The following commands are available:
+
+=cut
+
+=head2 cancel
+
+Cancel one or more actions.
+
+
+=cut
+
+sub cancel {
+    my @args = @_;
+
+    my $rc;
+    $rc = RHNC::Schedule->cancel( $rhnc, @args );
+    if (! defined $rc) {
+        return 1;
+    }
+    return 0;
+}
+
+=head2 actions
+
+List actions
+
+Options :
+ -a : archived
+ -c : completed
+ -f : failed
+ -p : in progress
+
+=cut
+
+my %action_list = (
+    1 => 'archived',
+    2 => 'completed',
+    4 => 'failed',
+    8 => 'inprogress',
+);
+
+sub actions {
+    local @ARGV = @_;
+    my ( $verbose, $archived, $completed, $failed, $inprogress ) =
+      ( 0, 0, 0, 0, 0, );
+    my $user;
+    my $result = GetOptions(
+        'user|u=s'              => \$user,
+        'archived|a'            => \$archived,
+        'completed|c'           => \$completed,
+        'failed|f'              => \$failed,
+        'inprogress|progress|p' => \$inprogress,
+        'verbose|v+'            => \$verbose
+      )
+      or pod2usage(
+        -exitval  => 254,
+        -sections => ['DESCRIPTION/actions'],
+        -verbose  => 99,
+      );
+
+    my @list;
+
+    $archived   <<= 0;
+    $completed  <<= 1;
+    $failed     <<= 2;
+    $inprogress <<= 3;
+    my $all = $archived + $completed + $failed + $inprogress;
+
+    if ( $all == 0 ) {
+        push @list, @{ RHNC::Schedule->actions($rhnc) };
+    }
+    else {
+        foreach my $t ( $archived, $completed, $failed, $inprogress ) {
+            if ($t) {
+                push @list,
+                  @{ RHNC::Schedule->actions( $rhnc, $action_list{$t} ) };
+            }
+        }
+    }
+    if ( defined $user ) {
+        foreach my $action ( sort { $a->{id} <=> $b->{id} } @list ) {
+            if ( $user eq $action->{scheduler} ) {
+                if ($verbose) {
+                    print $action->as_string;
+                }
+                else {
+                    print $action->id();
+                }
+            }
+        }
+    }
+    else {
+        foreach my $action ( sort { $a->{id} <=> $b->{id} } @list ) {
+            print $action->as_string;
+        }
+    }
+    return 0;
+}
+
+=head2 systems
+
+List systems impacted for the given action(s FIXME). 
+
+Options :
+
+=over 4
+
+=item *  -a
+=item * archived
+
+=item * -c
+=item * completed
+
+=item * -f
+=item * failed
+
+=item * -p
+=item * in progress
+
+=back
+
+=cut
+
+sub systems {
+    local @ARGV = @_;
+    my ( $verbose, $archived, $completed, $failed, $inprogress ) =
+      ( 0, 0, 0, 0, 0, );
+    my $user;
+    my $result = GetOptions(
+        'user|u=s'              => \$user,
+        'archived|a'            => \$archived,
+        'completed|c'           => \$completed,
+        'failed|f'              => \$failed,
+        'inprogress|progress|p' => \$inprogress,
+        'verbose|v+'            => \$verbose
+      )
+      or pod2usage(
+        -exitval  => 254,
+        -sections => ['DESCRIPTION/actions'],
+        -verbose  => 99,
+      );
+
+    my @actions_list = @ARGV;
+
+    
+
+
+    return 0;
+}
+
+=head1 OPTIONS
+
+See various commands for options available.
+
+=head1 DIAGNOSTICS
+
+See L<EXIT STATUS>.
+
+=head1 EXIT STATUS
+
+TODO. 
+This script will return 1 for success, 0 for failure. Not very
+consistent for now, likely to change.
+
+=head1 CONFIGURATION
+
+See L<RHNC>.
+
+=head1 DEPENDENCIES
+
+=over 4
+
+=item * L<RHNC>
+
+=item * L<Pod::Usage>
+
+=back
+
+=head1 INCOMPATIBILITIES
+
+See L<RHNC>.
+
+=head1 BUGS AND LIMITATIONS
+
+See L<RHNC>.
+
+=head1 AUTHOR
+
+Jerome Fenal L<< <jfenal@free.fr> >>.
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2009, 2010 Jerome Fenal, all rights reserved.
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
+
+package main;
+
+#
+# Main
+#
+
+$rhnc = RHNC::Session->new();
+
+my %func = (
+    a       => \&actions,
+    action  => \&actions,
+    actions => \&actions,
+    s       => \&systems,
+    sys     => \&systems,
+    system  => \&systems,
+    systems => \&systems,
+    cancel  => \&cancel,
+);
+
+my @args = @ARGV;
+my $cmd  = shift @args;
+my $rc;
+
+if ( defined $cmd && defined $func{$cmd} ) {
+    $rhnc = RHNC::Session->new();
+    $rc   = $func{$cmd}->(@args);
+    exit $rc;
+}
+
+pod2usage(
+    -exitval => 254,
+    -verbose  => 99,
+    -message => "No or unknown command given"
+);
+

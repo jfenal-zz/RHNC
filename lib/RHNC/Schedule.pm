@@ -118,6 +118,108 @@ sub actions {
     return $actions;
 }
 
+=head2 cancel
+
+Cancel given action, or list of actions.
+
+  $self->cancel();                  # cancel this one
+  $self->cancel( @action_ids );     # cancel this one, plus all actions in @actions_ids
+  RHNC::Schedule::cancel( $rhnc, @actions_ids ); # cancel all actions in @actions_ids
+  RHNC::Schedule->cancel( $rhnc, @actions_ids ); # idem
+
+C<@action_ids> may contain actions ids, or array refs of actions ids.
+
+=cut
+
+sub cancel {
+    my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
+    my @to_cancel = ();
+    
+    if (defined $self && ref $self eq __PACKAGE__) {
+        push @to_cancel, $self->{id};
+    }
+    if ( @args ) {
+        foreach my $i (@args) {
+            if (ref $i eq 'ARRAY') {
+                push @to_cancel, @$i;
+            }
+            else {
+                push @to_cancel, $i;
+            }
+        }
+    }
+    if (@to_cancel) {
+        return $rhnc->call('schedule.cancelActions', \@to_cancel);
+    }
+
+    return;
+}
+
+=head2 id
+
+Return action id.
+
+  $id = $action->id();
+
+=cut
+sub id {
+    my ($self) = @_;
+
+    return $self->{id};
+}
+
+=head2 type
+
+Return action type.
+
+  $type = $action->type();
+
+=cut
+sub type {
+    my ($self) = @_;
+
+    return $self->{type};
+}
+
+=head2 scheduler
+
+Return action scheduler.
+
+  $scheduler = $action->scheduler();
+
+=cut
+sub scheduler {
+    my ($self) = @_;
+
+    return $self->{scheduler};
+}
+
+=head2 name
+
+Return action name.
+
+  $name = $action->name();
+
+=cut
+sub name {
+    my ($self) = @_;
+
+    return $self->{name};
+}
+
+=head2 earliest
+
+Return action earliest.
+
+  $earliest = $action->earliest();
+
+=cut
+sub earliest {
+    my ($self) = @_;
+
+    return $self->{earliest};
+}
+
 =head2 as_string
 
 Return a printable string from a L<RHNC::Schedule> object.
