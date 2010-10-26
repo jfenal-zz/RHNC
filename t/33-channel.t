@@ -18,6 +18,7 @@ ok( scalar @channels >= 0, 'got a list of ' . scalar(@channels) . ' channels' );
 
 my $tchan      = $channels[0];
 my $tchan_name = $tchan->label;
+diag("Using channel $tchan_name");
 BEGIN { $tests++; }
 my $channel = $tchan->get();
 is( ref($channel), 'RHNC::Channel',

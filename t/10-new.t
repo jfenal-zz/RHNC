@@ -1,5 +1,7 @@
 #!perl
 
+use strict;
+use warnings;
 use Test::More;
 
 use lib qw( . lib lib/RHNC );
@@ -21,10 +23,10 @@ BEGIN { $tests++ }
 is($rhnc->version, 0.01, "Version is ".$rhnc->version);
 
 BEGIN { $tests++ }
-my $av = $rhnc->apiversion();
-ok($av >= 10.8, "API Version ($av) > 10.8");
+my ($avmaj, $avmin) = split /\./, $rhnc->apiversion();
+ok( ($avmaj == 10  && $avmin >= 8) || $avmaj > 10, "API Version ($avmaj.$avmin) > 10.8");
 
 BEGIN { $tests++ }
-my $sv = $rhnc->systemversion();
-ok($sv >= 5.3, "Satellite version ($sv) > 5.3");
+my ($svmaj, $svmin) = split /\./, $rhnc->systemversion();
+ok(($svmaj == 5 && $svmin >= 3) || $svmaj > 5 , "Satellite version ($svmaj.$svmin) > 5.3");
 

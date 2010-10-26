@@ -9,8 +9,8 @@ find(
         push @scripts, $File::Find::name
           if $File::Find::name =~ m!script/rhnc-.*!;
     },
+#      bin
     qw(
-      bin
       script
       )
 );

@@ -127,54 +127,71 @@ sub publish {
 # Getters & setters
 #
 
-=head2 synopsis
+=head2 id
 
-Return synopsis for erratum
+Return id for erratum
 
-  print $errata->synopsis();
+  print $errata->id();
 
 =cut
-sub synopsis {
+sub id { 
     my ($self) = @_;
 
-    return $self->{description};
+    return $self->{id};
 }
-
 
 =head2 advisory_name
 
-Return advisory_name for erratum
+Return advisory name for erratum
 
   print $errata->advisory_name();
 
 =cut
 sub advisory_name {
+    my ($self) = @_;
 
+    return $self->{advisory_name};
 }
 
+=head2 advisory_synopsis
+
+Return advisory synopsis for erratum
+
+  print $errata->advisory_synopsis();
+
+=cut
+sub advisory_synopsis {
+    my ($self) = @_;
+
+    return $self->{advisory_synopsis};
+}
 
 =head2 advisory_release
 
-Return advisory_release for erratum
+Return advisory release for erratum
 
   print $errata->advisory_release();
 
 =cut
-sub advisory_release {}
+sub advisory_release {
+    my ($self) = @_;
 
+    return $self->{advisory_release};
+}
 
 =head2 advisory_type
 
-Return advisory_type for erratum
+Return advisory type for erratum
 
   print $errata->advisory_type();
 
+#" - Type of advisory (one of the following: 'Security Advisory', 'Product Enhancement Advisory', or 'Bug Fix Advisory'
 =cut
 sub advisory_type {
-    #" - Type of advisory (one of the following: 'Security Advisory', 'Product Enhancement Advisory', or 'Bug Fix Advisory'
+    my ($self) = @_;
+
+    return $self->{advisory_type};
 }
-
-
 
 =head2 product
 
@@ -264,7 +281,7 @@ sub cve {
 }
 
 
-=head2 findByCve
+=head2 find_by_cve
 
 Search errata by CVE id.
 
@@ -275,7 +292,7 @@ Returns a array ref to the list of corresponding errata.
 
 =cut
 
-sub findByCve {
+sub find_by_cve {
     my ( $self, $rhnc, @args ) = RHNC::_get_self_rhnc_args( __PACKAGE__, @_ );
     my $id_or_name = shift @args;
 

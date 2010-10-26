@@ -12,7 +12,7 @@ plan tests => $tests;
 my $rhnc = RHNC::Session->new();
 
 BEGIN { $tests++; }
-my $l = RHNC::Schedule->actions($rhnc);
+my $l = RHNC::Schedule->actions($rhnc, 'all');
 isa_ok( $l, 'ARRAY', 'list is a array ref' );
 
 my $action1 = $l->[0];

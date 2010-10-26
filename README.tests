@@ -1,3 +1,5 @@
 In order to run the test suite, the Satellite must have at least :
-- a few systems registered
-- one group, with systems inside (used in t/s21-sg.t)
+- 2 systems registered
+- one non-empty group, with systems inside (used in t/s21-sg.t)
+- at least one action scheduled
+- one channel, with errata defined (a Red Hat channel is OK)

@@ -93,6 +93,7 @@ my %properties = (
     osa_status         => [ 0, undef, undef, undef ],
     lock_status        => [ 0, undef, undef, undef ],
     last_checkin       => [ 0, undef, undef, undef ],
+    last_boot          => [ 0, undef, undef, undef ],
     connection_path    => [ 0, undef, undef, undef ],
 );
 

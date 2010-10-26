@@ -36,6 +36,7 @@ t/31-ak-config.t
 t/31-ak-entitlements.t
 t/32-kickstart.t
 t/33-channel.t
+t/34-errata.t
 t/35-package.t
 t/36-configchannel.t
 t/boilerplate.t
@@ -47,6 +48,7 @@ t/s22-system.t
 t/s31-activationkey.t
 t/s32-kickstart.t
 t/s33-channel.t
+t/s34-errata.t
 t/s35-package.t
 t/s40-schedule.t
 t/script-pod-coverage.t

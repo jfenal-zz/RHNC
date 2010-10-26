@@ -82,6 +82,10 @@ my %properties = (
     gpg_key_id           => [ 0, undef, undef, undef ],
     gpg_key_fp           => [ 0, undef, undef, undef ],
     end_of_life          => [ 0, undef, undef, undef ],
+    checksum_label       => [ 0, undef, undef, undef ],
+    yumrepo_label        => [ 0, undef, undef, undef ],
+    yumrepo_last_sync    => [ 0, undef, undef, undef ],
+    yumrepo_source_url   => [ 0, undef, undef, undef ],
 );
 
 sub _setdefaults {
