@@ -175,6 +175,44 @@ system subscribed.
 
 =cut
 
+my %son_of;
+
+sub _printchild {
+    my ( $chan, $level, $verbose, $all ) = @_;
+    my $plabel = $chan->label();
+
+    my $len = 48 - ( 2 * $level );
+    my $format = ' ' x ( 2 * $level );
+
+    my $systems = $chan->systems();
+    if ( $systems != 0 || $all ) {
+        if ( $verbose == 1 ) {
+            $format .= "%-${len}s %7s: %5d pkg, %5d systems\n";
+            printf( $format,
+                $chan->label(),    '(' . $chan->id() . ')',
+                $chan->packages(), $chan->systems(),
+            );
+        }
+        elsif ( $verbose == 2 ) {
+            $format .= "%-${len}s (%5d): %5d pkg, %5d systems, %s, %-40s\n";
+            printf( $format,
+                $chan->label(), $chan->id(), $chan->packages(),
+                $chan->systems(), $chan->provider_name(), $chan->name(), );
+        }
+        else {
+            print $format . $chan->label() . "\n";
+
+        }
+    }
+
+    if ( defined $son_of{$plabel} ) {
+        for my $c ( sort { $a->label() cmp $b->label() } @{ $son_of{$plabel} } )
+        {
+            _printchild( $c, $level + 1, $verbose, $all );
+        }
+    }
+}
+
 sub list {
     local @ARGV = @_;
     my ( $verbose, $all ) = ( 0, 0 );
@@ -194,42 +232,26 @@ sub list {
     my $nr = 0;
 
     # sort { $a->{label} cmp $b->{label} }
+    my %root_channels;
     foreach my $chan (@channel_list) {
+        if ( $chan->parent_label() eq q() ) {
+            $root_channels{ $chan->label() } = $chan;
+        }
+        else {
+            push @{ $son_of{ $chan->parent_label() } }, $chan;
+        }
+    }
+
+    foreach
+      my $chan ( sort { $a->label() cmp $b->label() } values %root_channels )
+    {
         my $systems = $chan->systems();
         my $parent  = $chan->parent_label();
         my $format;
 
         if ( $systems != 0 || $all ) {
-            if ( $verbose == 1 ) {
-                if ( $parent eq q() ) {
-                    $format = "%-48s %7s: %5d pkg, %5d systems\n",;
-                }
-                else {
-                    $format = "  %-46s %7s: %5d pkg, %5d systems\n",;
-                }
-                printf( $format,
-                    $chan->label(),    '(' . $chan->id() . ')',
-                    $chan->packages(), $chan->systems(),
-                );
-            }
-            elsif ( $verbose == 2 ) {
-                if ( $parent eq q() ) {
-                    $format = "%-48s (%5d): %5d pkg, %5d systems, %s, %-40s\n",;
-                }
-                else {
-                    $format =
-                      "  %-46s (%5d): %5d pkg, %5d systems, %s, %-40s\n",;
-                }
-                printf( $format,
-                    $chan->label(), $chan->id(), $chan->packages(),
-                    $chan->systems(), $chan->provider_name(), $chan->name(), );
-            }
-            else {
-                if ( $parent ne q() ) {
-                    print q(  );
-                }
-                print $chan->label() . "\n";
-            }
+            _printchild( $chan, 0, $verbose, $all );
+
         }
     }
 
@@ -297,7 +319,7 @@ sub list_packages {
 
     my $result = GetOptions(
         'verbose|v+' => \$verbose,
-        'all|a'     => \$all,
+        'all|a'      => \$all,
       )
       or pod2usage(
         -exitval  => 254,
@@ -393,10 +415,8 @@ sub add_packages {
 
     my $res = 0;
     if ( scalar @package_id ) {
-        $res =
-          $self->{rhnc}
-          ->call( 'channel.software.addPackages', $self->{label}, \@package_id,
-          );
+        $res = $self->{rhnc}->call( 'channel.software.addPackages',
+            $self->{label}, \@package_id, );
     }
     return $res;
 }
