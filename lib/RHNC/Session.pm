@@ -57,7 +57,7 @@ sub _readconfig {
         # create new config object from file
         my $config = Config::IniFiles->new( -file => $file );
 
-        my @p = qw(server user password data);
+        my @p = qw( server user password data proxy );
 
         # loop on all accepted parameters (@p)
         foreach my $p (@p) {
@@ -129,7 +129,8 @@ sub new {
             section  => 0,
             username => 0,
             password => 0,
-            server   => 0
+            server   => 0,
+            proxy    => 0,
         }
     );
     my $self = {};
@@ -140,6 +141,8 @@ sub new {
     $self->{username} = 'rhn-admin';
     $self->{password} = 'none';
     $self->{section}  = 'rhn';
+    $self->{proxy}  = undef;
+
     if ( defined $p{section} ) {
         $self->{section} = $p{section};
     }
@@ -150,6 +153,7 @@ sub new {
         $self->{username} = $class->{username};
         $self->{password} = $class->{password};
         $self->{section}  = $class->{section};
+        $self->{proxy}    = $class->{proxy};
     }
 
     # Retrieve session from disk if available
@@ -166,6 +170,9 @@ sub new {
         $self->{server}   = $p{server};
         $self->{username} = $p{username};
         $self->{password} = $p{password};
+        if (defined $p{proxy}) {
+            $self->{proxy} = $p{proxy};
+        }
     }
     else {
 
@@ -177,8 +184,17 @@ sub new {
         }
     }
 
-    $self->{client} =
-      Frontier::Client->new( url => 'https://' . $self->{server} . '/rpc/api' );
+    # Frontier::Client does not honor proxy on https
+    my $url =
+        ( defined $self->{proxy} ? 'http://' : 'https://' )
+      . $self->{server}
+      . '/rpc/api';
+
+    $self->{client} = Frontier::Client->new(
+        url => $url,
+        ( defined $self->{proxy} ? ( proxy => $self->{proxy} ) : () )
+    );
+
     my $session =
       $self->{client}
       ->call( 'auth.login', $self->{username}, $self->{password} );
