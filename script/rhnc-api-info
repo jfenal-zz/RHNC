@@ -1,0 +1,216 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+use lib qw( . .. lib ../lib );
+use RHNC;
+use Pod::Usage;
+use Carp;
+use Getopt::Long;
+
+use vars qw( $rhnc );
+
+=head1 NAME
+
+rhnc-api-info - Return API information.
+
+=head1 USAGE
+
+  rhnc-api-info command
+
+=head1 REQUIRED ARGUMENTS
+
+At least B<command> is required for this script to operate. No shell is
+currently offered, although this may come in the future.
+
+=head1 DESCRIPTION
+
+The following commands are available:
+
+=cut
+
+=head2 version
+
+Print various API version informations.
+
+  rhnc-api-info version
+
+=cut
+
+sub version {
+    local @ARGV = @_;
+    my $verbose = 0;
+    my $result = GetOptions( 'verbose|v+' => \$verbose )
+      or pod2usage(
+        -exitval  => 254,
+        -sections => ['DESCRIPTION/version'],
+        -verbose  => 99,
+      );
+
+    print "API Version : " . $rhnc->apiversion . "\n";
+    print "Satellite Version : " . $rhnc->systemversion . "\n";
+    print "RHNC Version : " . $rhnc->version . "\n";
+
+    return 0;
+}
+
+=head2 namespaces
+
+Print available API namespaces
+
+  rhnc-api-info namespaces
+
+=cut
+
+sub namespaces {
+    local @ARGV = @_;
+    my $verbose = 0;
+    my $result = GetOptions( 'verbose|v+' => \$verbose )
+      or pod2usage(
+        -exitval  => 254,
+        -sections => ['DESCRIPTION/namespaces'],
+        -verbose  => 99,
+      );
+
+    my $ns = $rhnc->namespaces;
+
+    foreach my $nk ( keys %$ns ) {
+        print "$nk : $ns->{$nk}\n";
+    }
+
+    return 0;
+}
+
+=head2 calls
+
+Print available API calls, for a particular namespace, or all
+namespaces.
+
+  rhnc-api-info calls [namespace]
+    [-v|--verbose]   \ # verbose
+    [-c|--csv]       \ # csv format
+
+=cut
+
+sub calls {
+    local @ARGV = @_;
+    my $verbose = 0;
+    my $csv     = 0;
+    my $result  = GetOptions(
+        'csv'        => \$csv,
+        'verbose|v+' => \$verbose,
+      )
+      or pod2usage(
+        -exitval  => 254,
+        -sections => ['DESCRIPTION/namespaces'],
+        -verbose  => 99,
+      );
+
+    my @nslist = @ARGV;
+    if ( scalar @nslist == 0 ) {
+        @nslist = keys %{ $rhnc->namespaces };
+    }
+
+    foreach my $namespace (@nslist) {
+        my $calls = $rhnc->calls($namespace);
+        foreach my $k ( keys %$calls ) {
+            if ($csv) {
+                print '"'
+                  . $namespace . '","'
+                  . $calls->{$k}->{name} . '","'
+                  . $calls->{$k}->{return} . '"' . "\n";
+            }
+            elsif ($verbose) {
+                print
+                  "$calls->{$k}->{return} = $namespace.$calls->{$k}->{name}( "
+                  . join( ", ", @{ $calls->{$k}->{parameters} } ) . " )\n";
+            }
+            else {
+                print $namespace . '.' . $calls->{$k}->{name}
+                  . " (returns "
+                  . $calls->{$k}->{return} . ")\n";
+            }
+        }
+    }
+
+    return 0;
+}
+
+=head1 OPTIONS
+
+See various commands for options available.
+
+=head1 DIAGNOSTICS
+
+See L<EXIT STATUS>.
+
+=head1 EXIT STATUS
+
+This script will return 1 for success, 0 for failure. Not very
+consistent for now, likely to change.
+
+=head1 CONFIGURATION
+
+See L<RHNC>.
+
+=head1 DEPENDENCIES
+
+=over 4
+
+=item * L<RHNC>
+
+=item * L<Pod::Usage>
+
+=back
+
+=head1 INCOMPATIBILITIES
+
+See L<RHNC>.
+
+=head1 BUGS AND LIMITATIONS
+
+See L<RHNC>.
+
+=head1 AUTHOR
+
+Jerome Fenal L<< <jfenal@free.fr> >>.
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2009, 2010 Jerome Fenal, all rights reserved.
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
+
+package main;
+
+#
+# Main
+#
+
+$rhnc = RHNC::Session->new();
+
+my %func = (
+    version    => \&version,
+    namespaces => \&namespaces,
+    calls      => \&calls,
+);
+
+my @args = @ARGV;
+my $cmd  = shift @args;
+my $rc;
+
+if ( defined $cmd && defined $func{$cmd} ) {
+    $rhnc = RHNC::Session->new();
+    $rc   = $func{$cmd}->(@args);
+    exit $rc;
+}
+
+pod2usage(
+    -exitval => 254,
+    -verbose => 99,
+    -message => "No or unknown command given"
+);
+

@@ -31,6 +31,7 @@ t/00-load.t
 t/10-new.t
 t/20-org.t
 t/21-sg.t
+t/22-system.t
 t/31-activationkey.t
 t/31-ak-config.t
 t/31-ak-entitlements.t
