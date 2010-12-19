@@ -143,6 +143,15 @@ sub new {
     $self->{section}  = 'rhn';
     $self->{proxy}  = undef;
 
+    # call_trace if $ENV{RHNC_CALL_TRACE} is set
+    $self->{call_trace}  = 0;
+    if (exists $ENV{RHNC_CALL_TRACE} ) {
+        $self->{call_trace}  = 1;
+        open my $ctlog, '>>', "/tmp/rhnc_call_trace.log"
+         or die "Can't open for append /tmp/rhnc_call_trace.log";
+        $self->{call_trace_glob} = $ctlog;
+    }
+
     if ( defined $p{section} ) {
         $self->{section} = $p{section};
     }
@@ -316,6 +325,9 @@ sub call {
         return;
     }
 
+    if ($self->{call_trace}) {
+        print {$self->{call_trace_glob}} "Calling $call at " . time() . "\n";
+    }
     return $result;
 }
 
@@ -395,6 +407,34 @@ sub systemversion {
     return $self->{systemversion};
 }
 
+=head2 namespaces
+
+Returns Satellite API available namespaces.
+
+=cut
+
+sub namespaces {
+    my ( $self, @args ) = @_;
+
+    my $ns = $self->call('api.getApiNamespaces' );
+
+    return $ns;
+}
+
+=head2 calls
+
+Returns Satellite API available calls for a given namespace.
+
+=cut
+
+sub calls {
+    my ( $self, $namespace, @args ) = @_;
+
+    my $calls = $self->call('api.getApiNamespaceCallList', $namespace );
+
+    return $calls;
+}
+
 =head2 version
 
 Returns client version number
@@ -405,6 +445,34 @@ sub version {
     my ( $self, @args ) = @_;
 
     return $self->{version};
+}
+
+=head2 logout
+
+logout from current connection
+
+=cut
+
+sub logout {
+    my ( $self, @args ) = @_;
+
+    if ( $self->{call_trace} ) {
+        close $self->{call_trace_glob}
+          or die "Can't close /tmp/rhnc_call_trace.log";
+    }
+
+    my $rc;
+    if (defined $self->{client} ) {
+        $rc = $self->call('auth.logout');
+    }
+    
+    return $rc;
+}
+
+sub DESTROY {
+    my ( $self, @args ) = @_;
+
+    $self->logout;
 }
 
 =head1 DIAGNOSTICS
