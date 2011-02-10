@@ -74,6 +74,7 @@ my %properties = (
     systems              => [ 0, undef, undef, undef ],
     arch_name            => [ 1, undef, undef, undef ],
     arch                 => [ 1, undef, undef, undef ],
+    last_modified        => [ 0, undef, undef, undef ],
     maintainer_name      => [ 0, undef, undef, undef ],
     maintainer_email     => [ 0, undef, undef, undef ],
     maintainer_phone     => [ 0, undef, undef, undef ],
