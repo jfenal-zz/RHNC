@@ -97,7 +97,7 @@ sub calls {
     my $verbose = 0;
     my $csv     = 0;
     my $result  = GetOptions(
-        'csv'        => \$csv,
+        'csv|c'      => \$csv,
         'verbose|v+' => \$verbose,
       )
       or pod2usage(
@@ -190,7 +190,6 @@ package main;
 # Main
 #
 
-$rhnc = RHNC::Session->new();
 
 my %func = (
     version    => \&version,
@@ -205,6 +204,7 @@ my $rc;
 if ( defined $cmd && defined $func{$cmd} ) {
     $rhnc = RHNC::Session->new();
     $rc   = $func{$cmd}->(@args);
+    $rhnc->logout();
     exit $rc;
 }
 
