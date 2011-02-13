@@ -52,6 +52,9 @@ provides:
   RHNC::Package:
     file: lib/RHNC/Package.pm
     version: 0.01
+  RHNC::Schedule:
+    file: lib/RHNC/Schedule.pm
+    version: 0.01
   RHNC::Session:
     file: lib/RHNC/Session.pm
     version: 0.01
