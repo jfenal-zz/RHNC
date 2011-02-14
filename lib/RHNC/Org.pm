@@ -50,11 +50,6 @@ our $VERSION = '0.01';
     );
     my $foo = RHNC::Org->create($org);
 
-=head1 EXPORT
-
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
-
 =head1 FUNCTIONS
 
 =head2 new
@@ -244,9 +239,8 @@ sub destroy {
         croak "No client in this object " . ref($self) . ". Exiting";
     }
     $self->{rhnc}->call( 'org.delete', $self->{id} );
-
+    undef $self->{rhnc};
     $self = ();
-    undef $self;
     return 1;
 }
 
