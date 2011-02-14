@@ -28,6 +28,9 @@ foreach my $m (@methods) {
     if ( $m eq 'earliest' ) {
         $v = $v->value();
     }
+    if (! defined $v) {
+        $v = '(not defined)';
+    }
     ok( defined($v), "$m is $v" );
 }
 
