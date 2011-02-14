@@ -145,6 +145,7 @@ sub new {
 
     # call_trace if $ENV{RHNC_CALL_TRACE} is set
     $self->{call_trace}  = 0;
+    $self->{call_trace_glob} = undef;
     if (exists $ENV{RHNC_CALL_TRACE} ) {
         $self->{call_trace}  = 1;
         open my $ctlog, '>>', "/tmp/rhnc_call_trace.log"
@@ -184,7 +185,6 @@ sub new {
         }
     }
     else {
-
         # load all config files in order, reading from $p{config} if exists
         foreach my $f ( @files, $p{config} ) {
             if ( defined $f && -f $f ) {
@@ -452,27 +452,30 @@ sub version {
 logout from current connection
 
 =cut
-
 sub logout {
     my ( $self, @args ) = @_;
 
-    if ( $self->{call_trace} ) {
-        close $self->{call_trace_glob}
-          or die "Can't close /tmp/rhnc_call_trace.log";
-    }
+    if ( defined $self->{session} ) {
 
-    my $rc;
-    if (defined $self->{client} ) {
-        $rc = $self->call('auth.logout');
+        if ( $self->{call_trace} && defined $self->{call_trace_glob} ) {
+            close $self->{call_trace_glob}
+              or die "Can't close /tmp/rhnc_call_trace.log";
+        }
+
+        my $rc;
+        if ( defined $self->{client} ) {
+            $rc = $self->{client}->call( 'auth.logout', $self->{session} );
+        }
+        delete $self->{session};
+        return $rc;
     }
-    
-    return $rc;
+    return 0;
 }
 
 sub DESTROY {
     my ( $self, @args ) = @_;
 
-    $self->logout;
+#    $self->logout;
 }
 
 =head1 DIAGNOSTICS

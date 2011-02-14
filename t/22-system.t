@@ -263,3 +263,6 @@ $tests+= scalar keys %method_to_return; }
 foreach my $method (keys %method_to_return) {
     isa_ok( $sys->$method(), $method_to_return{$method}, "method $method");
 }
+
+BEGIN { $tests++; }
+ok($rhnc->logout, 'logout');

@@ -50,3 +50,6 @@ isa_ok( $l, 'ARRAY', "List is indeed a ARRAYref" );
 BEGIN { $tests++ }
 ok( $org->destroy(), 'org deleted' );
 
+BEGIN { $tests++ }
+ok($rhnc->logout,'logout');
+
