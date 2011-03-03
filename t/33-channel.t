@@ -16,26 +16,36 @@ my @channels = @{ RHNC::Channel::list($rhnc) };
 BEGIN { $tests++; }
 ok( scalar @channels >= 0, 'got a list of ' . scalar(@channels) . ' channels' );
 
-my $tchan      = $channels[0];
-my $tchan_name = $tchan->label;
-diag("Using channel $tchan_name");
 BEGIN { $tests++; }
+my $tchan      = $channels[0];
 my $channel = $tchan->get();
 is( ref($channel), 'RHNC::Channel',
     "first member of list is RHNC::Channel class" );
+
+diag("Let's get a parent channel");
+if (defined $tchan->parent_label) {
+    $tchan = RHNC::Channel->get($rhnc, $tchan->parent_label ); 
+    $channel = $tchan->get();
+}
+
+my $tchan_name = $tchan->label;
+diag("Using channel $tchan_name");
 
 BEGIN { $tests++; }
 ok( $channel->arch() =~ /IA-32|x86_64|i386|amd64|sparc/i, 'arch is fine' );
 
 BEGIN { $tests+=4; }
-my $plist;
-ok(@{$plist = $channel->latest_packages()} > 0, 'Latest packages has more than one packages' );
+my $plist = $channel->latest_packages();
+ok(@{$plist} > 0, 'Latest packages has more than one packages' );
+use Data::Dumper;
+print Dumper  $plist->[0];
 ok(defined($plist->[0]->{rhnc}), "First package has its RHNC ref");
 ok(ref $plist->[0]->{rhnc} eq 'RHNC::Session', "and its a RHNC::Session ref");
 ok(@{$plist = $channel->latest_packages(1)} > 0, 'Latest packages (forced update) has more than one packages' );
 
 BEGIN { $tests+=4; }
-ok(@{ $plist = $channel->list_packages()} > 0, 'Latest packages has more than one packages' );
+$plist = $channel->list_packages();
+ok(@{$plist} > 0, 'List packages has more than one packages' );
 ok(defined $plist->[0]->{rhnc}, "First package has its RHNC ref");
 ok(ref $plist->[0]->{rhnc} eq 'RHNC::Session', "and its a RHNC::Session ref");
 ok(@{ $plist = $channel->list_packages(1)} > 0, 'Latest packages (forced update) has more than one packages' );
