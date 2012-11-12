@@ -9,14 +9,6 @@ use Params::Validate;
 use Config::IniFiles;
 use base qw( RHNC );
 
-# $Id$
-
-#$VERSION     = 0.01;
-#@ISA         = qw(Exporter);
-#@EXPORT      = ();
-#@EXPORT_OK   = qw(Session Barename GetSID);
-#%EXPORT_TAGS = ( DEFAULT => [qw(&Session &Barename &GetSID)] );
-
 =head1 NAME
 
 RHNC::Session - Initiate a new connection to RHNC Satellite
@@ -59,6 +51,8 @@ sub _readconfig {
 
         my @p = qw( server user password data proxy );
 
+        # name the config
+        $self->{label} = $section;
         # loop on all accepted parameters (@p)
         foreach my $p (@p) {
 
@@ -95,7 +89,6 @@ sub is_session {
     return 0;
 
 }
-
 
 =head2 new
 

@@ -249,7 +249,7 @@ sub list_systems {
 
     while ( $systemgroup = shift @ARGV ) {
         my $sg = RHNC::SystemGroup->get( $rhnc, $systemgroup );
-        my $slist_ref = $sg->list_systems($rhnc);
+        my $slist_ref = $sg->list_systems();
         foreach my $s (@$slist_ref) {
             print $s->profile_name() . "\n";
         }

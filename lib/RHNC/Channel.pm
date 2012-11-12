@@ -1,7 +1,5 @@
 package RHNC::Channel;
 
-# $Id$
-
 use strict;
 use warnings;
 use Params::Validate;
@@ -87,6 +85,7 @@ my %properties = (
     yumrepo_label        => [ 0, undef, undef, undef ],
     yumrepo_last_sync    => [ 0, undef, undef, undef ],
     yumrepo_source_url   => [ 0, undef, undef, undef ],
+    clone_original       => [ 0, q(),   undef, undef ],
 );
 
 sub _setdefaults {
@@ -235,7 +234,7 @@ sub list_packages {
     my $plist = [];
 
     my $list;
-    if ( ( defined $update || !defined $self->{list_packages} )
+    if ( ( defined $update || !defined $self->{packages} )
         && defined $self->{rhnc} )
     {
         $rhnc = $self->{rhnc};
@@ -250,9 +249,9 @@ sub list_packages {
             push @$plist, $p;
         }
 
-        $self->{list_packages} = $plist;
+        $self->{packages} = $plist;
     }
-    return $self->{list_packages};
+    return $self->{packages};
 }
 
 =head2 latest_packages

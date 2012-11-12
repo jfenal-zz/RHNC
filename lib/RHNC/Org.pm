@@ -287,18 +287,19 @@ Return name of organisation
 
 sub name {
     my ( $self, $name ) = @_;
-    if ( defined $name ) {
-
+    use Data::Dumper;
+#    print Dumper $self;
+    if ( defined $name && $name ne q() ) {
         if ( defined $self->{id} ) {
-            $self->{name} = $name;
             my $res =
               $self->{rhnc}
               ->call( 'org.updateName', $self->{id}, $self->{name} );
 
-            if ( !defined($name) || $res->{name} ne $name ) {
+            if ( $res->{name} ne $name ) {
                 croak
                   "Could not change Org name to '$name' for OrgId $self->{id}";
             }
+            $self->{name} = $name;
         }
         else {
             croak "Cannot change Org Name to '$name' for unknown OrgId";

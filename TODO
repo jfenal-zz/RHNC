@@ -1,4 +1,6 @@
 
+Make RHN::Org->name method setter work (again ?)
+
 - add get method to ConfigChannel ??
 - add config channel support to rhnc-ak 
   - add/remove/append config channel.
@@ -60,6 +62,15 @@ Big change to schedule, once experimented :
 - add RHNC::Object as father of all other objects
 - RHNC will maintain a hash to all available Sessions ('rhn' or
   'default' being the default one)
+
+  our %_clients;
+
+  $_clients{default} = RHNC::Session(...);
+  $_clients{rhnc} = RHNC::Session(...);
+  etc..
+
+  FIXME : finish design before doing anything
+
 - RHNC::Object will have a few  methods:
   - rhnc() return the rhnc  object (default or referenced by its name).
   - as_json
@@ -85,7 +96,7 @@ its uniqueid and class.
 ----------
 
 Default rhnc :
-Once previous change is implement, make all rhnc references optional,
+Once previous change is implemented, make all rhnc references optional,
 and as a named parameter, not a positional one, in all methods
 requiring it (list, create, etc.).
 

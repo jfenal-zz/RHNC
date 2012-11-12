@@ -194,23 +194,38 @@ ok( $@, "croak if no name in join_package_name" );
 #
 # 1. get a channel with packages
 my @channels = @{ RHNC::Channel->list($rhnc) };
-my $plist;
+my @plist;
 
+use Data::Dumper;
+
+#print STDERR Dumper \@channels;
 PKG:
 foreach my $c (@channels) {
-    if ( @{ $plist = $c->latest_packages() } ) {
-        diag( 'Using channel : ' . $c->name );
+    if (   $c->systems > 0
+        && $c->packages > 0
+        && $c->parent_label eq ''
+        && $c->{label} =~ m{ \A rhel - .* - server - \d \z }imxs )
+    {
+        @plist = @{ $c->latest_packages() };
+        diag( 'Using channel (' . $c->label . ') : ' . $c->name );
         last PKG;
     }
 }
 
+#print STDERR Dumper \@plist;
 # 2. get 3 packages
 #my $p1 = RHNC::Package->get($rhnc, $plist->[0]->id);
 #my $p2 = RHNC::Package->get($rhnc, $plist->[1]->id);
 #my $p3 = RHNC::Package->get($rhnc, $plist->[2]->id);
-my $p1 = $plist->[0];
-my $p2 = $plist->[1];
-my $p3 = $plist->[2];
+my $p1 = $plist[0];
+my $p2 = $plist[1];
+my $p3 = $plist[2];
+diag("p1 isa " . ref $p1);
+diag("p2 isa " . ref $p2);
+diag("p3 isa " . ref $p3);
+#print STDERR Dumper $p1;
+#print STDERR Dumper $p2;
+#print STDERR Dumper $p3;
 diag("Using ". $p1->nvra);
 diag("Using ". $p2->nvra);
 diag("Using ". $p3->nvra);
@@ -250,16 +265,21 @@ is( $p3->nvra,    $p6->nvra,    "ident nvra" );
 shift @channels; # FIXME let's hope we have more than one channel
 PKG2:
 foreach my $c (@channels) {
-    if ( @{ $plist = $c->list_packages() } ) {
-        diag( 'Using channel : ' . $c->name );
+    if (   $c->systems > 0
+        && $c->packages > 0
+        && $c->parent_label eq ''
+        && $c->{label} =~ m{ \A rhel - .* - server - \d \z }imxs )
+    {
+        @plist = @{ $c->latest_packages() };
+        diag( 'Using channel (' . $c->label . ') : ' . $c->name );
         last PKG2;
     }
 }
 
 # 2. get 3 packages
-$p1 = $plist->[0];
-$p2 = $plist->[1];
-$p3 = $plist->[2];
+$p1 = $plist[0];
+$p2 = $plist[1];
+$p3 = $plist[2];
 diag("Using ". $p1->nvra);
 diag("Using ". $p2->nvra);
 diag("Using ". $p3->nvra);

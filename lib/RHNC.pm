@@ -11,7 +11,7 @@ our @EXPORT = qw( &entitlement_exists &entitlements &_unique
 use Params::Validate;
 use Carp;
 
-use vars qw(  %_properties %entitlement_exists);
+use vars qw(  %_properties %entitlement_exists );
 
 use Frontier::Client;
 use RHNC::Session;
@@ -30,6 +30,7 @@ use RHNC::System::CustomInfo;
 
 our $_xmlfalse = Frontier::RPC2::Boolean->new(0);
 our $_xmltrue  = Frontier::RPC2::Boolean->new(1);
+our %_rhnc_for;
 
 our %entitlement = (
     m             => 'monitoring_entitled',
@@ -42,7 +43,7 @@ our %entitlement = (
     virt          => 'virtualization_host',
 );
 
-our @EXPORTS = qw( $VERSION $_xmlfalse $_xmltrue);
+our @EXPORTS = qw( $VERSION $_xmlfalse $_xmltrue );
 
 =head1 NAME
 
@@ -112,13 +113,14 @@ sub manage {
     }
 
     $object->{rhnc} = $self;
+    $object->{_session} = $self->session;
 
     my $uid = $object->_uniqueid;
     if ( !defined $uid || $uid eq q{} ) {
         croak 'Object unique id not defined';
     }
 
-    $self->{_managed}{$uid} = \$object;
+    $self->{_managed}{ref $object}{$uid} = \$object;
 
     return $self;
 }
@@ -137,8 +139,8 @@ sub unmanage {
         return;
     }
 
-    delete $self->{_managed}{ $object->name() };
-    delete $object->{rhnc};
+    delete $self->{_managed}{ref $object}{ $object->_uniqueid() };
+    delete $object->{_session};
 
     return $self;
 }
@@ -163,6 +165,11 @@ sub save {
 
 Return corresponding RHN Client, if available.
 
+  $session = $o->rhnc(); 
+  $session = RHNC->rhnc(); 
+  $session = RHNC::rhnc();
+  $session = RHNC::rhnc();
+
 =cut
 
 sub rhnc {
@@ -171,7 +178,7 @@ sub rhnc {
     if ( defined $rhnc ) {
         $self->{rhnc} = $rhnc;
     }
-    return $self->{rhnc} if exists $self->{rhnc};
+    return $self->{rhnc} if defined $self->{rhnc};
 
     return;
 }

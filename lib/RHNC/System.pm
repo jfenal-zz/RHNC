@@ -188,7 +188,7 @@ sub id {
     }
 
     $system = shift @args;
-    print STDERR "system = $system\n";
+#    print STDERR "system = $system\n";
     my $res = $rhnc->call( 'system.getId', $system );
     if ( @$res eq 1 ) {
         return $res->[0]->{id};
